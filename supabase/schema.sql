@@ -89,3 +89,4 @@ do $$ begin
 exception when undefined_column then
   insert into storage.buckets(id,name,public) values('sandi-memories','sandi-memories',false) on conflict(id) do update set public=false;
 end $$;
+
