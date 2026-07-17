@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import AuroraEngine from "@/components/AuroraEngine";
 const whispers = [
   "Born in New Hyde Park",
   "Raised in Roslyn",
@@ -70,7 +70,7 @@ export default function HomePage() {
       <main className="aurora-page">
         {!entered ? (
           <section className="cover">
-            <div className="aurora" />
+<AuroraEngine intensity={0.9} speed={1} />
             <div className="stars" />
 
             <div className="cover-inner">
@@ -121,7 +121,7 @@ export default function HomePage() {
             </header>
 
             <section className="hero">
-              <div className="aurora" />
+<AuroraEngine intensity={0.9} speed={1} />
               <div className="stars" />
 
               <div className="hero-copy">
