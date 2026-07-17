@@ -1,2 +1,22 @@
+import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
-export default function Studio(){return <main><Navigation/><section className="section pageTop"><div className="shell narrow"><div className="sectionTitle"><span className="eyebrow">PRIVATE ACCESS</span><h2>Story Studio</h2><p>Tal will have owner access. Beth will have reviewer access.</p></div><div className="panel form"><label>Email<input type="email"/></label><label>Password<input type="password"/></label><button className="primary">Sign in</button><p className="muted">Authentication will activate after Supabase is connected.</p></div></div></section></main>}
+
+export default function StudioPage() {
+  return (
+    <main>
+      <Navigation />
+      <section className="pageTop studioComingSoon">
+        <div className="shell studioComingSoonInner">
+          <span className="eyebrow">PRIVATE STORY STUDIO</span>
+          <h1>The editing room is being prepared.</h1>
+          <p>
+            This private area will allow Tal and Beth to review, label, and organize
+            contributions. Contributor uploads can be activated first; reviewer login
+            is the next release.
+          </p>
+          <Link className="primary" href="/">Return to the invitation</Link>
+        </div>
+      </section>
+    </main>
+  );
+}
