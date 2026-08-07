@@ -108,3 +108,7 @@
 @keyframes chapterArrive{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @media(max-width:700px){.revealExperience{padding-inline:.75rem}.revealMasthead{min-height:48vh}.memoryPlate{flex-basis:72vw}.memoryPlate.is-active{flex-basis:88vw}.memoryCarousel>header{display:grid}.revealChapterControls span{display:none}}
 @media(prefers-reduced-motion:reduce){.revealChapter{animation:none}.memoryPlate{transition:none}}
+
+.studioToolbarActions{display:flex;gap:.55rem;flex-wrap:wrap;justify-content:flex-end}
+.studioToolbarActions .secondary{display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap}
+@media(max-width:700px){.studioToolbarActions{justify-content:flex-start}}
