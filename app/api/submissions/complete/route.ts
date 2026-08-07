@@ -12,13 +12,13 @@ const fileSchema = z.object({
   downloadUrl: z.string().url().max(1500),
   contentType: z.string().min(1).max(150),
   contentDisposition: z.string().max(500),
-  originalName: z.string().min(1).max(300),
+  originalName: z.string().min(1).max(500),
   bytes: z.number().int().positive()
 });
 
 const schema = z.object({
   submissionId: z.string().uuid(),
-  files: z.array(fileSchema).max(20)
+  files: z.array(fileSchema).max(1000)
 });
 
 function safeBackupName(name: string) {
@@ -26,7 +26,21 @@ function safeBackupName(name: string) {
     .normalize("NFKD")
     .replace(/[^a-zA-Z0-9._ -]/g, "_")
     .replace(/\s+/g, "-")
-    .slice(0, 180) || "memory";
+    .slice(0, 200) || "memory";
+}
+
+async function mapLimit<T, R>(items: T[], limit: number, worker: (item: T, index: number) => Promise<R>) {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  async function run() {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await worker(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+  return results;
 }
 
 export async function POST(request: Request) {
@@ -45,21 +59,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Submission not found." }, { status: 404 });
     }
 
-    const verifiedPrimary: Array<{
-      file: z.infer<typeof fileSchema>;
-      etag: string;
-    }> = [];
-
     for (const file of body.files) {
       if (!file.pathname.startsWith(expectedPrefix)) {
         return NextResponse.json({ error: "An uploaded file did not belong to this contribution." }, { status: 400 });
       }
+    }
 
+    const verifiedPrimary = await mapLimit(body.files, 5, async file => {
       const stored = await head(file.pathname);
       if (stored.size !== file.bytes) {
-        return NextResponse.json({
-          error: `${file.originalName} did not finish uploading. Please try that file again.`
-        }, { status: 409 });
+        throw new Error(`${file.originalName} did not finish uploading. Please try that file again.`);
       }
 
       const { error: mediaError } = await supabase.from("media_assets").upsert({
@@ -70,8 +79,8 @@ export async function POST(request: Request) {
         bytes: file.bytes
       }, { onConflict: "storage_path" });
       if (mediaError) throw mediaError;
-      verifiedPrimary.push({ file, etag: stored.etag });
-    }
+      return { file, etag: stored.etag };
+    });
 
     const completedAt = new Date().toISOString();
     const { error: updateError } = await supabase
@@ -84,9 +93,8 @@ export async function POST(request: Request) {
     let backupError: string | null = null;
 
     try {
-      const manifestFiles = [];
-      for (const [index, item] of verifiedPrimary.entries()) {
-        const backupPath = `${backupPrefix}/media/${String(index + 1).padStart(2, "0")}-${safeBackupName(item.file.originalName)}`;
+      const manifestFiles = await mapLimit(verifiedPrimary, 4, async (item, index) => {
+        const backupPath = `${backupPrefix}/media/${String(index + 1).padStart(3, "0")}-${safeBackupName(item.file.originalName)}`;
         const backup = await copy(item.file.pathname, backupPath, {
           access: "private",
           contentType: item.file.contentType,
@@ -97,7 +105,7 @@ export async function POST(request: Request) {
         if (verifiedBackup.size !== item.file.bytes) {
           throw new Error(`Backup verification failed for ${item.file.originalName}.`);
         }
-        manifestFiles.push({
+        return {
           originalName: item.file.originalName,
           contentType: item.file.contentType,
           bytes: item.file.bytes,
@@ -105,11 +113,11 @@ export async function POST(request: Request) {
           backupPath: backup.pathname,
           primaryEtag: item.etag,
           backupEtag: verifiedBackup.etag
-        });
-      }
+        };
+      });
 
       await put(`${backupPrefix}/manifest.json`, JSON.stringify({
-        version: 1,
+        version: 2,
         createdAt: completedAt,
         submission,
         files: manifestFiles
@@ -133,8 +141,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("submission-complete", error);
-    return NextResponse.json({
-      error: "Your files may have arrived, but confirmation failed. Do not delete them from your phone; email uploads@sandi50th.com and we will verify them."
-    }, { status: 500 });
+    const message = error instanceof Error && /did not finish uploading/i.test(error.message)
+      ? error.message
+      : "Your files may have arrived, but confirmation failed. Do not delete them from your phone; email uploads@sandi50th.com and we will verify them.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

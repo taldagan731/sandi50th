@@ -9,6 +9,7 @@ const ALLOWED_CONTENT_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/gif",
   "image/heic",
   "image/heif",
   "video/mp4",
@@ -18,7 +19,11 @@ const ALLOWED_CONTENT_TYPES = [
   "audio/mp4",
   "audio/wav",
   "audio/x-m4a",
-  "application/pdf"
+  "audio/webm",
+  "audio/ogg",
+  "application/pdf",
+  "application/zip",
+  "application/x-zip-compressed"
 ];
 
 type TokenPayload = {
@@ -60,7 +65,7 @@ export async function POST(request: Request) {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,
           maximumSizeInBytes: MAX_FILE_BYTES,
           addRandomSuffix: false,
-          allowOverwrite: false,
+          allowOverwrite: true,
           validUntil: Date.now() + 2 * 60 * 60 * 1000,
           tokenPayload: JSON.stringify(payload)
         };
