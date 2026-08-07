@@ -112,3 +112,10 @@
 .studioToolbarActions{display:flex;gap:.55rem;flex-wrap:wrap;justify-content:flex-end}
 .studioToolbarActions .secondary{display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap}
 @media(max-width:700px){.studioToolbarActions{justify-content:flex-start}}
+
+.studioSubmissionDecision{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin:1rem 0;padding:.8rem 0;border-top:1px solid rgba(215,177,108,.16);border-bottom:1px solid rgba(215,177,108,.16)}
+.studioSubmissionDecision>span{margin-right:auto;color:rgba(247,239,229,.66);font-size:.82rem}
+.studioSubmissionDecision button{border:1px solid rgba(215,177,108,.3);border-radius:999px;background:transparent;color:#f7efe5;padding:.55rem .75rem;cursor:pointer}
+.studioSubmissionDecision button.include{background:#d7b16c;color:#160d16}
+.studioSubmissionDecision button.exclude{border-color:rgba(209,115,115,.75)}
+@media(max-width:700px){.studioSubmissionDecision>span{width:100%}}
