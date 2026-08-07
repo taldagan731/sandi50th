@@ -47,7 +47,7 @@ export function OpeningExperience() {
               transition={{ delay: reduceMotion ? 0 : 0.6, duration: 1 }}
               onAnimationComplete={() => setIntroDone(true)}
             >
-              The way we remember you.
+              The way we see you.
             </motion.p>
             <motion.button
               className="beginButton"

@@ -41,7 +41,7 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
       <header className="revealMasthead">
         <span className="eyebrow">A PRIVATE FILM AND LIVING ARCHIVE</span>
         <h1>Still Becoming</h1>
-        <p>Fifty years, held in the memories of the people who love Sandi.</p>
+        <p>Fifty years, told by the people who love Sandi.</p>
       </header>
 
       <nav className="revealChapterNav" aria-label="Story chapters">

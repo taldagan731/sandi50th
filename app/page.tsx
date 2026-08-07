@@ -33,7 +33,7 @@ export default function Home() {
         <div className="shell invitationGrid">
           <div className="sectionTitle">
             <span className="eyebrow">HELP US RECOVER THE DETAILS</span>
-            <h2>Bring a piece of her life back to her.</h2>
+            <h2>Bring a piece of her story into the light.</h2>
             <p>
               Search old albums, phones, family group chats, cloud libraries, tapes, and boxes of keepsakes. One forgotten photograph can unlock an entire story.
             </p>
@@ -52,7 +52,7 @@ export default function Home() {
           <div className="literaryCard">
             <span className="eyebrow">THE LITERARY HEART</span>
             <blockquote>
-              “Some lives are remembered in photographs. Yours is remembered in the people who still smile when they say your name.”
+              “Some lives are seen in photographs. Yours is seen in the people who smile when they say your name.”
             </blockquote>
             <cite>Original text written for Sandi</cite>
           </div>
@@ -87,7 +87,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she changed.</span><span>Contributions due August 10, 2026 · uploads@sandi50th.com</span></div></footer>
+      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>Contributions due August 10, 2026 · uploads@sandi50th.com</span></div></footer>
     </main>
   );
 }
