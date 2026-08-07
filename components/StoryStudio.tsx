@@ -64,7 +64,10 @@ export function StoryStudio() {
     setSessionReady(true);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (!sessionReady) {
     return <section className="studioGate"><p>Opening the private editing room…</p></section>;
