@@ -321,14 +321,13 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           <video ref={videoRef} controls preload="metadata" poster={posterReady ? `${mediaUrl}?poster=1` : undefined}>
             <source src={mediaUrl} type={item.mime_type} />
           </video>
-        ) : item.mime_type === "image/heic" || item.mime_type === "image/heif" ? (
-          <div className="unsupportedPreview">
-            <strong>iPhone original preserved</strong>
-            <p>This browser cannot reliably display HEIC. Download the original to review it, then add a JPEG copy before including it in the reveal.</p>
-            <a className="downloadFile" href={`${mediaUrl}?download=1`}>Download {item.original_name}</a>
-          </div>
         ) : item.mime_type.startsWith("image/") ? (
-          <img src={mediaUrl} alt={caption || `Submitted photograph: ${item.original_name}`} />
+          <ReviewImage
+            src={mediaUrl}
+            downloadUrl={`${mediaUrl}?download=1`}
+            name={item.original_name}
+            alt={caption || `Submitted photograph: ${item.original_name}`}
+          />
         ) : item.mime_type.startsWith("audio/") ? (
           <audio controls preload="metadata"><source src={mediaUrl} type={item.mime_type} /></audio>
         ) : (
@@ -367,4 +366,19 @@ function formatBytes(bytes: number) {
   const units = ["B", "KB", "MB", "GB"];
   const index = Math.min(Math.floor(Math.log(Math.max(bytes, 1)) / Math.log(1024)), units.length - 1);
   return `${(bytes / 1024 ** index).toFixed(index ? 1 : 0)} ${units[index]}`;
+}
+
+
+function ReviewImage({ src, downloadUrl, name, alt }: { src: string; downloadUrl: string; name: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="unsupportedPreview">
+        <strong>iPhone original preserved</strong>
+        <p>This browser cannot display the HEIC original. Open Studio in Safari or download the file and add a JPEG presentation copy.</p>
+        <a className="downloadFile" href={downloadUrl}>Download {name}</a>
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} onError={() => setFailed(true)} />;
 }
