@@ -27,3 +27,26 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
           SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
           BLOB_READ_WRITE_TOKEN: vercel_blob_rw_placeholder
+      - name: Smoke-test privacy and public content
+        shell: bash
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          BLOB_READ_WRITE_TOKEN: vercel_blob_rw_placeholder
+        run: |
+          npm run start > /tmp/sandi50th-next.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/ > /tmp/home.html; then break; fi
+            sleep 1
+          done
+          grep -q "Contributions due August 10, 2026" /tmp/home.html
+          curl -fsS http://127.0.0.1:3000/contribute | grep -q "Please contribute by August 10, 2026"
+          curl -fsS http://127.0.0.1:3000/studio | grep -q "Private Story Studio"
+          curl -fsS http://127.0.0.1:3000/reveal | grep -q "This story is not public"
+          curl -fsSI http://127.0.0.1:3000/ | tr -d '\r' | grep -qi "x-robots-tag: noindex, nofollow, noarchive, nosnippet"
+          curl -fsS http://127.0.0.1:3000/robots.txt | grep -q "Disallow: /"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/studio/contributions)" = "401"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/studio/media/00000000-0000-0000-0000-000000000000)" = "401"
