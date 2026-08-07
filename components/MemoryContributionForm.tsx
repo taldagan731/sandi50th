@@ -447,11 +447,7 @@ export function MemoryContributionForm() {
                   {files.map(item => (
                     <article key={item.id} className={"uploadTile status-" + item.status}>
                       <div className="uploadThumb">
-                        {item.preview ? (
-                          item.file.type.startsWith("video/") ? <video src={item.preview} muted playsInline /> : <img src={item.preview} alt="" />
-                        ) : (
-                          <span>{isZip(item.file) ? "ZIP" : mediaType(normalizedFileType(item.file))}</span>
-                        )}
+                        <UploadThumbnail item={item} />
                       </div>
                       <div className="uploadTileCopy">
                         <strong title={item.relativePath}>{item.relativePath}</strong>
@@ -615,4 +611,16 @@ function mediaType(type: string) {
   if (type.startsWith("video")) return "VIDEO";
   if (type.startsWith("audio")) return "AUDIO";
   return "FILE";
+}
+
+
+function UploadThumbnail({ item }: { item: SelectedFile }) {
+  const [failed, setFailed] = useState(false);
+  if (!item.preview || failed) {
+    return <span>{isZip(item.file) ? "ZIP" : mediaType(normalizedFileType(item.file))}</span>;
+  }
+  if (normalizedFileType(item.file).startsWith("video/")) {
+    return <video src={item.preview} muted playsInline onError={() => setFailed(true)} />;
+  }
+  return <img src={item.preview} alt="" onError={() => setFailed(true)} />;
 }
