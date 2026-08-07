@@ -1,4 +1,4 @@
-import { head } from "@vercel/blob";
+import { copy, head, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
