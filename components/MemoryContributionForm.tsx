@@ -1,6 +1,7 @@
 "use client";
 
-import { upload, type PutBlobResult } from "@vercel/blob/client";
+import type { PutBlobResult } from "@vercel/blob";
+import { upload } from "@vercel/blob/client";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 
 const MAX_FILES = 20;
