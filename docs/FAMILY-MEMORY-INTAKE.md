@@ -23,14 +23,14 @@ Use one block per memory. Plain text is best; a spreadsheet with these columns a
 
 ## The eight working chapters
 
-1. Before the map
-2. The world she made
-3. The people who know
-4. The ordinary magic
-5. What she carries
-6. The turning points
-7. Still becoming
-8. The next room
+1. Once Upon a Time
+2. Growing Up in Roslyn
+3. Finding Her Voice
+4. Building Something Bigger
+5. The Family She Chose
+6. Around the World
+7. The People Who Love Her
+8. Still Becoming
 
 ## Accuracy rule
 
