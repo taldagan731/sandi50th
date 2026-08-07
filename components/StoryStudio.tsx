@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase/browser";\nimport { StoryWorkshop } from "@/components/StoryWorkshop";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { StoryWorkshop } from "@/components/StoryWorkshop";
 
 type MediaItem = {
   id: string;
@@ -101,7 +102,11 @@ export function StoryStudio() {
           <h1>The memories that have arrived.</h1>
           <p>{submissions.length} contributions · {counts.total} files · {counts.pending} awaiting a decision</p>
         </div>
-        <div className="studioToolbarActions">\n          <a className="secondary" href="/api/studio/export">Download archive index</a>\n          <a className="secondary" href="/reveal">Open private reveal</a>\n          <button className="secondary" type="button" onClick={signOut}>Sign out</button>\n        </div>
+        <div className="studioToolbarActions">
+          <a className="secondary" href="/api/studio/export">Download archive index</a>
+          <a className="secondary" href="/reveal">Open private reveal</a>
+          <button className="secondary" type="button" onClick={signOut}>Sign out</button>
+        </div>
       </header>
 
       <nav className="studioFilters" aria-label="Contribution filters">
