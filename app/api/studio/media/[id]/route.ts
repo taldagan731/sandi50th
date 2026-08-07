@@ -27,7 +27,11 @@ export async function GET(
     .single();
   if (!submission) return new NextResponse("Not found", { status: 404 });
 
-  const requestedPath = new URL(request.url).searchParams.get("poster") === "1" && media.poster_path\n    ? media.poster_path\n    : media.storage_path;\n\n  if (!requestedPath.startsWith("incoming/") && !requestedPath.startsWith("posters/")) {
+  const requestedPath = new URL(request.url).searchParams.get("poster") === "1" && media.poster_path
+    ? media.poster_path
+    : media.storage_path;
+
+  if (!requestedPath.startsWith("incoming/") && !requestedPath.startsWith("posters/")) {
     const { data, error: signedError } = await owner.supabase.storage
       .from("sandi-memories")
       .createSignedUrl(requestedPath, 60);
