@@ -113,10 +113,8 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
                           </video>
                         ) : item.mimeType.startsWith("audio/") ? (
                           <div className="revealAudio"><span>Listen to this memory</span><audio controls preload="metadata"><source src={url} type={item.mimeType} /></audio></div>
-                        ) : item.mimeType === "image/heic" || item.mimeType === "image/heif" ? (
-                          <div className="unsupportedPreview"><strong>Original iPhone photograph</strong><p>A JPEG presentation copy is still needed for this display.</p></div>
                         ) : item.mimeType.startsWith("image/") ? (
-                          <img src={url} alt={item.caption || `A submitted memory: ${item.originalName}`} loading={index ? "lazy" : "eager"} />
+                          <RevealImage item={item} url={url} eager={index === 0} />
                         ) : (
                           <a className="revealDocument" href={`${url}?download=1`}>Open {item.originalName}</a>
                         )}
@@ -335,4 +333,25 @@ function Waveform({ large = false }: { large?: boolean }) {
     return <span key={index} style={style} />;
   });
   return <div className={large ? "voiceWave is-large" : "voiceWave"} aria-hidden="true">{bars}</div>;
+}
+
+
+function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eager: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="unsupportedPreview">
+        <strong>Original iPhone photograph preserved</strong>
+        <p>This browser cannot display the HEIC original. Review it in Safari or add a JPEG presentation copy.</p>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={item.caption || `A submitted memory: ${item.originalName}`}
+      loading={eager ? "eager" : "lazy"}
+      onError={() => setFailed(true)}
+    />
+  );
 }
