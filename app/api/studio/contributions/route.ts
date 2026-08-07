@@ -7,7 +7,7 @@ export async function GET() {
 
   const { data: submissions, error: submissionError } = await owner.supabase
     .from("submissions")
-    .select("id,name,contact,relationship,first_memory,story,approximate_year,location,people,life_chapter,prompt,consent,status,reviewer_notes,created_at,upload_completed_at")
+    .select("id,name,contact,relationship,first_memory,story,approximate_year,location,people,life_chapter,prompt,consent,status,review_status,reviewer_notes,created_at,upload_completed_at")
     .eq("project_id", owner.project.id)
     .order("created_at", { ascending: false });
   if (submissionError) {
