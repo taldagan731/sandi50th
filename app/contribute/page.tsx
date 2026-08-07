@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { ContributionHub } from "@/components/ContributionHub";
+import "./contribution-release.css";
 
 export default function ContributePage() {
   return (
