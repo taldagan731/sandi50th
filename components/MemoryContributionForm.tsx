@@ -38,6 +38,7 @@ const prompts = [
 type SelectedFile = { file: File; id: string };
 type PreparedUpload = { pathname: string; name: string; type: string; size: number };
 type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
+type UploadTokenPayload = { submissionId: string; originalName: string; bytes: number; contentType: string };
 
 export function MemoryContributionForm() {
   const [firstMemory, setFirstMemory] = useState("");
