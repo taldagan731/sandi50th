@@ -251,6 +251,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
   const [chapter, setChapter] = useState(item.chapter_number ? String(item.chapter_number) : "");
   const [caption, setCaption] = useState(item.caption ?? "");
   const [notes, setNotes] = useState(item.reviewer_notes ?? "");
+  const [order, setOrder] = useState(String(item.display_order));
   const [saving, setSaving] = useState(false);
   const [posterReady, setPosterReady] = useState(Boolean(item.poster_path));
   const [error, setError] = useState("");
@@ -268,7 +269,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
         chapterNumber: chapter ? Number(chapter) : null,
         caption,
         notes,
-        displayOrder: item.display_order
+        displayOrder: Number(order) || 0
       })
     });
     const body = await response.json();
@@ -317,8 +318,16 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           <video ref={videoRef} controls preload="metadata" poster={posterReady ? `${mediaUrl}?poster=1` : undefined}>
             <source src={mediaUrl} type={item.mime_type} />
           </video>
+        ) : item.mime_type === "image/heic" || item.mime_type === "image/heif" ? (
+          <div className="unsupportedPreview">
+            <strong>iPhone original preserved</strong>
+            <p>This browser cannot reliably display HEIC. Download the original to review it, then add a JPEG copy before including it in the reveal.</p>
+            <a className="downloadFile" href={`${mediaUrl}?download=1`}>Download {item.original_name}</a>
+          </div>
         ) : item.mime_type.startsWith("image/") ? (
           <img src={mediaUrl} alt={caption || `Submitted photograph: ${item.original_name}`} />
+        ) : item.mime_type.startsWith("audio/") ? (
+          <audio controls preload="metadata"><source src={mediaUrl} type={item.mime_type} /></audio>
         ) : (
           <a className="downloadFile" href={mediaUrl} target="_blank" rel="noreferrer">Open {item.original_name}</a>
         )}
@@ -333,6 +342,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           </select>
         </label>
         <label>Caption<textarea rows={2} value={caption} onChange={event => setCaption(event.target.value)} /></label>
+        <label>Order in chapter<input type="number" min="0" max="10000" value={order} onChange={event => setOrder(event.target.value)} /></label>
         <label>Private notes<textarea rows={2} value={notes} onChange={event => setNotes(event.target.value)} /></label>
         {item.mime_type.startsWith("video/") && (
           <button className="secondary compact" type="button" onClick={createPoster}>

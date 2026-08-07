@@ -60,7 +60,8 @@ export async function GET(
   outgoing.set("Cache-Control", "private, no-store");
   outgoing.set("X-Content-Type-Options", "nosniff");
   const safeFilename = media.original_name.replace(/[^\x20-\x7E]/g, "_").replace(/[\\"]/g, "_").slice(0, 180) || "memory";
-  outgoing.set("Content-Disposition", `inline; filename="${safeFilename}"`);
+  const disposition = new URL(request.url).searchParams.get("download") === "1" ? "attachment" : "inline";
+  outgoing.set("Content-Disposition", `${disposition}; filename="${safeFilename}"`);
 
   return new NextResponse(response.body, {
     status: response.status,

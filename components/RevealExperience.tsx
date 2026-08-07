@@ -97,8 +97,14 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
                       <video controls={expanded} preload="metadata" poster={item.poster ? `${url}?poster=1` : undefined}>
                         <source src={url} type={item.mimeType} />
                       </video>
-                    ) : (
+                    ) : item.mimeType.startsWith("audio/") ? (
+                      <div className="revealAudio"><span>Listen to this memory</span><audio controls preload="metadata"><source src={url} type={item.mimeType} /></audio></div>
+                    ) : item.mimeType === "image/heic" || item.mimeType === "image/heif" ? (
+                      <div className="unsupportedPreview"><strong>Original iPhone photograph</strong><p>A JPEG presentation copy is still needed for this display.</p></div>
+                    ) : item.mimeType.startsWith("image/") ? (
                       <img src={url} alt={item.caption || `A submitted memory: ${item.originalName}`} loading={index ? "lazy" : "eager"} />
+                    ) : (
+                      <a className="revealDocument" href={`${url}?download=1`}>Open {item.originalName}</a>
                     )}
                     <span>{item.caption || item.originalName}</span>
                   </article>

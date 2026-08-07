@@ -46,7 +46,7 @@
 .reviewFields>strong{overflow-wrap:anywhere}
 .reviewFields small{color:rgba(247,239,229,.58)}
 .reviewFields label,.studioGate label{display:grid;gap:.35rem;color:#d7b16c;font-size:.72rem;text-transform:uppercase;letter-spacing:.11em}
-.reviewFields textarea,.reviewFields select,.studioGate input{width:100%;border:1px solid rgba(215,177,108,.3);border-radius:.55rem;background:#1b111b;color:#f7efe5;padding:.75rem;font:inherit;text-transform:none;letter-spacing:normal}
+.reviewFields textarea,.reviewFields select,.reviewFields input,.studioGate input{width:100%;border:1px solid rgba(215,177,108,.3);border-radius:.55rem;background:#1b111b;color:#f7efe5;padding:.75rem;font:inherit;text-transform:none;letter-spacing:normal}
 .reviewActions{display:flex;gap:.55rem;flex-wrap:wrap}
 .reviewActions button,.compact{border:1px solid rgba(215,177,108,.34);border-radius:999px;padding:.65rem .85rem;background:transparent;color:#f7efe5;cursor:pointer}
 .reviewActions .include{background:#d7b16c;color:#160d16}
@@ -119,3 +119,10 @@
 .studioSubmissionDecision button.include{background:#d7b16c;color:#160d16}
 .studioSubmissionDecision button.exclude{border-color:rgba(209,115,115,.75)}
 @media(max-width:700px){.studioSubmissionDecision>span{width:100%}}
+
+.unsupportedPreview{display:grid;place-content:center;gap:.6rem;height:100%;padding:1.25rem;text-align:center;color:rgba(247,239,229,.72)}
+.unsupportedPreview p{margin:0;line-height:1.55;font-size:.84rem}
+.reviewPreview audio{width:calc(100% - 2rem)}
+.revealAudio{display:grid;place-content:center;gap:1rem;height:100%;padding:1rem;text-align:center}
+.revealAudio audio{width:min(30rem,100%)}
+.revealDocument{display:grid;place-content:center;height:100%;padding:2rem;color:#d7b16c;text-decoration:underline;text-underline-offset:.3rem}
