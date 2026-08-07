@@ -156,6 +156,7 @@
 
 .birthdayReel {
   min-height: 100vh;
+  min-height: 100dvh;
   border-top: 1px solid rgba(214,176,92,.3);
   background:
     linear-gradient(180deg, rgba(14,9,17,.12), rgba(14,9,17,.7)),
@@ -305,4 +306,25 @@
   .voiceCard:focus-within,
   .voiceCard.is-playing { transform: none; }
   .voiceWave span { animation: none !important; transform: scaleY(.7); }
+}
+
+
+@supports (padding: max(0px)) {
+  .voiceWall,
+  .birthdayReel {
+    padding-left: max(clamp(1rem, 5vw, 4rem), env(safe-area-inset-left));
+    padding-right: max(clamp(1rem, 5vw, 4rem), env(safe-area-inset-right));
+    padding-bottom: max(clamp(5rem, 11vw, 9rem), calc(3rem + env(safe-area-inset-bottom)));
+  }
+}
+
+@media (max-width: 600px) {
+  .voiceCard button,
+  .birthdayTransport button,
+  .birthdayQueue button {
+    min-height: 44px;
+  }
+  .birthdayQueue button {
+    min-height: 58px;
+  }
 }
