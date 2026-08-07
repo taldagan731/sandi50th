@@ -44,7 +44,7 @@ export async function POST() {
     .from("submissions")
     .select("id,name,relationship,first_memory,story,approximate_year,location,people,life_chapter,prompt,created_at")
     .eq("project_id", owner.project.id)
-    .in("status", ["uploaded", "approved", "reviewed"])
+    .eq("review_status", "included")
     .order("created_at", { ascending: true })
     .limit(250);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
