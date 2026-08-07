@@ -152,7 +152,8 @@ export function MemoryContributionForm() {
         completedFiles.push({
           ...blob,
           originalName: selected.file.name,
-          bytes: selected.file.size
+          bytes: selected.file.size,
+          contentType: normalizedFileType(selected.file)
         });
         setProgress(current => ({ ...current, [selected.id]: 100 }));
       }
