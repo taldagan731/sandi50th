@@ -2,12 +2,21 @@
 
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  DragEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 
-const MAX_FILES = 20;
+const MAX_FILES = 500;
 const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 10 * 1024 * 1024 * 1024;
 const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
+const PARALLEL_UPLOADS = 3;
 const EMAIL_FALLBACK = "mailto:uploads@sandi50th.com?subject=Sandi%2050th%20memory%20upload";
 
 const chapters = [
@@ -35,10 +44,27 @@ const prompts = [
   "What do you wish for her next fifty years?"
 ];
 
-type SelectedFile = { file: File; id: string };
+type UploadStatus = "ready" | "uploading" | "uploaded" | "failed";
+type SelectedFile = {
+  file: File;
+  id: string;
+  relativePath: string;
+  preview: string;
+  status: UploadStatus;
+  error: string;
+};
 type PreparedUpload = { pathname: string; name: string; type: string; size: number };
+type PreparedBatch = { submissionId: string; targets: Record<string, PreparedUpload> };
 type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
-type UploadTokenPayload = { submissionId: string; originalName: string; bytes: number; contentType: string };
+type LegacyEntry = {
+  isFile: boolean;
+  isDirectory: boolean;
+  name: string;
+  file?: (success: (file: File) => void, failure?: (error: DOMException) => void) => void;
+  createReader?: () => {
+    readEntries: (success: (entries: LegacyEntry[]) => void, failure?: (error: DOMException) => void) => void;
+  };
+};
 
 export function MemoryContributionForm() {
   const [firstMemory, setFirstMemory] = useState("");
@@ -50,6 +76,24 @@ export function MemoryContributionForm() {
   const [activeFile, setActiveFile] = useState("");
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [uploadError, setUploadError] = useState("");
+  const [batch, setBatch] = useState<PreparedBatch | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const folderInput = useRef<HTMLInputElement>(null);
+  const completed = useRef<Record<string, CompletedFile>>({});
+  const extracted = useRef<Record<string, CompletedFile>>({});
+
+  useEffect(() => {
+    const input = folderInput.current;
+    if (!input) return;
+    input.setAttribute("webkitdirectory", "");
+    input.setAttribute("directory", "");
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      for (const item of files) if (item.preview) URL.revokeObjectURL(item.preview);
+    };
+  }, [files]);
 
   const totalSize = useMemo(
     () => files.reduce((sum, item) => sum + item.file.size, 0),
@@ -65,37 +109,83 @@ export function MemoryContributionForm() {
     return Math.min(100, (loaded / totalSize) * 100);
   }, [files, progress, totalSize, uploading]);
 
-  function addFiles(event: ChangeEvent<HTMLInputElement>) {
-    const incoming = Array.from(event.target.files ?? []);
-    const oversized = incoming.find(file => file.size > MAX_FILE_BYTES);
-    if (oversized) {
-      setUploadError(`${oversized.name} is larger than the 5 GB per-file limit. Email us and we will arrange another transfer.`);
-      event.target.value = "";
-      return;
-    }
+  function addIncoming(incoming: File[]) {
+    const accepted: SelectedFile[] = [];
+    const rejected: string[] = [];
 
-    const selected = incoming.map(file => ({
-      file,
-      id: `${file.name}-${file.size}-${file.lastModified}`
-    }));
+    for (const file of incoming) {
+      const relativePath = file.webkitRelativePath || file.name;
+      if (file.size > MAX_FILE_BYTES) {
+        rejected.push(file.name + " is larger than the 5 GB per-file limit");
+        continue;
+      }
+      if (!isAcceptedType(file)) {
+        rejected.push(file.name + " is not a supported photo, video, audio, ZIP, or PDF");
+        continue;
+      }
+      const id = [relativePath, file.size, file.lastModified].join("-");
+      accepted.push({
+        file,
+        id,
+        relativePath,
+        preview: canPreview(file) ? URL.createObjectURL(file) : "",
+        status: "ready",
+        error: ""
+      });
+    }
 
     setFiles(current => {
       const ids = new Set(current.map(item => item.id));
-      const combined = [...current, ...selected.filter(item => !ids.has(item.id))].slice(0, MAX_FILES);
+      const unique = accepted.filter(item => !ids.has(item.id));
+      const room = Math.max(0, MAX_FILES - current.length);
+      const added = unique.slice(0, room);
+      for (const item of unique.slice(room)) if (item.preview) URL.revokeObjectURL(item.preview);
+      const combined = [...current, ...added];
       const combinedBytes = combined.reduce((sum, item) => sum + item.file.size, 0);
       if (combinedBytes > MAX_TOTAL_BYTES) {
-        setUploadError("This group is over the 10 GB session limit. Please send it in two contributions.");
+        for (const item of added) if (item.preview) URL.revokeObjectURL(item.preview);
+        setUploadError("This album is over the 10 GB session limit. Please send it in two contributions.");
         return current;
       }
-      setUploadError("");
+      const warnings = [...rejected];
+      if (unique.length > room) warnings.push("Only the first " + MAX_FILES + " items were selected");
+      setUploadError(warnings.length ? warnings.join(". ") + "." : "");
       return combined;
     });
+  }
+
+  function chooseFiles(event: ChangeEvent<HTMLInputElement>) {
+    addIncoming(Array.from(event.target.files ?? []));
     event.target.value = "";
   }
 
+  async function dropFiles(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const items = Array.from(event.dataTransfer.items ?? []);
+    const entries = items
+      .map(item => {
+        const withEntry = item as DataTransferItem & { webkitGetAsEntry?: () => LegacyEntry | null };
+        return withEntry.webkitGetAsEntry?.() ?? null;
+      })
+      .filter((entry): entry is LegacyEntry => Boolean(entry));
+
+    if (entries.length) {
+      const collected: File[] = [];
+      for (const entry of entries) collected.push(...await filesFromEntry(entry, ""));
+      addIncoming(collected);
+      return;
+    }
+    addIncoming(Array.from(event.dataTransfer.files));
+  }
+
   function removeFile(id: string) {
-    if (uploading) return;
-    setFiles(current => current.filter(item => item.id !== id));
+    if (uploading || batch) return;
+    setFiles(current => {
+      const removed = current.find(item => item.id === id);
+      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      return current.filter(item => item.id !== id);
+    });
     setProgress(current => {
       const next = { ...current };
       delete next[id];
@@ -103,11 +193,20 @@ export function MemoryContributionForm() {
     });
   }
 
+  function updateFile(id: string, update: Partial<Pick<SelectedFile, "status" | "error">>) {
+    setFiles(current => current.map(item => item.id === id ? { ...item, ...update } : item));
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (batch) {
+      await runBatch(batch);
+      return;
+    }
+
     setUploadError("");
     setUploading(true);
-    setActiveFile(files.length ? "Preparing secure upload…" : "Saving your written memory…");
+    setActiveFile(files.length ? "Preparing your private album…" : "Saving your written memory…");
     setProgress({});
 
     try {
@@ -125,7 +224,7 @@ export function MemoryContributionForm() {
         prompt: String(form.get("prompt") ?? ""),
         consent: Boolean(form.get("consent")),
         files: files.map(item => ({
-          name: item.file.name,
+          name: item.relativePath,
           type: normalizedFileType(item.file),
           size: item.file.size
         }))
@@ -139,45 +238,116 @@ export function MemoryContributionForm() {
       const prepared = await prepareResponse.json();
       if (!prepareResponse.ok) throw new Error(prepared.error || "Could not prepare the upload.");
 
-      const completedFiles: CompletedFile[] = [];
-      for (let index = 0; index < prepared.uploads.length; index += 1) {
-        const target = prepared.uploads[index] as PreparedUpload;
-        const selected = files[index];
-        if (!selected) throw new Error("A selected file could not be matched.");
-
-        setActiveFile(`Uploading ${index + 1} of ${files.length}: ${selected.file.name}`);
-        const blob = await uploadWithRetry(target, selected, percentage => {
-          setProgress(current => ({ ...current, [selected.id]: percentage }));
-        });
-
-        completedFiles.push({
-          ...blob,
-          originalName: selected.file.name,
-          bytes: selected.file.size,
-          contentType: normalizedFileType(selected.file)
-        });
-        setProgress(current => ({ ...current, [selected.id]: 100 }));
-      }
-
-      setActiveFile("Verifying that everything arrived…");
-      const completeResponse = await fetch("/api/submissions/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submissionId: prepared.submissionId, files: completedFiles })
-      });
-      const completed = await completeResponse.json();
-      if (!completeResponse.ok) throw new Error(completed.error || "Could not confirm the upload.");
-
-      setConfirmationId(String(completed.submissionId ?? prepared.submissionId));
-      setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const nextBatch: PreparedBatch = {
+        submissionId: String(prepared.submissionId),
+        targets: Object.fromEntries(files.map((item, index) => [item.id, prepared.uploads[index] as PreparedUpload]))
+      };
+      setBatch(nextBatch);
+      setUploading(false);
+      await runBatch(nextBatch);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "The upload could not be completed.";
-      setUploadError(`${reason} Your form and selected files are still here. Check your connection and try again, or email the files to uploads@sandi50th.com.`);
-    } finally {
+      const reason = error instanceof Error ? error.message : "The upload could not be prepared.";
+      setUploadError(reason + " Your form and selected files are still here. Try again, or email the files to uploads@sandi50th.com.");
       setUploading(false);
       setActiveFile("");
     }
+  }
+
+  async function runBatch(currentBatch: PreparedBatch) {
+    setUploading(true);
+    setUploadError("");
+    const pending = files.filter(item => !completed.current[item.id]);
+    let cursor = 0;
+    let failed = 0;
+
+    async function worker() {
+      while (cursor < pending.length) {
+        const index = cursor;
+        cursor += 1;
+        const selected = pending[index];
+        const target = currentBatch.targets[selected.id];
+        if (!target) {
+          failed += 1;
+          updateFile(selected.id, { status: "failed", error: "This file lost its upload destination. Please email it instead." });
+          continue;
+        }
+        updateFile(selected.id, { status: "uploading", error: "" });
+        setActiveFile("Uploading " + selected.file.name);
+        try {
+          const blob = await uploadWithRetry(currentBatch.submissionId, target, selected, percentage => {
+            setProgress(current => ({ ...current, [selected.id]: percentage }));
+          });
+          const saved: CompletedFile = {
+            ...blob,
+            originalName: selected.relativePath,
+            bytes: selected.file.size,
+            contentType: normalizedFileType(selected.file)
+          };
+          completed.current[selected.id] = saved;
+          setProgress(current => ({ ...current, [selected.id]: 100 }));
+          updateFile(selected.id, { status: "uploaded", error: "" });
+
+          if (isZip(selected.file)) {
+            setActiveFile("Sorting " + selected.file.name + " into individual memories…");
+            const unpackedResponse = await fetch("/api/submissions/unpack", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                submissionId: currentBatch.submissionId,
+                pathname: blob.pathname,
+                originalName: selected.file.name
+              })
+            });
+            const unpacked = await unpackedResponse.json();
+            if (unpackedResponse.ok && Array.isArray(unpacked.extracted)) {
+              for (const item of unpacked.extracted as CompletedFile[]) {
+                extracted.current[item.pathname] = item;
+              }
+            }
+          }
+        } catch (error) {
+          failed += 1;
+          const reason = error instanceof Error ? error.message : "Upload failed";
+          updateFile(selected.id, { status: "failed", error: reason });
+        }
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(PARALLEL_UPLOADS, Math.max(1, pending.length)) }, worker));
+
+    const savedFiles = [...Object.values(completed.current), ...Object.values(extracted.current)];
+    if (savedFiles.length || files.length === 0) {
+      try {
+        setActiveFile("Verifying and backing up what arrived…");
+        const response = await fetch("/api/submissions/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ submissionId: currentBatch.submissionId, files: savedFiles })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not verify the saved files.");
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "Confirmation failed.";
+        setUploadError(reason + " Do not delete the originals; email uploads@sandi50th.com so we can verify them.");
+        setUploading(false);
+        setActiveFile("");
+        return;
+      }
+    }
+
+    const remaining = files.filter(item => !completed.current[item.id]).length;
+    if (!remaining && failed === 0) {
+      setConfirmationId(currentBatch.submissionId);
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setUploadError(
+        Object.keys(completed.current).length + " item(s) arrived safely. " +
+        remaining + " did not finish. The successful files will not be sent again; use Retry failed files."
+      );
+    }
+    setUploading(false);
+    setActiveFile("");
   }
 
   if (submitted) {
@@ -187,7 +357,7 @@ export function MemoryContributionForm() {
         <span className="eyebrow">YOUR MEMORY ARRIVED</span>
         <h2>Thank you for becoming part of Sandi’s story.</h2>
         <p>
-          Your written memory and {files.length ? `${files.length} file${files.length === 1 ? "" : "s"} have` : "details have"} been received and verified in private storage.
+          Your written memory and {files.length ? files.length + " file" + (files.length === 1 ? " has" : "s have") : "details have"} been received, verified, and backed up in private storage.
         </p>
         <p className="confirmationCode">Confirmation: {confirmationId.slice(0, 8).toUpperCase()}</p>
         <button className="secondary" type="button" onClick={() => window.location.reload()}>
@@ -196,6 +366,8 @@ export function MemoryContributionForm() {
       </section>
     );
   }
+
+  const failedCount = files.filter(item => item.status === "failed").length;
 
   return (
     <form className="memoryForm" onSubmit={submit}>
@@ -212,12 +384,7 @@ export function MemoryContributionForm() {
           />
         </label>
         {!opened && (
-          <button
-            type="button"
-            className="primary"
-            disabled={!firstMemory.trim()}
-            onClick={() => setOpened(true)}
-          >
+          <button type="button" className="primary" disabled={!firstMemory.trim()} onClick={() => setOpened(true)}>
             Continue the story
           </button>
         )}
@@ -254,29 +421,55 @@ export function MemoryContributionForm() {
               <textarea name="story" rows={5} placeholder="Add details, an inside joke, what happened before or after, or why the memory matters." />
             </label>
 
-            <div className="uploadBox">
+            <div
+              className={"uploadBox albumDrop " + (dragging ? "isDragging" : "")}
+              onDragEnter={event => { event.preventDefault(); setDragging(true); }}
+              onDragOver={event => event.preventDefault()}
+              onDragLeave={event => { if (event.currentTarget === event.target) setDragging(false); }}
+              onDrop={dropFiles}
+            >
               <span className="uploadGlyph">↑</span>
-              <h3>Share photographs, video, audio, or keepsakes</h3>
-              <p>Choose up to twenty items at once. iPhone HEIC photos are welcome. Large videos use a multipart transfer so a failed part can retry without starting the whole video again.</p>
-              <label className="filePicker primary">
-                Choose files
-                <input type="file" multiple accept="image/*,video/*,audio/*,.heic,.heif,.pdf" onChange={addFiles} />
-              </label>
+              <h3>Drop an entire album — we’ll sort it out.</h3>
+              <p>Select many files from your phone, choose a whole folder on a computer, or send a ZIP with nested folders. Nothing needs organizing or captioning first.</p>
+              <div className="albumActions">
+                <label className="filePicker primary">
+                  Choose photos and videos
+                  <input type="file" multiple accept="image/*,video/*,audio/*,.heic,.heif,.pdf,.zip,application/zip" onChange={chooseFiles} />
+                </label>
+                <label className="filePicker secondary folderPicker">
+                  Choose a folder
+                  <input ref={folderInput} type="file" multiple onChange={chooseFiles} />
+                </label>
+              </div>
+              <small>Up to {MAX_FILES} items, 5 GB per file, 10 GB per contribution. Large videos upload in resumable parts.</small>
             </div>
 
             {files.length > 0 && (
-              <div className="selectedFiles">
-                <div className="fileSummary"><strong>{files.length} item{files.length === 1 ? "" : "s"}</strong><span>{formatBytes(totalSize)} selected</span></div>
-                {files.map(item => (
-                  <article key={item.id}>
-                    <span className="fileType">{mediaType(normalizedFileType(item.file))}</span>
-                    <div>
-                      <strong>{item.file.name}</strong>
-                      <small>{progress[item.id] !== undefined ? `${Math.round(progress[item.id])}% · ` : ""}{formatBytes(item.file.size)}</small>
-                    </div>
-                    <button type="button" disabled={uploading} aria-label={`Remove ${item.file.name}`} onClick={() => removeFile(item.id)}>×</button>
-                  </article>
-                ))}
+              <div className="selectedFiles albumSelection">
+                <div className="fileSummary">
+                  <strong>{files.length} item{files.length === 1 ? "" : "s"}</strong>
+                  <span>{formatBytes(totalSize)} selected · duplicates in this batch are skipped</span>
+                </div>
+                <div className="thumbnailGrid">
+                  {files.map(item => (
+                    <article key={item.id} className={"uploadTile status-" + item.status}>
+                      <div className="uploadThumb">
+                        {item.preview ? (
+                          item.file.type.startsWith("video/") ? <video src={item.preview} muted playsInline /> : <img src={item.preview} alt="" />
+                        ) : (
+                          <span>{isZip(item.file) ? "ZIP" : mediaType(normalizedFileType(item.file))}</span>
+                        )}
+                      </div>
+                      <div className="uploadTileCopy">
+                        <strong title={item.relativePath}>{item.relativePath}</strong>
+                        <small>{item.status === "failed" ? "Needs retry" : item.status === "uploaded" ? "Saved" : progress[item.id] !== undefined ? Math.round(progress[item.id]) + "%" : formatBytes(item.file.size)}</small>
+                        {item.error && <small className="tileError">{item.error}</small>}
+                      </div>
+                      <button type="button" disabled={uploading || Boolean(batch)} aria-label={"Remove " + item.file.name} onClick={() => removeFile(item.id)}>×</button>
+                      <span className="tileProgress" style={{ width: (progress[item.id] ?? 0) + "%" }} />
+                    </article>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -287,22 +480,22 @@ export function MemoryContributionForm() {
 
             {uploading && (
               <div className="uploadProgress" role="status" aria-live="polite">
-                <span style={{ width: `${totalProgress}%` }} />
-                <p>{activeFile} {files.length ? `${Math.round(totalProgress)}%` : ""}</p>
+                <span style={{ width: totalProgress + "%" }} />
+                <p>{activeFile} {files.length ? Math.round(totalProgress) + "%" : ""}</p>
               </div>
             )}
             {uploadError && (
               <div className="uploadError" role="alert">
-                <strong>The contribution has not been confirmed yet.</strong>
+                <strong>{failedCount ? "Part of the album needs another try." : "The contribution has not been confirmed yet."}</strong>
                 <p>{uploadError}</p>
                 <a href={EMAIL_FALLBACK}>Email the memory instead</a>
               </div>
             )}
             <button className="primary submitMemory" type="submit" disabled={uploading}>
-              {uploading ? "Please keep this page open…" : uploadError ? "Try the upload again" : "Send my contribution securely"}
+              {uploading ? "Please keep this page open…" : failedCount ? "Retry failed files" : "Send my contribution securely"}
             </button>
-            <p className="secureNote">Files go directly from this device to private storage. Keep this page open until the confirmation code appears.</p>
-            <p className="uploadFallback">If uploading does not work, email the files to <a href={EMAIL_FALLBACK}>uploads@sandi50th.com</a> with your name and a short note about the memory. Do not delete the originals from your phone.</p>
+            <p className="secureNote">Files go directly from this device to private storage, three at a time. If one fails, the others remain saved and only that file needs retrying.</p>
+            <p className="uploadFallback">If uploading does not work, email the files to <a href={EMAIL_FALLBACK}>uploads@sandi50th.com</a> with your name and a short note. Do not delete the originals from your phone.</p>
           </section>
 
           <aside className="panel contributionGuide">
@@ -330,6 +523,7 @@ export function MemoryContributionForm() {
 }
 
 async function uploadWithRetry(
+  submissionId: string,
   target: PreparedUpload,
   selected: SelectedFile,
   onProgress: (percentage: number) => void
@@ -341,9 +535,10 @@ async function uploadWithRetry(
         access: "private",
         handleUploadUrl: "/api/uploads",
         clientPayload: JSON.stringify({
-          submissionId: target.pathname.split("/")[1],
-          originalName: selected.file.name,
-          bytes: selected.file.size
+          submissionId,
+          originalName: selected.relativePath,
+          bytes: selected.file.size,
+          contentType: normalizedFileType(selected.file)
         }),
         contentType: normalizedFileType(selected.file),
         multipart: selected.file.size >= MULTIPART_THRESHOLD,
@@ -351,31 +546,73 @@ async function uploadWithRetry(
       });
     } catch (error) {
       lastError = error;
-      if (attempt < 3) {
-        await new Promise(resolve => window.setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
-      }
+      if (attempt < 3) await new Promise(resolve => window.setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error(`${selected.file.name} could not be uploaded after three attempts.`);
+  throw lastError instanceof Error ? lastError : new Error(selected.file.name + " could not be uploaded after three attempts.");
+}
+
+async function filesFromEntry(entry: LegacyEntry, parent: string): Promise<File[]> {
+  const path = parent ? parent + "/" + entry.name : entry.name;
+  if (entry.isFile && entry.file) {
+    const file = await new Promise<File>((resolve, reject) => entry.file?.(resolve, reject));
+    Object.defineProperty(file, "webkitRelativePath", { value: path, configurable: true });
+    return [file];
+  }
+  if (!entry.isDirectory || !entry.createReader) return [];
+
+  const reader = entry.createReader();
+  const children: LegacyEntry[] = [];
+  while (true) {
+    const page = await new Promise<LegacyEntry[]>((resolve, reject) => reader.readEntries(resolve, reject));
+    if (!page.length) break;
+    children.push(...page);
+  }
+  const nested: File[] = [];
+  for (const child of children) nested.push(...await filesFromEntry(child, path));
+  return nested;
 }
 
 function normalizedFileType(file: File) {
-  if (file.type) return file.type.toLowerCase();
+  if (file.type) {
+    const type = file.type.toLowerCase();
+    if (type === "application/x-zip-compressed") return type;
+    return type;
+  }
   const name = file.name.toLowerCase();
   if (name.endsWith(".heic")) return "image/heic";
   if (name.endsWith(".heif")) return "image/heif";
   if (name.endsWith(".mov")) return "video/quicktime";
   if (name.endsWith(".mp4")) return "video/mp4";
+  if (name.endsWith(".webm")) return "video/webm";
   if (name.endsWith(".m4a")) return "audio/x-m4a";
+  if (name.endsWith(".mp3")) return "audio/mpeg";
+  if (name.endsWith(".wav")) return "audio/wav";
+  if (name.endsWith(".zip")) return "application/zip";
   if (name.endsWith(".pdf")) return "application/pdf";
   return "application/octet-stream";
+}
+
+function isAcceptedType(file: File) {
+  const type = normalizedFileType(file);
+  return type.startsWith("image/") || type.startsWith("video/") || type.startsWith("audio/") ||
+    type === "application/pdf" || type === "application/zip" || type === "application/x-zip-compressed";
+}
+
+function isZip(file: File) {
+  return /\.zip$/i.test(file.name) || normalizedFileType(file).includes("zip");
+}
+
+function canPreview(file: File) {
+  const type = normalizedFileType(file);
+  return (type.startsWith("image/") && !/hei[cf]/i.test(type)) || type.startsWith("video/");
 }
 
 function formatBytes(bytes: number) {
   if (!bytes) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
   const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / 1024 ** index).toFixed(index ? 1 : 0)} ${units[index]}`;
+  return (bytes / 1024 ** index).toFixed(index ? 1 : 0) + " " + units[index];
 }
 
 function mediaType(type: string) {
