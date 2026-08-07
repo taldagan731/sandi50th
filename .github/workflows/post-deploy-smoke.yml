@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   live-smoke:
@@ -30,4 +31,14 @@ jobs:
           echo "Production did not reach the expected release in five minutes."
           exit 1
       - name: Verify text, direct media upload, backup, and noindex
+        id: live_smoke
         run: node scripts/live-contribution-smoke.mjs
+      - name: Publish smoke-test status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.live_smoke.outcome }}
+        shell: bash
+        run: |
+          if [ "$OUTCOME" = "success" ]; then state=success; else state=failure; fi
+          curl --fail-with-body -X POST             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}             -d "{\"state\":\"$state\",\"context\":\"live-contribution-smoke\",\"description\":\"Production upload, backup, and noindex check: $OUTCOME\"}"
