@@ -15,7 +15,6 @@ type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
 
 export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const [captureKind, setCaptureKind] = useState<CaptureKind>("audio");
-  const [supported, setSupported] = useState(true);
   const [phase, setPhase] = useState<"idle" | "requesting" | "recording" | "preview" | "uploading" | "success">("idle");
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -33,13 +32,17 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const effectiveKind: CaptureKind = birthday ? captureKind : "audio";
 
   useEffect(() => {
-    setSupported("MediaRecorder" in window && Boolean(navigator.mediaDevices?.getUserMedia));
     return () => {
-      stopTracks();
+      stream.current?.getTracks().forEach(track => track.stop());
       if (timer.current) window.clearInterval(timer.current);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [previewUrl]);
+  }, []);
+
+  useEffect(() => {
+    if (phase === "recording" && liveVideo.current && stream.current) {
+      liveVideo.current.srcObject = stream.current;
+    }
+  }, [phase]);
 
   async function beginRecording() {
     setError("");
@@ -258,11 +261,9 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
 
         {(phase === "idle" || phase === "requesting") && (
           <div className="recorderStart">
-            {supported ? (
-              <button className="primary recordButton" type="button" disabled={phase === "requesting"} onClick={beginRecording}>
-                {phase === "requesting" ? "Opening " + (effectiveKind === "video" ? "camera…" : "microphone…") : effectiveKind === "video" ? "Start camera message" : "Start voice recording"}
-              </button>
-            ) : <p>This browser does not support recording here. Use the file option below.</p>}
+            <button className="primary recordButton" type="button" disabled={phase === "requesting"} onClick={beginRecording}>
+              {phase === "requesting" ? "Opening " + (effectiveKind === "video" ? "camera…" : "microphone…") : effectiveKind === "video" ? "Start camera message" : "Start voice recording"}
+            </button>
             <label className="filePicker secondary">
               Choose an existing recording
               <input type="file" accept={birthday ? "audio/*,video/*" : "audio/*"} onChange={chooseFallback} />
