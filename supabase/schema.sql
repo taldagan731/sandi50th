@@ -53,7 +53,7 @@ create table if not exists public.media_assets (
 );
 
 insert into public.projects(slug,title,birthday,submission_deadline)
-values('sandi50th','Still Becoming — The Story of Sandi','2026-08-11','2026-08-07')
+values('sandi50th','Still Becoming — The Story of Sandi','2026-08-11','2026-08-10')
 on conflict(slug) do update set title=excluded.title,birthday=excluded.birthday,submission_deadline=excluded.submission_deadline;
 
 alter table public.projects enable row level security;
