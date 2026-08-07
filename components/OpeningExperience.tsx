@@ -21,7 +21,9 @@ export function OpeningExperience() {
   const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
-    if (reduceMotion) setIntroDone(true);
+    if (!reduceMotion) return;
+    const timer = window.setTimeout(() => setIntroDone(true), 0);
+    return () => window.clearTimeout(timer);
   }, [reduceMotion]);
 
   return (
