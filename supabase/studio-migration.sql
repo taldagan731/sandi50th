@@ -1,6 +1,10 @@
 -- Run once in Supabase SQL Editor after supabase/schema.sql.
 -- Adds the private review and story-studio records. No contributor access is granted.
 
+alter table public.submissions
+  add column if not exists review_status text not null default 'pending'
+    check (review_status in ('pending', 'included', 'excluded'));
+
 alter table public.media_assets
   add column if not exists review_status text not null default 'pending'
     check (review_status in ('pending', 'included', 'excluded')),
