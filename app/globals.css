@@ -95,7 +95,7 @@
 .revealProse{max-width:48rem;margin:0 auto;font-family:var(--font-display,Georgia,serif);font-size:clamp(1.16rem,2vw,1.42rem);line-height:1.82}
 .revealProse p:first-child::first-letter{float:left;margin:.08em .12em 0 0;color:#d7b16c;font-size:4.6em;line-height:.72}
 .memoryCarousel{margin-top:clamp(4rem,8vw,8rem)}
-.memoryCarousel>header{display:flex;justify-content:space-between;align-items:end;margin-bottom:1rem}
+.memoryCarousel>header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1rem}
 .memoryCarousel>header p{color:rgba(248,240,231,.55)}
 .memoryRail{display:flex;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 0 1rem}
 .memoryPlate{position:relative;flex:0 0 clamp(12rem,22vw,20rem);height:clamp(18rem,34vw,30rem);overflow:hidden;border:1px solid rgba(215,177,108,.2);border-radius:.75rem;background:#120b12;color:#f8f0e7;padding:0;scroll-snap-align:center;cursor:pointer;transition:flex-basis .36s cubic-bezier(.22,1,.36,1),border-color .25s}
