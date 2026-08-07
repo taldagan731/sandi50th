@@ -1,6 +1,6 @@
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -50,53 +50,59 @@ export async function POST(request: Request) {
 
     for (const file of body.files) {
       const allowed = ALLOWED_PREFIXES.some(prefix => file.type.startsWith(prefix)) || ALLOWED_EXACT.has(file.type);
-      if (!allowed) return NextResponse.json({ error: `${file.name} is not an accepted file type.` }, { status: 400 });
+      if (!allowed) {
+        return NextResponse.json({ error: `${file.name} is not an accepted photo, video, audio, or PDF file.` }, { status: 400 });
+      }
     }
 
-    const supabase = createAdminClient();
-    const { data: project, error: projectError } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("slug", "sandi50th")
-      .single();
-    if (projectError || !project) throw projectError ?? new Error("Project not found.");
+    const submissionId = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+    const uploads = body.files.map((file, index) => ({
+      pathname: `incoming/${submissionId}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`,
+      name: file.name,
+      type: file.type,
+      size: file.size
+    }));
 
-    const { data: submission, error: submissionError } = await supabase
-      .from("submissions")
-      .insert({
-        project_id: project.id,
-        name: body.name,
-        contact: body.contact,
-        relationship: body.relationship,
-        first_memory: body.firstMemory,
-        story: body.story,
-        approximate_year: body.approximateYear,
-        location: body.place,
-        people: body.people ? body.people.split(",").map(value => value.trim()).filter(Boolean) : [],
-        life_chapter: body.lifeChapter,
-        prompt: body.prompt,
+    await put(
+      `submissions/${submissionId}/draft.json`,
+      JSON.stringify({
+        version: 1,
+        submissionId,
+        status: "prepared",
+        createdAt,
+        contributor: {
+          name: body.name,
+          contact: body.contact,
+          relationship: body.relationship
+        },
+        memory: {
+          firstMemory: body.firstMemory,
+          story: body.story,
+          approximateYear: body.approximateYear,
+          place: body.place,
+          people: body.people.split(",").map(value => value.trim()).filter(Boolean),
+          lifeChapter: body.lifeChapter,
+          prompt: body.prompt
+        },
         consent: body.consent,
-        status: "received"
-      })
-      .select("id")
-      .single();
-    if (submissionError || !submission) throw submissionError ?? new Error("Could not create submission.");
+        requestedFiles: uploads
+      }),
+      {
+        access: "private",
+        addRandomSuffix: false,
+        contentType: "application/json"
+      }
+    );
 
-    const uploads = [];
-    for (let index = 0; index < body.files.length; index += 1) {
-      const file = body.files[index];
-      const path = `${submission.id}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`;
-      const { data, error } = await supabase.storage.from("sandi-memories").createSignedUploadUrl(path);
-      if (error || !data) throw error ?? new Error(`Could not prepare ${file.name}.`);
-      uploads.push({ path, token: data.token, name: file.name, type: file.type, size: file.size });
-    }
-
-    return NextResponse.json({ submissionId: submission.id, uploads });
+    return NextResponse.json({ submissionId, uploads });
   } catch (error) {
     console.error("submission-init", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Please review the required fields and file limits." }, { status: 400 });
     }
-    return NextResponse.json({ error: "The secure upload could not be prepared. Please try again." }, { status: 500 });
+    return NextResponse.json({
+      error: "We could not prepare the secure upload. Your form is still here—please try again or email uploads@sandi50th.com."
+    }, { status: 500 });
   }
 }
