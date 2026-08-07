@@ -59,7 +59,8 @@ export async function GET(
   }
   outgoing.set("Cache-Control", "private, no-store");
   outgoing.set("X-Content-Type-Options", "nosniff");
-  outgoing.set("Content-Disposition", `inline; filename="${media.original_name.replace(/"/g, "")}"`);
+  const safeFilename = media.original_name.replace(/[^\x20-\x7E]/g, "_").replace(/[\\"]/g, "_").slice(0, 180) || "memory";
+  outgoing.set("Content-Disposition", `inline; filename="${safeFilename}"`);
 
   return new NextResponse(response.body, {
     status: response.status,
