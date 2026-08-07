@@ -74,9 +74,14 @@ export function StoryStudio() {
 
   const visible = submissions.filter(submission => {
     if (filter === "all") return true;
-    if (filter === "pending") return submission.media.some(item => item.review_status === "pending");
-    return submission.media.some(item => item.review_status === "included");
+    if (filter === "pending") return submission.review_status === "pending" || submission.media.some(item => item.review_status === "pending");
+    return submission.review_status === "included" || submission.media.some(item => item.review_status === "included");
   });
+
+  const storyCounts = submissions.reduce((totals, submission) => {
+    totals[submission.review_status] += 1;
+    return totals;
+  }, { pending: 0, included: 0, excluded: 0 });
 
   const counts = submissions.reduce((totals, submission) => {
     for (const item of submission.media) {
@@ -116,7 +121,7 @@ export function StoryStudio() {
         <div>
           <span className="eyebrow">PRIVATE STORY STUDIO</span>
           <h1>The memories that have arrived.</h1>
-          <p>{submissions.length} contributions · {counts.total} files · {counts.pending} awaiting a decision</p>
+          <p>{submissions.length} contributions · {counts.total} files · {storyCounts.pending} stories and {counts.pending} files awaiting a decision</p>
         </div>
         <div className="studioToolbarActions">
           <a className="secondary" href="/api/studio/export">Download archive index</a>
