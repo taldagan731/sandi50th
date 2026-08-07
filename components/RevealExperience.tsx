@@ -165,9 +165,11 @@ function VoiceWall({ items, activeId, onActiveChange }: RecordingCollectionProps
   );
 }
 
-function VoiceCard({ item, number, activeId, onActiveChange }: RecordingCollectionProps & {
+function VoiceCard({ item, number, activeId, onActiveChange }: {
   item: RevealMedia;
   number: number;
+  activeId: string | null;
+  onActiveChange: (id: string | null) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const playbackId = `voice:${item.id}`;
