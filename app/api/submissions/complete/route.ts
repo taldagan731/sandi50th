@@ -1,6 +1,7 @@
-import { head, put } from "@vercel/blob";
+import { head } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -23,43 +24,50 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
     const expectedPrefix = `incoming/${body.submissionId}/`;
+    const supabase = createAdminClient();
 
-    await head(`submissions/${body.submissionId}/draft.json`);
+    const { data: submission, error: submissionError } = await supabase
+      .from("submissions")
+      .select("id")
+      .eq("id", body.submissionId)
+      .single();
+    if (submissionError || !submission) {
+      return NextResponse.json({ error: "Submission not found." }, { status: 404 });
+    }
 
-    const verifiedFiles = [];
     for (const file of body.files) {
       if (!file.pathname.startsWith(expectedPrefix)) {
         return NextResponse.json({ error: "An uploaded file did not belong to this contribution." }, { status: 400 });
       }
+
       const stored = await head(file.pathname);
       if (stored.size !== file.bytes) {
-        return NextResponse.json({ error: `${file.originalName} did not finish uploading. Please try that file again.` }, { status: 409 });
+        return NextResponse.json({
+          error: `${file.originalName} did not finish uploading. Please try that file again.`
+        }, { status: 409 });
       }
-      verifiedFiles.push({
-        ...file,
-        storedBytes: stored.size,
-        uploadedAt: stored.uploadedAt
-      });
+
+      const { error: mediaError } = await supabase.from("media_assets").upsert({
+        submission_id: body.submissionId,
+        storage_path: file.pathname,
+        original_name: file.originalName,
+        mime_type: file.contentType,
+        bytes: file.bytes
+      }, { onConflict: "storage_path" });
+      if (mediaError) throw mediaError;
     }
 
-    const completedAt = new Date().toISOString();
-    await put(
-      `submissions/${body.submissionId}/complete.json`,
-      JSON.stringify({
-        version: 1,
-        submissionId: body.submissionId,
-        status: "complete",
-        completedAt,
-        files: verifiedFiles
-      }),
-      {
-        access: "private",
-        addRandomSuffix: false,
-        contentType: "application/json"
-      }
-    );
+    const { error: updateError } = await supabase
+      .from("submissions")
+      .update({ status: "uploaded", upload_completed_at: new Date().toISOString() })
+      .eq("id", body.submissionId);
+    if (updateError) throw updateError;
 
-    return NextResponse.json({ ok: true, submissionId: body.submissionId, fileCount: verifiedFiles.length });
+    return NextResponse.json({
+      ok: true,
+      submissionId: body.submissionId,
+      fileCount: body.files.length
+    });
   } catch (error) {
     console.error("submission-complete", error);
     return NextResponse.json({
