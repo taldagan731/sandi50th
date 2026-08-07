@@ -31,6 +31,7 @@ type Submission = {
   life_chapter: string;
   prompt: string;
   status: string;
+  review_status: "pending" | "included" | "excluded";
   created_at: string;
   media: MediaItem[];
 };
@@ -86,6 +87,21 @@ export function StoryStudio() {
     return totals;
   }, { total: 0, pending: 0, included: 0 });
 
+  async function reviewSubmission(submissionId: string, reviewStatus: "pending" | "included" | "excluded") {
+    setError("");
+    const response = await fetch("/api/studio/submission-review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissionId, reviewStatus })
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setError(body.error || "The contribution decision could not be saved.");
+      return;
+    }
+    await load();
+  }
+
   async function signOut() {
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
@@ -128,6 +144,12 @@ export function StoryStudio() {
               </div>
               <time>{new Date(submission.created_at).toLocaleString()}</time>
             </header>
+            <div className="studioSubmissionDecision" aria-label={`Story decision for ${submission.name}`}>
+              <span>Story: <strong>{submission.review_status}</strong></span>
+              <button type="button" className={submission.review_status === "included" ? "include" : ""} onClick={() => reviewSubmission(submission.id, "included")}>Include story</button>
+              <button type="button" className={submission.review_status === "excluded" ? "exclude" : ""} onClick={() => reviewSubmission(submission.id, "excluded")}>Exclude story</button>
+              <button type="button" onClick={() => reviewSubmission(submission.id, "pending")}>Return to pending</button>
+            </div>
             <div className="studioMemory">
               <blockquote>{submission.first_memory}</blockquote>
               {submission.story && <p>{submission.story}</p>}
@@ -150,6 +172,8 @@ export function StoryStudio() {
           </article>
         ))}
       </div>
+
+      <StoryWorkshop />
     </div>
   );
 }
