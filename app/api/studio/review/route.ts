@@ -19,10 +19,16 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     const { data: media, error: mediaError } = await owner.supabase
       .from("media_assets")
-      .select("id,submission_id")
+      .select("id,submission_id,mime_type,poster_path")
       .eq("id", body.mediaId)
       .single();
     if (mediaError || !media) return NextResponse.json({ error: "Media not found." }, { status: 404 });
+
+    if (body.reviewStatus === "included" && media.mime_type.startsWith("video/") && !media.poster_path) {
+      return NextResponse.json({
+        error: "Choose a poster frame before including this video."
+      }, { status: 409 });
+    }
 
     const { data: submission } = await owner.supabase
       .from("submissions")
