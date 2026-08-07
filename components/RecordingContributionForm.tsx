@@ -33,7 +33,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const effectiveKind: CaptureKind = birthday ? captureKind : "audio";
 
   useEffect(() => {
-    setSupported(Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder));
+    setSupported("MediaRecorder" in window && Boolean(navigator.mediaDevices?.getUserMedia));
     return () => {
       stopTracks();
       if (timer.current) window.clearInterval(timer.current);
