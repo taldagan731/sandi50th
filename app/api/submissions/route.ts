@@ -4,11 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-const MAX_FILES = 20;
+const MAX_FILES = 500;
 const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 10 * 1024 * 1024 * 1024;
 const ALLOWED_PREFIXES = ["image/", "video/", "audio/"];
-const ALLOWED_EXACT = new Set(["application/pdf"]);
+const ALLOWED_EXACT = new Set(["application/pdf", "application/zip", "application/x-zip-compressed"]);
 
 const requestSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -23,21 +23,22 @@ const requestSchema = z.object({
   prompt: z.string().trim().max(500).optional().default(""),
   consent: z.literal(true),
   files: z.array(z.object({
-    name: z.string().min(1).max(300),
+    name: z.string().min(1).max(500),
     type: z.string().min(1).max(150),
     size: z.number().int().positive().max(MAX_FILE_BYTES)
   })).max(MAX_FILES)
 });
 
 function safeName(name: string) {
-  const dot = name.lastIndexOf(".");
-  const ext = dot >= 0 ? name.slice(dot).toLowerCase().replace(/[^a-z0-9.]/g, "") : "";
-  const stem = (dot >= 0 ? name.slice(0, dot) : name)
+  const normalized = name.replace(/\\/g, "/").split("/").pop() || "memory";
+  const dot = normalized.lastIndexOf(".");
+  const ext = dot >= 0 ? normalized.slice(dot).toLowerCase().replace(/[^a-z0-9.]/g, "") : "";
+  const stem = (dot >= 0 ? normalized.slice(0, dot) : normalized)
     .normalize("NFKD")
     .replace(/[^a-zA-Z0-9-_]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "memory";
-  return `${stem}${ext.slice(0, 12)}`;
+    .slice(0, 100) || "memory";
+  return `${stem}${ext.slice(0, 16)}`;
 }
 
 export async function POST(request: Request) {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     for (const file of body.files) {
       const allowed = ALLOWED_PREFIXES.some(prefix => file.type.startsWith(prefix)) || ALLOWED_EXACT.has(file.type);
       if (!allowed) {
-        return NextResponse.json({ error: `${file.name} is not an accepted photo, video, audio, or PDF file.` }, { status: 400 });
+        return NextResponse.json({ error: `${file.name} is not an accepted photo, video, audio, ZIP, or PDF file.` }, { status: 400 });
       }
     }
 
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     const uploads = body.files.map((file, index) => ({
-      pathname: `incoming/${submission.id}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`,
+      pathname: `incoming/${submission.id}/${String(index + 1).padStart(3, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`,
       name: file.name,
       type: file.type,
       size: file.size
