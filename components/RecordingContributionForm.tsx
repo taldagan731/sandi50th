@@ -46,6 +46,11 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
 
   async function beginRecording() {
     setError("");
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setError("Direct recording is not supported by this browser. Choose a recording made with the Camera or Voice Memos app instead.");
+      setPhase("idle");
+      return;
+    }
     setPhase("requesting");
     try {
       const media = await navigator.mediaDevices.getUserMedia({
@@ -125,6 +130,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       return;
     }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (birthday) setCaptureKind(isVideoFile(file) ? "video" : "audio");
     setRecordingFile(file);
     setPreviewUrl(URL.createObjectURL(file));
     setSeconds(0);
@@ -329,6 +335,11 @@ function extensionFor(type: string, kind: CaptureKind) {
   if (type.includes("ogg")) return "ogg";
   if (type.includes("wav")) return "wav";
   return "webm";
+}
+
+function isVideoFile(file: File) {
+  if (file.type.startsWith("video/")) return true;
+  return /\.(mov|mp4|m4v|webm)$/i.test(file.name);
 }
 
 function normalizedType(file: File) {

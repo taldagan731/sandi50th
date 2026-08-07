@@ -61,3 +61,77 @@
  .contributionPathNav button:hover,.contributionPathNav button:focus-visible{transform:none}
  .voicePulse i{animation:none}
 }
+
+
+/* Phone reliability: prevent Safari zoom, missed taps, and safe-area overlap. */
+@supports (padding: max(0px)) {
+  .contributeHero {
+    padding-top: max(150px, calc(118px + env(safe-area-inset-top)));
+  }
+  .contributionFooter {
+    padding-bottom: max(60px, calc(32px + env(safe-area-inset-bottom)));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@media (max-width: 700px) {
+  .memoryForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .memoryForm textarea,
+  .memoryForm select,
+  .recordingForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .recordingForm textarea,
+  .recordingForm select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .contributionPathNav button,
+  .albumActions .primary,
+  .recordingForm .primary,
+  .recordingForm .secondary,
+  .recordingForm button,
+  .submitMemory {
+    min-height: 44px;
+  }
+
+  .captureChoice label {
+    min-height: 44px;
+    padding: .75rem 1rem;
+  }
+
+  .uploadTile > button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  .uploadProgress p,
+  .uploadError,
+  .uploadFallback,
+  .secureNote {
+    font-size: .9rem;
+    line-height: 1.55;
+  }
+
+  .albumDrop {
+    touch-action: pan-y;
+  }
+
+  .recorderStage {
+    min-height: min(52dvh, 24rem);
+  }
+
+  .recordingPlayback {
+    max-height: 48dvh;
+  }
+}
+
+@media (hover: none) {
+  .contributionPathNav button:hover {
+    transform: none;
+  }
+}

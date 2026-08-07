@@ -598,7 +598,9 @@ function isZip(file: File) {
 
 function canPreview(file: File) {
   const type = normalizedFileType(file);
-  return (type.startsWith("image/") && !/hei[cf]/i.test(type)) || type.startsWith("video/");
+  // Safari 17+ can display an iPhone HEIC selection directly. Other browsers
+  // still preserve and upload the original even when they cannot preview it.
+  return type.startsWith("image/") || type.startsWith("video/");
 }
 
 function formatBytes(bytes: number) {
