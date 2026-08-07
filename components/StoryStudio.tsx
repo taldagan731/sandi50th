@@ -42,6 +42,8 @@ export function StoryStudio() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "included">("all");
+  const [backupNotice, setBackupNotice] = useState("");
+  const [backingUp, setBackingUp] = useState(false);
 
   async function load() {
     setError("");
@@ -107,6 +109,17 @@ export function StoryStudio() {
     await load();
   }
 
+  async function verifyBackups() {
+    setBackingUp(true);
+    setError("");
+    setBackupNotice("");
+    const response = await fetch("/api/studio/backups", { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) setError(body.error || "Backup verification failed.");
+    else setBackupNotice(`Verified ${body.fileCount} files across ${body.submissionCount} contributions.`);
+    setBackingUp(false);
+  }
+
   async function signOut() {
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
@@ -124,6 +137,7 @@ export function StoryStudio() {
           <p>{submissions.length} contributions · {counts.total} files · {storyCounts.pending} stories and {counts.pending} files awaiting a decision</p>
         </div>
         <div className="studioToolbarActions">
+          <button className="secondary" type="button" disabled={backingUp} onClick={verifyBackups}>{backingUp ? "Verifying backups…" : "Verify all backups"}</button>
           <a className="secondary" href="/api/studio/export">Download archive index</a>
           <a className="secondary" href="/reveal">Open private reveal</a>
           <button className="secondary" type="button" onClick={signOut}>Sign out</button>
@@ -137,6 +151,7 @@ export function StoryStudio() {
       </nav>
 
       {error && <p className="studioError" role="alert">{error}</p>}
+      {backupNotice && <p className="studioNotice" role="status">{backupNotice}</p>}
       {!visible.length && <div className="studioEmpty">Nothing is waiting in this view.</div>}
 
       <div className="studioSubmissions">
