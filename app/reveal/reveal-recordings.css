@@ -1,0 +1,308 @@
+.recordingCollectionHeader {
+  max-width: 760px;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+
+.recordingCollectionHeader h2 {
+  margin: .75rem 0 1rem;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: clamp(2.2rem, 5vw, 4.6rem);
+  font-weight: 400;
+  line-height: 1.02;
+}
+
+.recordingCollectionHeader p {
+  max-width: 62ch;
+  margin: 0 auto;
+  color: rgba(255,255,255,.72);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.voiceWall,
+.birthdayReel {
+  position: relative;
+  padding: clamp(5rem, 11vw, 9rem) clamp(1rem, 5vw, 4rem);
+  overflow: hidden;
+}
+
+.voiceWall {
+  border-top: 1px solid rgba(214,176,92,.28);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(122,64,84,.2), transparent 42rem),
+    #17101c;
+}
+
+.voiceWallGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 1rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.voiceCard {
+  min-height: 280px;
+  padding: 1.4rem;
+  border: 1px solid rgba(214,176,92,.22);
+  background: rgba(25,17,30,.78);
+  box-shadow: 0 22px 70px rgba(0,0,0,.16);
+  transition: border-color .25s ease, transform .25s ease, background-color .25s ease;
+}
+
+.voiceCard:hover,
+.voiceCard:focus-within,
+.voiceCard.is-playing {
+  border-color: rgba(214,176,92,.62);
+  background: rgba(38,24,43,.9);
+  transform: translateY(-2px);
+}
+
+.voiceCardTopline {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(214,176,92,.82);
+  font-size: .7rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.voiceCard h3 {
+  margin: 1.4rem 0 .35rem;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 1.8rem;
+  font-weight: 400;
+}
+
+.voiceCard p {
+  min-height: 2.8em;
+  color: rgba(255,255,255,.66);
+  line-height: 1.5;
+}
+
+.voiceCard button,
+.birthdayTransport button,
+.birthdayQueue button {
+  color: inherit;
+  font: inherit;
+}
+
+.voiceCard button {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: .8rem 1rem;
+  border: 1px solid rgba(214,176,92,.45);
+  border-radius: 999px;
+  background: transparent;
+  color: #f4e5c0;
+  cursor: pointer;
+}
+
+.voiceCard button:focus-visible,
+.birthdayTransport button:focus-visible,
+.birthdayQueue button:focus-visible {
+  outline: 2px solid #e5be6a;
+  outline-offset: 3px;
+}
+
+.voiceCard audio,
+.birthdayAudioPortrait audio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.voiceWave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 74px;
+  margin-top: 2rem;
+}
+
+.voiceWave span {
+  width: 3px;
+  height: var(--wave-height);
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(214,176,92,.35), #e5be6a);
+  transform: scaleY(.58);
+  transform-origin: center;
+}
+
+.is-playing .voiceWave span {
+  animation: voice-wave 1.05s ease-in-out var(--wave-delay) infinite alternate;
+}
+
+.voiceWave.is-large {
+  height: clamp(150px, 27vw, 300px);
+  gap: clamp(2px, .45vw, 6px);
+  margin: 0;
+}
+
+.voiceWave.is-large span {
+  width: clamp(2px, .35vw, 5px);
+}
+
+@keyframes voice-wave {
+  from { transform: scaleY(.38); opacity: .55; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+
+.birthdayReel {
+  min-height: 100vh;
+  border-top: 1px solid rgba(214,176,92,.3);
+  background:
+    linear-gradient(180deg, rgba(14,9,17,.12), rgba(14,9,17,.7)),
+    radial-gradient(circle at 50% 38%, rgba(165,112,79,.18), transparent 38rem),
+    #0e0911;
+}
+
+.birthdayStage {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.birthdayMedia {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(214,176,92,.35);
+  background: linear-gradient(145deg, #211725, #0c090e);
+  box-shadow: 0 32px 100px rgba(0,0,0,.42);
+}
+
+.birthdayMedia video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #050406;
+}
+
+.birthdayAudioPortrait {
+  width: min(84%, 720px);
+}
+
+.birthdayLowerThird {
+  position: absolute;
+  left: clamp(1rem, 4vw, 2.5rem);
+  bottom: clamp(1rem, 4vw, 2.4rem);
+  display: flex;
+  flex-direction: column;
+  padding: .75rem 1rem;
+  border-left: 2px solid #d6b05c;
+  background: rgba(8,5,10,.72);
+  backdrop-filter: blur(8px);
+}
+
+.birthdayLowerThird strong {
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: clamp(1.15rem, 2.5vw, 1.65rem);
+  font-weight: 400;
+}
+
+.birthdayLowerThird span {
+  margin-top: .2rem;
+  color: rgba(255,255,255,.7);
+  font-size: .74rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.birthdayTransport {
+  display: grid;
+  grid-template-columns: 1fr minmax(180px, 1.4fr) 1fr;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.birthdayTransport button {
+  padding: .9rem 1rem;
+  border: 1px solid rgba(214,176,92,.35);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255,255,255,.8);
+  cursor: pointer;
+}
+
+.birthdayTransport button:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+.birthdayTransport .birthdayPlay {
+  border-color: #d6b05c;
+  background: #d6b05c;
+  color: #17101c;
+}
+
+.birthdayPosition {
+  margin: 1rem 0 0;
+  color: rgba(255,255,255,.55);
+  text-align: center;
+  font-size: .75rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.birthdayQueue {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: .65rem;
+  max-width: 1100px;
+  margin: 2.5rem auto 0;
+}
+
+.birthdayQueue button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .15rem .75rem;
+  padding: .8rem;
+  border: 1px solid rgba(214,176,92,.15);
+  background: rgba(255,255,255,.025);
+  color: rgba(255,255,255,.75);
+  text-align: left;
+  cursor: pointer;
+}
+
+.birthdayQueue button[aria-current="true"] {
+  border-color: rgba(214,176,92,.62);
+  background: rgba(214,176,92,.08);
+  color: #fff;
+}
+
+.birthdayQueue button > span {
+  grid-row: 1 / span 2;
+  color: #d6b05c;
+  font-size: .72rem;
+}
+
+.birthdayQueue strong { font-weight: 500; }
+.birthdayQueue small { color: rgba(255,255,255,.5); }
+
+@media (max-width: 600px) {
+  .voiceWall,
+  .birthdayReel { padding-inline: 1rem; }
+  .recordingCollectionHeader { text-align: left; }
+  .recordingCollectionHeader p { margin-left: 0; }
+  .birthdayMedia { aspect-ratio: 4 / 5; }
+  .birthdayTransport { grid-template-columns: 1fr 1.55fr 1fr; gap: .4rem; }
+  .birthdayTransport button { padding-inline: .55rem; font-size: .78rem; }
+  .birthdayQueue { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voiceCard { transition: none; }
+  .voiceCard:hover,
+  .voiceCard:focus-within,
+  .voiceCard.is-playing { transform: none; }
+  .voiceWave span { animation: none !important; transform: scaleY(.7); }
+}
