@@ -15,7 +15,7 @@ export default function ContributePage() {
           <p>
             Send a story, a photograph, an old home movie, a voice, or a piece of Sandi’s history. Everything will be woven into a private film for August 11.
           </p>
-          <div className="submissionDeadline"><span>✦</span><div><strong>Please contribute by August 7, 2026</strong><small>You may return and submit more than once.</small></div></div>
+          <div className="submissionDeadline"><span>✦</span><div><strong>Please contribute by August 10, 2026</strong><small>You may return and submit more than once.</small></div></div>
         </div>
       </section>
 

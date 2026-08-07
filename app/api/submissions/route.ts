@@ -50,7 +50,9 @@ export async function POST(request: Request) {
 
     for (const file of body.files) {
       const allowed = ALLOWED_PREFIXES.some(prefix => file.type.startsWith(prefix)) || ALLOWED_EXACT.has(file.type);
-      if (!allowed) return NextResponse.json({ error: `${file.name} is not an accepted file type.` }, { status: 400 });
+      if (!allowed) {
+        return NextResponse.json({ error: `${file.name} is not an accepted photo, video, audio, or PDF file.` }, { status: 400 });
+      }
     }
 
     const supabase = createAdminClient();
@@ -80,16 +82,16 @@ export async function POST(request: Request) {
       })
       .select("id")
       .single();
-    if (submissionError || !submission) throw submissionError ?? new Error("Could not create submission.");
-
-    const uploads = [];
-    for (let index = 0; index < body.files.length; index += 1) {
-      const file = body.files[index];
-      const path = `${submission.id}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`;
-      const { data, error } = await supabase.storage.from("sandi-memories").createSignedUploadUrl(path);
-      if (error || !data) throw error ?? new Error(`Could not prepare ${file.name}.`);
-      uploads.push({ path, token: data.token, name: file.name, type: file.type, size: file.size });
+    if (submissionError || !submission) {
+      throw submissionError ?? new Error("Could not create submission.");
     }
+
+    const uploads = body.files.map((file, index) => ({
+      pathname: `incoming/${submission.id}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}-${safeName(file.name)}`,
+      name: file.name,
+      type: file.type,
+      size: file.size
+    }));
 
     return NextResponse.json({ submissionId: submission.id, uploads });
   } catch (error) {
@@ -97,6 +99,8 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Please review the required fields and file limits." }, { status: 400 });
     }
-    return NextResponse.json({ error: "The secure upload could not be prepared. Please try again." }, { status: 500 });
+    return NextResponse.json({
+      error: "We could not prepare the secure upload. Your form is still here—please try again or email uploads@sandi50th.com."
+    }, { status: 500 });
   }
 }

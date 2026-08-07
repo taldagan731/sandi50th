@@ -84,7 +84,7 @@ export function OpeningExperience() {
               <div className="deadlineCallout">
                 <span>✦</span>
                 <div>
-                  <strong>Please contribute by August 7.</strong>
+                  <strong>Please contribute by August 10.</strong>
                   <small>Baby pictures, childhood videos, family photographs, keepsakes, audio memories, and birthday messages are all welcome.</small>
                 </div>
               </div>
