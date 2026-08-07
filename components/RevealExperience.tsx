@@ -81,13 +81,18 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
                 const expanded = activeMediaId === item.id || (!activeMediaId && index === 0);
                 const url = `/api/studio/media/${item.id}`;
                 return (
-                  <button
+                  <article
                     className={expanded ? "memoryPlate is-active" : "memoryPlate"}
                     key={item.id}
-                    type="button"
-                    aria-pressed={expanded}
-                    onClick={() => setActiveMediaId(item.id)}
                   >
+                    <button
+                      className="memorySelect"
+                      type="button"
+                      aria-pressed={expanded}
+                      onClick={() => setActiveMediaId(item.id)}
+                    >
+                      {expanded ? "Selected" : "Bring forward"}
+                    </button>
                     {item.mimeType.startsWith("video/") ? (
                       <video controls={expanded} preload="metadata" poster={item.poster ? `${url}?poster=1` : undefined}>
                         <source src={url} type={item.mimeType} />
@@ -96,7 +101,7 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
                       <img src={url} alt={item.caption || `A submitted memory: ${item.originalName}`} loading={index ? "lazy" : "eager"} />
                     )}
                     <span>{item.caption || item.originalName}</span>
-                  </button>
+                  </article>
                 );
               })}
             </div>
