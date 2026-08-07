@@ -1,22 +1,17 @@
-import Link from "next/link";
-import { Navigation } from "@/components/Navigation";
+import type { Metadata } from "next";
+import { StoryStudio } from "@/components/StoryStudio";
+
+export const metadata: Metadata = {
+  title: "Private Story Studio",
+  robots: { index: false, follow: false, noarchive: true, nosnippet: true }
+};
 
 export default function StudioPage() {
   return (
-    <main>
-      <Navigation />
-      <section className="pageTop studioComingSoon">
-        <div className="shell studioComingSoonInner">
-          <span className="eyebrow">PRIVATE STORY STUDIO</span>
-          <h1>The editing room is being prepared.</h1>
-          <p>
-            This private area will allow Tal and Beth to review, label, and organize
-            contributions. Contributor uploads can be activated first; reviewer login
-            is the next release.
-          </p>
-          <Link className="primary" href="/">Return to the invitation</Link>
-        </div>
-      </section>
+    <main className="storyStudioPage">
+      <div className="shell">
+        <StoryStudio />
+      </div>
     </main>
   );
 }
