@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "An uploaded file did not belong to this contribution." }, { status: 400 });
       }
 
-      const stored = await head(file.pathname, { access: "private" });
+      const stored = await head(file.pathname);
       if (stored.size !== file.bytes) {
         return NextResponse.json({
           error: `${file.originalName} did not finish uploading. Please try that file again.`
