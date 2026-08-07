@@ -70,7 +70,7 @@ export async function POST() {
       "anthropic-version": "2023-06-01"
     },
     body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
       max_tokens: 12000,
       system: [
         "You are drafting a private birthday documentary called Still Becoming.",
