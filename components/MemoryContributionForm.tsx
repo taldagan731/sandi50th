@@ -153,6 +153,7 @@ export function MemoryContributionForm() {
           ...blob,
           originalName: selected.file.name,
           bytes: selected.file.size,
+          contentType: normalizedFileType(selected.file),
           contentType: normalizedFileType(selected.file)
         });
         setProgress(current => ({ ...current, [selected.id]: 100 }));
