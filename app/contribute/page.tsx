@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
-import { MemoryContributionForm } from "@/components/MemoryContributionForm";
+import { ContributionHub } from "@/components/ContributionHub";
 
 export default function ContributePage() {
   return (
@@ -13,19 +13,19 @@ export default function ContributePage() {
           <span className="eyebrow">A PRIVATE INVITATION</span>
           <h1>Help us preserve a memory that deserves to live forever.</h1>
           <p>
-            Send a story, a photograph, an old home movie, a voice, or a piece of Sandi’s history. Everything will be woven into a private film for August 11.
+            Send a story, drop an entire album, or record your voice or birthday message. Everything will be woven into a private film for August 11.
           </p>
           <div className="submissionDeadline"><span>✦</span><div><strong>Please contribute by August 10, 2026</strong><small>You may return and submit more than once.</small></div></div>
         </div>
       </section>
 
       <section className="contributionSection">
-        <div className="shell"><MemoryContributionForm /></div>
+        <div className="shell"><ContributionHub /></div>
       </section>
 
       <section className="contributionFooter">
         <div className="shell contributionFooterInner">
-          <p>One photograph can reopen an entire chapter.</p>
+          <p>One photograph—or one familiar voice—can reopen an entire chapter.</p>
           <Link href="/">Return to the invitation</Link>
         </div>
       </section>
