@@ -87,7 +87,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she changed.</span><span>Contributions due August 7, 2026 · uploads@sandi50th.com</span></div></footer>
+      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she changed.</span><span>Contributions due August 10, 2026 · uploads@sandi50th.com</span></div></footer>
     </main>
   );
 }
