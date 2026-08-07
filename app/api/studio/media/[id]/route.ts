@@ -14,7 +14,7 @@ export async function GET(
   const { id } = await context.params;
   const { data: media, error } = await owner.supabase
     .from("media_assets")
-    .select("id,submission_id,storage_path,mime_type,original_name")
+    .select("id,submission_id,storage_path,poster_path,mime_type,original_name")
     .eq("id", id)
     .single();
   if (error || !media) return new NextResponse("Not found", { status: 404 });
@@ -27,10 +27,10 @@ export async function GET(
     .single();
   if (!submission) return new NextResponse("Not found", { status: 404 });
 
-  if (!media.storage_path.startsWith("incoming/") && !media.storage_path.startsWith("posters/")) {
+  const requestedPath = new URL(request.url).searchParams.get("poster") === "1" && media.poster_path\n    ? media.poster_path\n    : media.storage_path;\n\n  if (!requestedPath.startsWith("incoming/") && !requestedPath.startsWith("posters/")) {
     const { data, error: signedError } = await owner.supabase.storage
       .from("sandi-memories")
-      .createSignedUrl(media.storage_path, 60);
+      .createSignedUrl(requestedPath, 60);
     if (signedError || !data) return new NextResponse("Not found", { status: 404 });
     return NextResponse.redirect(data.signedUrl);
   }
@@ -38,7 +38,7 @@ export async function GET(
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) return new NextResponse("Storage is not configured", { status: 503 });
 
-  const blob = await head(media.storage_path);
+  const blob = await head(requestedPath);
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`
   };
