@@ -38,7 +38,7 @@ export async function POST() {
       let backup;
 
       if (primaryPath.startsWith("incoming/")) {
-        const source = await head(primaryPath, { access: "private" });
+        const source = await head(primaryPath);
         backup = await copy(primaryPath, backupPath, {
           access: "private",
           contentType: item.mime_type,
@@ -60,7 +60,7 @@ export async function POST() {
         });
       }
 
-      const verified = await head(backup.pathname, { access: "private" });
+      const verified = await head(backup.pathname);
       if (verified.size !== Number(item.bytes)) {
         throw new Error(`Backup verification failed for ${item.original_name}.`);
       }
