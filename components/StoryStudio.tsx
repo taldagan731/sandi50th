@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";\nimport { StoryWorkshop } from "@/components/StoryWorkshop";
 
 type MediaItem = {
   id: string;
