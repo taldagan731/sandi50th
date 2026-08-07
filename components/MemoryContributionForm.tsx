@@ -89,12 +89,6 @@ export function MemoryContributionForm() {
     input.setAttribute("directory", "");
   }, []);
 
-  useEffect(() => {
-    return () => {
-      for (const item of files) if (item.preview) URL.revokeObjectURL(item.preview);
-    };
-  }, [files]);
-
   const totalSize = useMemo(
     () => files.reduce((sum, item) => sum + item.file.size, 0),
     [files]
@@ -163,12 +157,11 @@ export function MemoryContributionForm() {
     event.preventDefault();
     setDragging(false);
     const items = Array.from(event.dataTransfer.items ?? []);
-    const entries = items
-      .map(item => {
-        const withEntry = item as DataTransferItem & { webkitGetAsEntry?: () => LegacyEntry | null };
-        return withEntry.webkitGetAsEntry?.() ?? null;
-      })
-      .filter((entry): entry is LegacyEntry => Boolean(entry));
+    const entries: LegacyEntry[] = [];
+    for (const item of items) {
+      const entry = item.webkitGetAsEntry?.();
+      if (entry) entries.push(entry as unknown as LegacyEntry);
+    }
 
     if (entries.length) {
       const collected: File[] = [];
