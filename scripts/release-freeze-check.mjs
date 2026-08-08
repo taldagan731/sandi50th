@@ -92,13 +92,6 @@ for (const path of publicSource) {
   if (/The way we remember you\.?/i.test(content)) failures.push(`${relative(root, path)} still frames Sandi in the past tense.`);
 }
 
-if (failures.length) {
-  console.error("\nReveal freeze check failed:\n- " + failures.join("\n- "));
-  process.exit(1);
-}
-
-console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
-
 
 const contributionForm = read("components/MemoryContributionForm.tsx");
 forbidText("components/MemoryContributionForm.tsx", "calculateFileSha256", "no contributor-path hashing");
@@ -117,3 +110,11 @@ const comparisonIndex = contributionForm.indexOf("<PostUploadPhotoReview");
 if (successIndex < 0 || comparisonIndex < successIndex) {
   failures.push("post-upload comparison must render only after the success confirmation");
 }
+
+
+if (failures.length) {
+  console.error("\nReveal freeze check failed:\n- " + failures.join("\n- "));
+  process.exit(1);
+}
+
+console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, post-storage duplicate handling, backup proof, and exact-deployment smoke are intact.");
