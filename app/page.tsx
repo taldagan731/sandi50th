@@ -68,11 +68,16 @@ export default function Home() {
           </div>
           <div className="chapters">
             {chapters.map(([number, title, copy]) => (
-              <article key={number}>
+              <Link
+                className="chapterRoom"
+                href={`/contribute?chapter=${Number(number)}#contribution-memory`}
+                key={number}
+              >
                 <span>CHAPTER {number}</span>
                 <h3>{title}</h3>
                 <p>{copy}</p>
-              </article>
+                <strong>Share something for this room →</strong>
+              </Link>
             ))}
           </div>
         </div>
