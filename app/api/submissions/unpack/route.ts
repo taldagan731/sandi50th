@@ -1,5 +1,6 @@
 import { get, put, type PutBlobResult } from "@vercel/blob";
 import { inflateRawSync } from "node:zlib";
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       }, { status: 202 });
     }
 
-    const extracted: Array<PutBlobResult & { originalName: string; bytes: number }> = [];
+    const extracted: Array<PutBlobResult & { originalName: string; bytes: number; sha256?: string }> = [];
     for (const [index, entry] of useful.entries()) {
       const fileBytes = extractEntry(bytes, entry);
       const normalized = normalizeArchivePath(entry.name);
@@ -91,7 +92,8 @@ export async function POST(request: Request) {
         addRandomSuffix: false,
         allowOverwrite: false
       });
-      extracted.push({ ...result, originalName: base, bytes: fileBytes.length });
+      const sha256 = contentType.startsWith("image/") ? createHash("sha256").update(fileBytes).digest("hex") : undefined;
+      extracted.push({ ...result, originalName: base, bytes: fileBytes.length, sha256 });
     }
 
     return NextResponse.json({

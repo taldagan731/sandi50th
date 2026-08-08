@@ -55,7 +55,7 @@ type SelectedFile = {
 };
 type PreparedUpload = { pathname: string; name: string; type: string; size: number };
 type PreparedBatch = { submissionId: string; targets: Record<string, PreparedUpload> };
-type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
+type CompletedFile = PutBlobResult & { originalName: string; bytes: number; sha256?: string };
 type LegacyEntry = {
   isFile: boolean;
   isDirectory: boolean;
@@ -66,9 +66,10 @@ type LegacyEntry = {
   };
 };
 
-export function MemoryContributionForm() {
-  const [firstMemory, setFirstMemory] = useState("");
-  const [opened, setOpened] = useState(false);
+export function MemoryContributionForm({ mode = "contributor" }: { mode?: "contributor" | "ownerArchive" }) {
+  const ownerArchive = mode === "ownerArchive";
+  const [firstMemory, setFirstMemory] = useState(ownerArchive ? "Owner archive batch" : "");
+  const [opened, setOpened] = useState(ownerArchive);
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
@@ -205,17 +206,18 @@ export function MemoryContributionForm() {
     try {
       const form = new FormData(event.currentTarget);
       const payload = {
-        name: String(form.get("name") ?? ""),
-        contact: String(form.get("contact") ?? ""),
-        relationship: String(form.get("relationship") ?? "Other"),
-        firstMemory,
+        sourceType: ownerArchive ? "owner_archive" : "contributor",
+        name: ownerArchive ? "Owner archive" : String(form.get("name") ?? ""),
+        contact: ownerArchive ? "Private owner import" : String(form.get("contact") ?? ""),
+        relationship: ownerArchive ? "Owner archive" : String(form.get("relationship") ?? "Other"),
+        firstMemory: ownerArchive ? "Owner archive batch" : firstMemory,
         story: String(form.get("story") ?? ""),
         approximateYear: String(form.get("year") ?? ""),
         place: String(form.get("place") ?? ""),
         people: String(form.get("people") ?? ""),
         lifeChapter: String(form.get("chapter") ?? "Not sure"),
-        prompt: String(form.get("prompt") ?? ""),
-        consent: Boolean(form.get("consent")),
+        prompt: ownerArchive ? "OWNER_ARCHIVE" : String(form.get("prompt") ?? ""),
+        consent: ownerArchive || Boolean(form.get("consent")),
         files: files.map(item => ({
           name: item.relativePath,
           type: normalizedFileType(item.file),
@@ -267,6 +269,9 @@ export function MemoryContributionForm() {
         updateFile(selected.id, { status: "uploading", error: "" });
         setActiveFile("Uploading " + selected.file.name);
         try {
+          const sha256 = selected.file.type.startsWith("image/")
+            ? await calculateFileSha256(selected.file)
+            : undefined;
           const blob = await uploadWithRetry(currentBatch.submissionId, target, selected, percentage => {
             setProgress(current => ({ ...current, [selected.id]: percentage }));
           });
@@ -274,7 +279,8 @@ export function MemoryContributionForm() {
             ...blob,
             originalName: selected.relativePath,
             bytes: selected.file.size,
-            contentType: normalizedFileType(selected.file)
+            contentType: normalizedFileType(selected.file),
+            sha256
           };
           completed.current[selected.id] = saved;
           setProgress(current => ({ ...current, [selected.id]: 100 }));
@@ -347,8 +353,8 @@ export function MemoryContributionForm() {
     return (
       <section className="contributionSuccess" aria-live="polite">
         <span className="successMark">✓</span>
-        <span className="eyebrow">YOUR MEMORY ARRIVED</span>
-        <h2>Thank you for becoming part of Sandi’s story.</h2>
+        <span className="eyebrow">{ownerArchive ? "OWNER ARCHIVE SAVED" : "YOUR MEMORY ARRIVED"}</span>
+        <h2>{ownerArchive ? "The archive batch is safely stored." : "Thank you for becoming part of Sandi’s story."}</h2>
         <p>
           Your written memory and {files.length ? files.length + " file" + (files.length === 1 ? " has" : "s have") : "details have"} been received, verified, and backed up in private storage.
         </p>
@@ -363,8 +369,9 @@ export function MemoryContributionForm() {
   const failedCount = files.filter(item => item.status === "failed").length;
 
   return (
-    <form className="memoryForm" onSubmit={submit}>
-      <section className="memoryOpening panel">
+    <form className={"memoryForm" + (ownerArchive ? " ownerArchiveForm" : "")} onSubmit={submit}>
+      {ownerArchive && <div className="panel ownerArchiveNotice"><span className="eyebrow">OWNER ARCHIVE</span><h2>Import Sandi’s private archive</h2><p>These photographs are labeled separately from contributions and deduplicated by their file contents.</p></div>}
+      {!ownerArchive && <section className="memoryOpening panel">
         <span className="eyebrow">BEGIN WITH THE STORY</span>
         <label className="openingQuestion">
           When you think of Sandi, what is the first memory that comes to mind?
@@ -381,17 +388,17 @@ export function MemoryContributionForm() {
             Continue the story
           </button>
         )}
-      </section>
+      </section>}
 
       {opened && (
         <div className="contributionColumns">
           <section className="panel formDetails">
             <span className="eyebrow">THE DETAILS BEHIND THE MEMORY</span>
             <div className="grid2 contributionGrid">
-              <label>Your name<input name="name" required placeholder="How Sandi knows you" /></label>
-              <label>Email or phone<input name="contact" required placeholder="For project updates only" /></label>
+              <label>Your name<input name="name" required defaultValue={ownerArchive ? "Owner archive" : undefined} placeholder="How Sandi knows you" /></label>
+              <label>Email or phone<input name="contact" required defaultValue={ownerArchive ? "Private owner import" : undefined} placeholder="For project updates only" /></label>
               <label>Your relationship to Sandi
-                <select name="relationship" defaultValue="Friend">
+                <select name="relationship" defaultValue={ownerArchive ? "Other" : "Friend"}>
                   <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
                 </select>
               </label>
@@ -463,7 +470,7 @@ export function MemoryContributionForm() {
             )}
 
             <label className="consent contributionConsent">
-              <input name="consent" type="checkbox" required />
+              <input name="consent" type="checkbox" required defaultChecked={ownerArchive} />
               <span>I have permission to share these materials in Sandi’s private birthday film and archive.</span>
             </label>
 
@@ -509,6 +516,11 @@ export function MemoryContributionForm() {
       )}
     </form>
   );
+}
+
+async function calculateFileSha256(file: File) {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function uploadWithRetry(

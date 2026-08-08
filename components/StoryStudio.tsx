@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StoryWorkshop } from "@/components/StoryWorkshop";
 import { FamilyQaStudio } from "@/components/FamilyQaStudio";
+import { StudioLiveFeed } from "@/components/StudioLiveFeed";
+import { MemoryContributionForm } from "@/components/MemoryContributionForm";
 
 type MediaItem = {
   id: string;
@@ -63,7 +65,6 @@ export function StoryStudio() {
   const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"visible" | "hidden">("visible");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
   const [intelligenceAvailable, setIntelligenceAvailable] = useState(true);
@@ -79,6 +80,9 @@ export function StoryStudio() {
   const [revealPublic, setRevealPublic] = useState(false);
   const [revealAccessAvailable, setRevealAccessAvailable] = useState(true);
   const [revealAccessWorking, setRevealAccessWorking] = useState(false);
+  const [newSubmissionIds, setNewSubmissionIds] = useState<Set<string>>(new Set());
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const knownSubmissionIds = useRef<Set<string> | null>(null);
 
   async function load() {
     setError("");
@@ -94,7 +98,28 @@ export function StoryStudio() {
       setSessionReady(true);
       return;
     }
-    setSubmissions(body.submissions);
+    const nextSubmissions = body.submissions as Submission[];
+    const nextIds = new Set(nextSubmissions.map(item => item.id));
+    if (knownSubmissionIds.current === null) {
+      const lastSeen = window.localStorage.getItem("sandi-studio-last-seen-at");
+      if (lastSeen) {
+        const threshold = new Date(lastSeen).getTime();
+        setNewSubmissionIds(new Set(nextSubmissions
+          .filter(item => new Date(item.created_at).getTime() > threshold)
+          .map(item => item.id)));
+      }
+    } else {
+      const arrivals = nextSubmissions
+        .filter(item => !knownSubmissionIds.current?.has(item.id))
+        .map(item => item.id);
+      if (arrivals.length) {
+        setNewSubmissionIds(current => new Set([...current, ...arrivals]));
+      }
+    }
+    knownSubmissionIds.current = nextIds;
+    setSubmissions(nextSubmissions);
+    setLastRefreshed(new Date());
+    window.localStorage.setItem("sandi-studio-last-seen-at", new Date().toISOString());
     setIntelligenceAvailable(body.intelligenceAvailable !== false);
     const revealResponse = await fetch("/api/studio/reveal-access", { cache: "no-store" });
     if (revealResponse.ok) {
@@ -112,6 +137,19 @@ export function StoryStudio() {
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const poll = window.setInterval(() => { void load(); }, 20_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [signedIn]);
 
   if (!sessionReady) {
     return <section className="studioGate"><p>Opening the private editing room…</p></section>;
@@ -134,8 +172,6 @@ export function StoryStudio() {
   };
 
   const visible = regularSubmissions.filter(submission => {
-    const hidden = submission.review_status === "excluded";
-    if (filter === "visible" ? hidden : !hidden) return false;
     if (person && !submission.people.some(value => value === person)) return false;
     if (place && submission.location !== place) return false;
     if ((era || chapterFacet || setting || tagState !== "all") && !submission.media.some(mediaMatchesFacets)) return false;
@@ -288,6 +324,20 @@ export function StoryStudio() {
         </div>
       </header>
 
+      <details className="studioTools ownerArchiveImporter">
+        <summary>Import owner archive photographs</summary>
+        <MemoryContributionForm mode="ownerArchive" />
+      </details>
+
+      <StudioLiveFeed
+        submissions={regularSubmissions}
+        newIds={newSubmissionIds}
+        lastRefreshed={lastRefreshed}
+        onVisibilityChange={reviewSubmission}
+      />
+
+      <details className="studioTools">
+        <summary>Organize, search, and edit contributions</summary>
       <section className="studioIntelligence" aria-labelledby="photo-intelligence-title">
         <header>
           <div>
@@ -359,11 +409,6 @@ export function StoryStudio() {
         {pilotNotice && <p className="studioNotice" role="status">{pilotNotice}</p>}
       </section>
 
-      <nav className="studioFilters" aria-label="Contribution visibility">
-        <button type="button" aria-pressed={filter === "visible"} onClick={() => setFilter("visible")}>Visible · {storyCounts.visible}</button>
-        <button type="button" aria-pressed={filter === "hidden"} onClick={() => setFilter("hidden")}>Hidden · {storyCounts.hidden}</button>
-      </nav>
-
       {error && <p className="studioError" role="alert">{error}</p>}
       {backupNotice && <p className="studioNotice" role="status">{backupNotice}</p>}
       {!visible.length && <div className="studioEmpty">Nothing is in this view.</div>}
@@ -406,6 +451,7 @@ export function StoryStudio() {
           </article>
         ))}
       </div>
+      </details>
 
       <FamilyQaStudio
         media={regularSubmissions.flatMap(submission => submission.media.map(item => ({
@@ -442,7 +488,10 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     const response = await fetch("/api/studio/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken: data.session.access_token })
+      body: JSON.stringify({
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token
+      })
     });
     const body = await response.json();
     if (!response.ok) {

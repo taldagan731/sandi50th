@@ -44,6 +44,12 @@ requireText("components/RecordingContributionForm.tsx", "playsInline", "inline m
 requireText("components/RevealExperience.tsx", "The rest is yours to write.", "Chapter Nine invitation");
 requireText("components/StoryStudio.tsx", "Open reveal publicly", "the no-deploy reveal access control");
 requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-only exclusion control");
+requireText("components/StoryStudio.tsx", "20_000", "the twenty-second Studio live polling interval");
+requireText("components/StudioLiveFeed.tsx", "Everything, as it comes in.", "the chronological live arrivals feed");
+requireText("components/StudioLiveFeed.tsx", "newArrival", "the new-since-last-look marker");
+requireText("lib/studio/auth.ts", "refreshSession", "the refreshable owner session");
+requireText("lib/studio/auth.ts", ".sandi50th.com", "the apex/www production owner cookie");
+requireText("app/api/studio/session/route.ts", "refreshToken", "the refresh token handoff");
 requireText("app/reveal/page.tsx", '.neq("review_status", "excluded")', "default-visible reveal selection");
 requireText("app/api/reveal/media/[id]/route.ts", "reveal_public", "the private/public reveal media gate");
 requireText("app/api/studio/contributions/route.ts", "%MOBILE TEST%", "automatic test-record exclusion");
