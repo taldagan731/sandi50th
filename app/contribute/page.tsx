@@ -3,7 +3,25 @@ import { Navigation } from "@/components/Navigation";
 import { ContributionHub } from "@/components/ContributionHub";
 import "./contribution-release.css";
 
-export default function ContributePage() {
+const chapterDefaults: Record<string, string> = {
+  "1": "Baby and early childhood",
+  "2": "Growing up in Roslyn",
+  "3": "Boston University",
+  "4": "Oracle and career achievements",
+  "5": "Family and love",
+  "6": "Travel and adventure",
+  "7": "Friendship",
+  "8": "Sandi today"
+};
+
+export default async function ContributePage({
+  searchParams
+}: {
+  searchParams: Promise<{ chapter?: string }>;
+}) {
+  const { chapter } = await searchParams;
+  const initialChapter = chapter ? chapterDefaults[chapter] : undefined;
+
   return (
     <main>
       <Navigation />
@@ -21,7 +39,7 @@ export default function ContributePage() {
       </section>
 
       <section className="contributionSection">
-        <div className="shell"><ContributionHub /></div>
+        <div className="shell"><ContributionHub initialChapter={initialChapter} /></div>
       </section>
 
       <section className="contributionFooter">

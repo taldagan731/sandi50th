@@ -37,7 +37,15 @@ function dateLabel(item: ArchiveMedia) {
   return `${range} · approximate range`;
 }
 
-export function RevealTimeline({ items, chapters }: { items: ArchiveMedia[]; chapters: Chapter[] }) {
+export function RevealTimeline({
+  items,
+  chapters,
+  onChapterSelect
+}: {
+  items: ArchiveMedia[];
+  chapters: Chapter[];
+  onChapterSelect?: (chapterNumber: number) => void;
+}) {
   const dated = useMemo(
     () => items.filter(item => item.yearStart && (item.mimeType.startsWith("image/") || item.mimeType.startsWith("video/"))),
     [items]
@@ -100,7 +108,14 @@ export function RevealTimeline({ items, chapters }: { items: ArchiveMedia[]; cha
 
       <nav className="timelineChapters" aria-label="Narrative chapters">
         {chapters.map(chapter => (
-          <span key={chapter.number}><small>{String(chapter.number).padStart(2, "0")}</small>{chapter.title}</span>
+          <button
+            key={chapter.number}
+            type="button"
+            onClick={() => onChapterSelect?.(chapter.number)}
+          >
+            <small>{String(chapter.number).padStart(2, "0")}</small>
+            {chapter.title}
+          </button>
         ))}
       </nav>
 

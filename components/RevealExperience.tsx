@@ -90,6 +90,21 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     [familyAnswers]
   );
 
+  function chooseChapter(index: number, scroll = false) {
+    setChapterIndex(index);
+    setActiveMediaId(null);
+    setActiveRecordingId(null);
+    if (scroll) {
+      requestAnimationFrame(() => {
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document.getElementById("reveal-story-room")?.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "start"
+        });
+      });
+    }
+  }
+
   if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length) {
     return (
       <section className="revealEmpty">
@@ -116,11 +131,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
                 key={item.number}
                 type="button"
                 aria-current={index === chapterIndex ? "step" : undefined}
-                onClick={() => {
-                  setChapterIndex(index);
-                  setActiveMediaId(null);
-                  setActiveRecordingId(null);
-                }}
+                onClick={() => chooseChapter(index)}
               >
                 <span>{String(item.number).padStart(2, "0")}</span>
                 <strong>{item.title}</strong>
@@ -128,7 +139,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
             ))}
           </nav>
 
-          <article className="revealChapter" key={chapter.number}>
+          <article className="revealChapter" id="reveal-story-room" key={chapter.number}>
             <header>
               <span>CHAPTER {String(chapter.number).padStart(2, "0")}</span>
               <h2>{chapter.title}</h2>
@@ -182,7 +193,16 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         </>
       )}
 
-      {archiveMedia.length > 0 && <RevealTimeline items={archiveMedia} chapters={chapters} />}
+      {archiveMedia.length > 0 && (
+        <RevealTimeline
+          items={archiveMedia}
+          chapters={chapters}
+          onChapterSelect={chapterNumber => {
+            const index = chapters.findIndex(item => item.number === chapterNumber);
+            if (index >= 0) chooseChapter(index, true);
+          }}
+        />
+      )}
 
       {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
 

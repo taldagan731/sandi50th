@@ -6,7 +6,7 @@ import { RecordingContributionForm } from "@/components/RecordingContributionFor
 
 type Path = "memory" | "voice" | "birthday";
 
-export function ContributionHub() {
+export function ContributionHub({ initialChapter }: { initialChapter?: string }) {
   const [path, setPath] = useState<Path>("memory");
 
   return (
@@ -30,7 +30,7 @@ export function ContributionHub() {
       </nav>
 
       <div className="contributionPath" id={"contribution-" + path}>
-        {path === "memory" && <MemoryContributionForm />}
+        {path === "memory" && <MemoryContributionForm initialChapter={initialChapter} />}
         {path === "voice" && <RecordingContributionForm kind="voice" />}
         {path === "birthday" && <RecordingContributionForm kind="birthday" />}
       </div>
