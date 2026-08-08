@@ -35,7 +35,7 @@ export function OpeningExperience() {
           <span>Still Becoming</span>
         </div>
         <p className="celebrationLead">
-          The way we see you: curious, funny, generous, formidable—and only getting started.
+          <strong>The way we see you.</strong> Curious, funny, generous, formidable—and only getting started.
         </p>
         <div className="actions celebrationActions">
           <Link className="primary" href="/contribute">Add to the celebration</Link>
