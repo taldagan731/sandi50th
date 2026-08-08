@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readPrivateMedia } from "@/lib/photo-intelligence/media";
+import { STORY_CHAPTERS, chapterNumberFromContributor } from "@/lib/chapters";
 
 const MODEL = process.env.ANTHROPIC_PHOTO_MODEL || "claude-sonnet-4-20250514";
 const REVIEW_THRESHOLD = 0.67;
@@ -44,17 +45,6 @@ const analysisSchema = z.object({
 type Job = { id: string; project_id: string; media_asset_id: string; attempts: number };
 type ProcessOptions = { limit?: number; projectId?: string; submissionId?: string };
 
-const CHAPTERS = [
-  "Once Upon a Time",
-  "Growing Up in Roslyn",
-  "Finding Her Voice",
-  "Building Something Bigger",
-  "The Family She Chose",
-  "Around the World",
-  "The People Who Love Her",
-  "Still Becoming"
-];
-
 function jsonFromModel(text: string) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
   const firstBrace = text.indexOf("{");
@@ -77,15 +67,6 @@ function decadeSpan(decade: number | null) {
   if (!decade) return { start: null, end: null };
   const start = Math.floor(decade / 10) * 10;
   return { start, end: start + 9 };
-}
-
-function contributorChapter(value: string | null | undefined) {
-  if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  const exact = CHAPTERS.findIndex(title => title.toLowerCase() === normalized);
-  if (exact >= 0) return exact + 1;
-  const numeric = normalized.match(/\b([1-8])\b/);
-  return numeric ? Number(numeric[1]) : null;
 }
 
 async function requestAnthropic(derivative: Buffer, context: Record<string, unknown>) {
@@ -112,7 +93,7 @@ async function requestAnthropic(derivative: Buffer, context: Record<string, unkn
           },
           {
             type: "text",
-            text: `Analyze this reduced, metadata-free derivative. Contributor metadata is authoritative and must win over visual inference.\n\nContributor context:\n${JSON.stringify(context)}\n\nReturn this exact JSON shape:\n{\n  "estimatedEra":{"value":"infant|child|adolescent|young adult|adult|recent","confidence":0.0},\n  "decadeGuess":{"value":1990,"confidence":0.0,"evidence":["visible, non-sensitive clues only"]},\n  "setting":{"value":"home|school|outdoors|travel|celebration|formal portrait|workplace|beach|holiday|other","confidence":0.0},\n  "people":{"approximateCount":1,"composition":"portrait|group|candid|unclear","confidence":0.0},\n  "notableObjects":[],\n  "occasionMarkers":[],\n  "eventClues":[],\n  "literaryDescription":{"value":"One factual sentence in the restrained, present-tense Still Becoming voice.","confidence":0.0},\n  "chapterAssignment":{"chapterNumber":1,"confidence":0.0,"rationale":"Brief evidence-based reason."}\n}\n\nThe eight chapters are: ${CHAPTERS.map((title, index) => `${index + 1}. ${title}`).join("; ")}. Use null for an unknown decade. Do not name anyone from appearance.`
+            text: `Analyze this reduced, metadata-free derivative. Contributor metadata is authoritative and must win over visual inference.\n\nContributor context:\n${JSON.stringify(context)}\n\nReturn this exact JSON shape:\n{\n  "estimatedEra":{"value":"infant|child|adolescent|young adult|adult|recent","confidence":0.0},\n  "decadeGuess":{"value":1990,"confidence":0.0,"evidence":["visible, non-sensitive clues only"]},\n  "setting":{"value":"home|school|outdoors|travel|celebration|formal portrait|workplace|beach|holiday|other","confidence":0.0},\n  "people":{"approximateCount":1,"composition":"portrait|group|candid|unclear","confidence":0.0},\n  "notableObjects":[],\n  "occasionMarkers":[],\n  "eventClues":[],\n  "literaryDescription":{"value":"One factual sentence in the restrained, present-tense Still Becoming voice.","confidence":0.0},\n  "chapterAssignment":{"chapterNumber":1,"confidence":0.0,"rationale":"Brief evidence-based reason."}\n}\n\nThe eight chapters are: ${STORY_CHAPTERS.map((title, index) => `${index + 1}. ${title}`).join("; ")}. Use null for an unknown decade. Do not name anyone from appearance.`
           }
         ]
       }]
@@ -189,7 +170,7 @@ async function completeJob(job: Job) {
     prompt: submission.prompt || null
   });
 
-  const contributorAssignedChapter = contributorChapter(submission.life_chapter);
+  const contributorAssignedChapter = chapterNumberFromContributor(submission.life_chapter);
   const chapterNumber = contributorAssignedChapter ?? analysis.chapterAssignment.chapterNumber;
   const chapterConfidence = contributorAssignedChapter ? 1 : analysis.chapterAssignment.confidence;
   const { start: aiStart, end: aiEnd } = decadeSpan(analysis.decadeGuess.value);
