@@ -3,6 +3,7 @@
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { fireContributionConfetti } from "@/lib/confetti";
+import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 import {
   ChangeEvent,
   DragEvent,
@@ -80,6 +81,7 @@ export function MemoryContributionForm({
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
+  const [contributorName, setContributorName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [activeFile, setActiveFile] = useState("");
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -238,6 +240,7 @@ export function MemoryContributionForm({
           size: item.file.size
         }))
       };
+      setContributorName(payload.name);
 
       const prepareResponse = await fetch("/api/submissions", {
         method: "POST",
@@ -373,6 +376,7 @@ export function MemoryContributionForm({
           Your written memory and {files.length ? files.length + " file" + (files.length === 1 ? " has" : "s have") : "details have"} been received, verified, and backed up in private storage.
         </p>
         <p className="confirmationCode">Confirmation: {confirmationId.slice(0, 8).toUpperCase()}</p>
+        {!ownerArchive && <NameChorusRecorder submissionId={confirmationId} contributorName={contributorName} />}
         <button className="secondary" type="button" onClick={() => window.location.reload()}>
           Share another memory
         </button>

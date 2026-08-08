@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
-import { RevealSoundtrack } from "@/components/RevealSoundtrack";
+import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 
 type RevealMedia = {
@@ -14,10 +14,11 @@ type RevealMedia = {
   poster: boolean;
   contributorName: string;
   relationship: string;
-  collection: "archive" | "voice" | "birthday";
+  collection: "archive" | "voice" | "birthday" | "name";
   yearStart: number | null;
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
+  displayOrder: number;
 };
 
 type ExpandedPhoto = { src: string; alt: string };
@@ -65,10 +66,15 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<ExpandedPhoto | null>(null);
+  const [finaleSignal, setFinaleSignal] = useState(0);
   const chapter = chapters[chapterIndex];
   const archiveMedia = useMemo(() => media.filter(item => item.collection === "archive"), [media]);
   const voiceMemories = useMemo(
     () => media.filter(item => item.collection === "voice" && item.mimeType.startsWith("audio/")),
+    [media]
+  );
+  const nameRecordings = useMemo(
+    () => media.filter(item => item.collection === "name" && item.mimeType.startsWith("audio/")),
     [media]
   );
   const birthdayMessages = useMemo(
@@ -137,7 +143,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     }
   }
 
-  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length) {
+  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length && !nameRecordings.length) {
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
@@ -153,7 +159,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
         <h1>Still Becoming</h1>
         <p>Fifty years, told by the people who love Sandi.</p>
-        <RevealSoundtrack ducked={activeRecordingId !== null} />
+        <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} />
       </header>
 
       {chapter && (
@@ -246,7 +252,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
       )}
 
       {birthdayMessages.length > 0 && (
-        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
+        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={() => setFinaleSignal(value => value + 1)} />
       )}
 
       {expandedPhoto && <PhotoFocus photo={expandedPhoto} onClose={() => setExpandedPhoto(null)} />}
@@ -411,7 +417,7 @@ function VoiceCard({ item, number, activeId, onActiveChange }: {
   );
 }
 
-function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingCollectionProps) {
+function BirthdayMessageReel({ items, activeId, onActiveChange, onFinale }: RecordingCollectionProps & { onFinale: () => void }) {
   const [index, setIndex] = useState(0);
   const [continuePlaying, setContinuePlaying] = useState(false);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
@@ -471,6 +477,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
     if (continuePlaying && sequenceStartedAtFirst.current && !finaleFired.current) {
       finaleFired.current = true;
       fireRevealFinaleConfetti();
+      onFinale();
     }
     setContinuePlaying(false);
     onActiveChange(null);

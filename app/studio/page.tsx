@@ -3,6 +3,7 @@ import { StoryStudio } from "@/components/StoryStudio";
 import "./studio-intelligence.css";
 import "./studio-live-feed.css";
 import "./family-qa.css";
+import "./name-chorus-studio.css";
 
 export const metadata: Metadata = {
   title: "Private Story Studio",

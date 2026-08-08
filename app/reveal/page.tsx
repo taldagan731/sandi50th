@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
+import "./name-chorus.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 
@@ -187,14 +188,17 @@ export default async function RevealPage() {
             poster: Boolean(item.poster_path),
             contributorName: submission?.name ?? "Someone who loves Sandi",
             relationship: submission?.relationship ?? "",
-            collection: prompt === "VOICE_WALL"
-              ? "voice" as const
-              : prompt === "BIRTHDAY_MESSAGE"
-                ? "birthday" as const
-                : "archive" as const,
+            collection: prompt === "NAME_CHORUS" || item.original_name.startsWith("name-chorus-")
+              ? "name" as const
+              : prompt === "VOICE_WALL"
+                ? "voice" as const
+                : prompt === "BIRTHDAY_MESSAGE"
+                  ? "birthday" as const
+                  : "archive" as const,
             yearStart: suppliedRange?.start ?? inferredStart,
             yearEnd: suppliedRange?.end ?? inferredEnd,
-            yearSource
+            yearSource,
+            displayOrder: item.display_order
           };
         })}
       />
