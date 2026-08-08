@@ -52,7 +52,7 @@ export default function Home() {
           <div className="literaryCard">
             <span className="eyebrow">THE LITERARY HEART</span>
             <blockquote>
-              “Some lives are seen in photographs. Yours is seen in the people who smile when they say your name.”
+              “You make a room warmer, a story better, and the people around you more fully themselves.”
             </blockquote>
             <cite>Original text written for Sandi</cite>
           </div>

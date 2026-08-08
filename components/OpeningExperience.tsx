@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Countdown } from "@/components/Countdown";
@@ -79,7 +80,7 @@ export function OpeningExperience() {
               transition={{ delay: reduceMotion ? 0 : .35, duration: 1 }}
             >
               <span className="eyebrow">A SECRET CELEBRATION · AUGUST 11, 2026</span>
-              <h1>Every life leaves a <em>constellation.</em></h1>
+              <h1>Every life holds a <em>constellation.</em></h1>
               <p>
                 We are gathering the photographs, home movies, stories, voices, and little forgotten moments that together tell the story of Sandi’s first fifty years.
               </p>
@@ -97,19 +98,25 @@ export function OpeningExperience() {
               <Countdown />
             </motion.div>
 
-            <motion.div
-              className="storyMark"
-              initial={{ opacity: 0, scale: .94, rotate: 2 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ delay: reduceMotion ? 0 : .65, duration: 1.2 }}
-              aria-hidden="true"
-            >
-              <div className="storyArch">
-                <span className="fifty">50</span>
-                <span className="sandiName">Sandi Yadegari</span>
-                <span className="filmName">Still Becoming</span>
+            <div className="storyMark" aria-hidden="true">
+              <div className="storyPortrait">
+                <Image
+                  className="storyPortraitImage"
+                  src="/api/public/hero-photo"
+                  alt=""
+                  fill
+                  priority
+                  sizes="(max-width: 650px) 285px, (max-width: 930px) 345px, 470px"
+                  onError={event => { event.currentTarget.style.display = "none"; }}
+                />
+                <div className="storyPortraitScrim" />
+                <div className="storyPortraitTitle">
+                  <span className="fifty">50</span>
+                  <span className="sandiName">Sandi Yadegari</span>
+                  <span className="filmName">Still Becoming</span>
+                </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
