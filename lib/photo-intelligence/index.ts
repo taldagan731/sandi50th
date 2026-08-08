@@ -41,7 +41,6 @@ const analysisSchema = z.object({
   })
 });
 
-type Analysis = z.infer<typeof analysisSchema>;
 type Job = { id: string; project_id: string; media_asset_id: string; attempts: number };
 type ProcessOptions = { limit?: number; projectId?: string; submissionId?: string };
 
