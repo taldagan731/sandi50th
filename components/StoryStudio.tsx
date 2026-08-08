@@ -266,15 +266,21 @@ export function StoryStudio() {
     setPilotRunning(true);
     setError("");
     setPilotNotice("");
-    const response = await fetch("/api/studio/photo-intelligence/pilot", { method: "POST" });
+    const response = await fetch("/api/studio/photo-intelligence/archive", { method: "POST" });
     const body = await response.json();
     if (!response.ok) {
-      setError(body.error || body.detail || "The ten-photo pilot could not run.");
+      setError(body.error || body.detail || "The archive could not be auto-assigned.");
     } else {
       const processed = Array.isArray(body.processed) ? body.processed.length : 0;
-      setPilotNotice(processed
-        ? `The pilot processed ${processed} photograph${processed === 1 ? "" : "s"}. Check every low-confidence flag before relying on an assignment.`
-        : "No queued photographs are waiting for the pilot.");
+      const assigned = Number(body.fallback?.assigned ?? 0);
+      const remaining = Number(body.archive?.remaining ?? 0);
+      setPilotNotice(
+        `${assigned} previously unassigned item${assigned === 1 ? "" : "s"} received a chapter. `
+        + `${processed} photograph${processed === 1 ? "" : "s"} received deeper AI analysis in this pass. `
+        + (remaining > 0
+          ? `${remaining} photograph${remaining === 1 ? "" : "s"} remain queued for background refinement.`
+          : "The photographic archive has completed AI refinement.")
+      );
       await load();
     }
     setPilotRunning(false);
@@ -412,7 +418,7 @@ export function StoryStudio() {
           </label>
           <div className="studioSearchActions">
             <button className="secondary" type="button" disabled={pilotRunning || !intelligenceAvailable} onClick={runPhotoPilot}>
-              {pilotRunning ? "Analyzing ten photographs…" : "Run ten-photo pilot"}
+              {pilotRunning ? "Assigning the archive…" : "Auto-assign the entire archive"}
             </button>
             <button className="secondary" type="button" onClick={() => {
               setQuery(""); setEra(""); setChapterFacet(""); setPerson(""); setPlace(""); setSetting(""); setTagState("all");

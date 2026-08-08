@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import {
-  globalPhotoPilotStatus,
-  prepareGlobalPhotoPilot,
+  applyChapterFallbacks,
+  globalPhotoArchiveStatus,
+  prepareGlobalPhotoArchive,
   processPhotoAnalysisJobs
 } from "@/lib/photo-intelligence";
 
@@ -16,25 +17,26 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const prepared = await prepareGlobalPhotoPilot(10);
+  const prepared = await prepareGlobalPhotoArchive();
   if (!prepared.available || !prepared.projectId) {
     return NextResponse.json(prepared, { status: 503 });
   }
-
-  const before = await globalPhotoPilotStatus();
+  const fallback = await applyChapterFallbacks(prepared.projectId);
+  if (!fallback.available) return NextResponse.json(fallback, { status: 503 });
+  const before = await globalPhotoArchiveStatus(prepared.projectId);
   if (!before.available) return NextResponse.json(before, { status: 503 });
   if (before.remaining === 0) {
-    return NextResponse.json({ available: true, pilotComplete: true, pilot: before, processed: [] });
+    return NextResponse.json({ available: true, archiveComplete: true, archive: before, fallback, processed: [] });
   }
-
   const result = await processPhotoAnalysisJobs({
-    limit: Math.min(3, before.remaining),
+    limit: Math.min(6, before.remaining),
     projectId: prepared.projectId
   });
-  const after = await globalPhotoPilotStatus();
+  const after = await globalPhotoArchiveStatus(prepared.projectId);
   return NextResponse.json({
     ...result,
-    pilotComplete: after.remaining === 0,
-    pilot: after
+    archiveComplete: after.remaining === 0,
+    archive: after,
+    fallback
   }, { status: result.available ? 200 : 503 });
 }
