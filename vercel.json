@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/internal/photo-intelligence",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

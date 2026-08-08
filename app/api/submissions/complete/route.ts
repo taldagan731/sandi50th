@@ -1,7 +1,8 @@
 import { copy, head, put } from "@vercel/blob";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { enqueueSubmissionPhotos, processPhotoAnalysisJobs } from "@/lib/photo-intelligence";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -130,6 +131,21 @@ export async function POST(request: Request) {
     } catch (error) {
       backupError = error instanceof Error ? error.message : "Unknown backup error";
       console.error("submission-backup", { submissionId: body.submissionId, error: backupError });
+    }
+
+    try {
+      const queued = await enqueueSubmissionPhotos(body.submissionId);
+      if (queued.available && queued.queued > 0) {
+        after(async () => {
+          const result = await processPhotoAnalysisJobs({ limit: 2, submissionId: body.submissionId });
+          if (!result.available) console.error("photo-analysis-worker-unavailable", result.error);
+        });
+      } else if (!queued.available) {
+        console.error("photo-analysis-queue-unavailable", queued);
+      }
+    } catch (error) {
+      // Analysis is downstream of a successful contribution and must never block or roll back the upload.
+      console.error("photo-analysis-enqueue", { submissionId: body.submissionId, error });
     }
 
     return NextResponse.json({
