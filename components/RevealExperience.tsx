@@ -1,7 +1,8 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
+import { RevealSoundtrack } from "@/components/RevealSoundtrack";
 
 type RevealMedia = {
   id: string;
@@ -17,6 +18,8 @@ type RevealMedia = {
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
 };
+
+type ExpandedPhoto = { src: string; alt: string };
 
 type RevealChapter = {
   number: number;
@@ -60,6 +63,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   const [chapterIndex, setChapterIndex] = useState(0);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
+  const [expandedPhoto, setExpandedPhoto] = useState<ExpandedPhoto | null>(null);
   const chapter = chapters[chapterIndex];
   const archiveMedia = useMemo(() => media.filter(item => item.collection === "archive"), [media]);
   const voiceMemories = useMemo(
@@ -90,6 +94,33 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     [familyAnswers]
   );
 
+  useEffect(() => {
+    if (!expandedPhoto) return;
+    function closeOnEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setExpandedPhoto(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [expandedPhoto]);
+
+  function photoFromTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLImageElement) || target.dataset.revealPhoto !== "true") return null;
+    return { src: target.currentSrc || target.src, alt: target.alt };
+  }
+
+  function handlePhotoClick(event: MouseEvent<HTMLDivElement>) {
+    const photo = photoFromTarget(event.target);
+    if (photo) setExpandedPhoto(photo);
+  }
+
+  function handlePhotoKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const photo = photoFromTarget(event.target);
+    if (!photo) return;
+    event.preventDefault();
+    setExpandedPhoto(photo);
+  }
+
   function chooseChapter(index: number, scroll = false) {
     setChapterIndex(index);
     setActiveMediaId(null);
@@ -116,11 +147,12 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   }
 
   return (
-    <div className="revealExperience">
+    <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
       <header className="revealMasthead">
         <span className="eyebrow">A PRIVATE FILM AND LIVING ARCHIVE</span>
         <h1>Still Becoming</h1>
         <p>Fifty years, told by the people who love Sandi.</p>
+        <RevealSoundtrack ducked={activeRecordingId !== null} />
       </header>
 
       {chapter && (
@@ -216,6 +248,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
       )}
 
+      {expandedPhoto && <PhotoFocus photo={expandedPhoto} onClose={() => setExpandedPhoto(null)} />}
+
       <section className="chapterNineInvitation" aria-labelledby="chapter-nine-title">
         <div className="chapterNineInner">
           <span className="eyebrow">STILL BECOMING</span>
@@ -243,7 +277,7 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
             {answer.photoAssetIds.length > 0 && (
               <div className="familyVoicePhotos">
                 {answer.photoAssetIds.map(photoId => (
-                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" />
+                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
                 ))}
               </div>
             )}
@@ -298,7 +332,7 @@ function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
         <p className="chorusQuestion">{group.question}</p>
         <figure key={answer.id}>
           {answer.photoAssetIds.length > 0 && (
-            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" />
+            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
           )}
           <div>
             <blockquote>{answer.answer}</blockquote>
@@ -505,6 +539,15 @@ function Waveform({ large = false }: { large?: boolean }) {
 }
 
 
+function PhotoFocus({ photo, onClose }: { photo: ExpandedPhoto; onClose: () => void }) {
+  return (
+    <div className="photoFocus" role="dialog" aria-modal="true" aria-label="Expanded photograph" onClick={onClose}>
+      <button type="button" onClick={onClose} aria-label="Close expanded photograph">Close</button>
+      <img src={photo.src} alt={photo.alt} onClick={event => event.stopPropagation()} />
+    </div>
+  );
+}
+
 function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eager: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
@@ -521,6 +564,10 @@ function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eag
       alt={item.caption || `A submitted memory: ${item.originalName}`}
       loading={eager ? "eager" : "lazy"}
       onError={() => setFailed(true)}
+      data-reveal-photo="true"
+      role="button"
+      tabIndex={0}
+      aria-label={`Expand photograph: ${item.caption || item.originalName}`}
     />
   );
 }
