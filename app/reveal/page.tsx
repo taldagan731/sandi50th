@@ -4,6 +4,7 @@ import { RevealExperience } from "@/components/RevealExperience";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
+import "./chapter-nine.css";
 
 export const dynamic = "force-dynamic";
 
