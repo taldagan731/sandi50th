@@ -69,9 +69,9 @@ export async function GET() {
           detail: fallback.error.message
         }, { status: 503 });
       }
-      media = fallback.data ?? [];
+      media = (fallback.data ?? []) as unknown as Array<Record<string, unknown>>;
     } else {
-      media = enriched.data ?? [];
+      media = (enriched.data ?? []) as unknown as Array<Record<string, unknown>>;
     }
   }
 
