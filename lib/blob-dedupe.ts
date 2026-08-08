@@ -17,7 +17,8 @@ export async function duplicateMarkerExists(sha256: string) {
       : 0;
     const name = error instanceof Error ? error.name : "";
     const message = error instanceof Error ? error.message : "";
-    const constructorName = typeof error === "object" && error !== null ? error.constructor?.name ?? "" : "";\n    if (status === 404 || /not.?found/i.test(name) || /not.?found/i.test(constructorName) || /not.?found|does not exist/i.test(message)) return false;
+    const constructorName = typeof error === "object" && error !== null ? error.constructor?.name ?? "" : "";
+    if (status === 404 || /not.?found/i.test(name) || /not.?found/i.test(constructorName) || /not.?found|does not exist/i.test(message)) return false;
     throw error;
   }
 }
