@@ -7,9 +7,9 @@ import { ShaderPerformanceMeter } from "@/components/ShaderPerformanceMeter";
 type RippleStrength = "whisper" | "gentle" | "lively";
 
 const strengths: Record<RippleStrength, { label: string; description: string; amplitude: number; shimmer: number }> = {
-  whisper: { label: "Whisper", description: "Barely-there swell and a faint reflected shimmer.", amplitude: 0.55, shimmer: 0.22 },
-  gentle: { label: "Gentle", description: "Natural movement that remains visible without calling attention to itself.", amplitude: 1, shimmer: 0.34 },
-  lively: { label: "Lively", description: "The clearest ripple, still capped well below a melting effect.", amplitude: 1.65, shimmer: 0.46 }
+  whisper: { label: "Whisper", description: "A subtle but visible swell and reflected shimmer.", amplitude: 1.05, shimmer: 0.4 },
+  gentle: { label: "Gentle", description: "Natural movement that is immediately visible without looking artificial.", amplitude: 2.15, shimmer: 0.62 },
+  lively: { label: "Lively", description: "The clearest ripple, still masked away from Sandi and the sky.", amplitude: 3.4, shimmer: 0.82 }
 };
 
 const vertexShader = `#version 300 es
@@ -58,7 +58,7 @@ void main(){
   vec3 color=texture(photograph,vec2(source.x+displacement.x,1.-source.y-displacement.y)).rgb;
   float shimmer=pow(max(0.,sin(source.x*42.+source.y*67.-time*.72)),8.);
   shimmer*=smoothstep(.27,.78,source.y)*(1.-smoothstep(.78,.98,source.y))*waterMask;
-  color+=vec3(1.,.84,.68)*shimmer*.042*shimmerAmount;
+  color+=vec3(1.,.84,.68)*shimmer*.072*shimmerAmount;
   outputColor=vec4(color,waterMask);
 }`;
 
@@ -71,21 +71,24 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   return shader;
 }
 
-function WaterRippleLayer({ strength }: { strength: RippleStrength }) {
+type MotionState = "checking" | "active" | "reduced" | "unavailable" | "failed";
+
+function WaterRippleLayer({ strength, onState }: { strength: RippleStrength; onState: (state: MotionState) => void }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const shell=shellRef.current,canvas=canvasRef.current;
-    if(!shell||!canvas||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    if(!shell||!canvas)return;
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){onState("reduced");return;}
     const gl=canvas.getContext("webgl2",{alpha:true,antialias:false,premultipliedAlpha:false,powerPreference:"low-power"});
-    if(!gl)return;
+    if(!gl){onState("unavailable");return;}
     const vertex=compile(gl,gl.VERTEX_SHADER,vertexShader),fragment=compile(gl,gl.FRAGMENT_SHADER,fragmentShader);
-    if(!vertex||!fragment)return;
+    if(!vertex||!fragment){onState("failed");return;}
     const program=gl.createProgram();
-    if(!program)return;
+    if(!program){onState("failed");return;}
     gl.attachShader(program,vertex);gl.attachShader(program,fragment);gl.linkProgram(program);
-    if(!gl.getProgramParameter(program,gl.LINK_STATUS))return;
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS)){onState("failed");return;}
     gl.useProgram(program);
     const buffer=gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
@@ -116,8 +119,9 @@ function WaterRippleLayer({ strength }: { strength: RippleStrength }) {
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
       gl.uniform2f(gl.getUniformLocation(program,"imageSize"),image.naturalWidth,image.naturalHeight);
       gl.uniform1i(gl.getUniformLocation(program,"photograph"),0);
-      ready=true;canvas.dataset.ready="true";resume();
+      ready=true;canvas.dataset.ready="true";onState("active");resume();
     };
+    image.onerror=()=>onState("failed");
     image.src="/images/sandi-hero.jpeg";
     const observer=new IntersectionObserver(entries=>{visible=Boolean(entries[0]?.isIntersecting);if(visible)resume();else stop();},{rootMargin:"80px"});
     const visibility=()=>document.hidden?stop():resume();
@@ -125,20 +129,22 @@ function WaterRippleLayer({ strength }: { strength: RippleStrength }) {
     gl.uniform1f(gl.getUniformLocation(program,"amplitude"),strengths[strength].amplitude);
     gl.uniform1f(gl.getUniformLocation(program,"shimmerAmount"),strengths[strength].shimmer);
     gl.clearColor(0,0,0,0);observer.observe(shell);resizeObserver.observe(shell);document.addEventListener("visibilitychange",visibility);resize();
-    return()=>{stop();observer.disconnect();resizeObserver.disconnect();document.removeEventListener("visibilitychange",visibility);image.onload=null;gl.deleteTexture(texture);gl.deleteProgram(program);gl.deleteShader(vertex);gl.deleteShader(fragment);gl.deleteBuffer(buffer);};
-  },[strength]);
+    return()=>{stop();observer.disconnect();resizeObserver.disconnect();document.removeEventListener("visibilitychange",visibility);image.onload=null;image.onerror=null;gl.deleteTexture(texture);gl.deleteProgram(program);gl.deleteShader(vertex);gl.deleteShader(fragment);gl.deleteBuffer(buffer);};
+  },[strength,onState]);
 
   return <div ref={shellRef} className="waterRippleLayer" aria-hidden="true"><canvas ref={canvasRef}/></div>;
 }
 
 export function WaterRipplePreview(){
   const [strength,setStrength]=useState<RippleStrength>("gentle");
+  const [motionState,setMotionState]=useState<MotionState>("checking");
   const current=strengths[strength];
   return <section className="waterPreviewComparison">
     <header><p>PRIVATE MOTION STUDY</p><h1>Beach water, gently alive</h1><span>The photograph appears first. WebGL adds only the masked water layer afterward.</span></header>
     <div className="waterPreviewStage">
       <Image className="waterPreviewPhoto" src="/images/sandi-hero.jpeg" alt="Sandi standing in the water at the beach" fill priority sizes="100vw"/>
-      <WaterRippleLayer strength={strength}/>
+      <WaterRippleLayer strength={strength} onState={setMotionState}/>
+      <p className="waterMotionStatus" data-state={motionState} aria-live="polite">{motionState==="active"?"Motion active · masked water only":motionState==="reduced"?"Static by design · Reduced Motion is enabled on this device":motionState==="unavailable"?"Static fallback · WebGL2 is unavailable":motionState==="failed"?"Static fallback · the animation layer could not start":"Checking the animation layer…"}</p>
       <div className="waterPreviewCopy"><span>50</span><strong>Sandi Yadegari</strong></div>
     </div>
     <div className="waterPreviewChoices" role="radiogroup" aria-label="Water movement intensity">
