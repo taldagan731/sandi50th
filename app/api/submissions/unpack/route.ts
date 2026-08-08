@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       }, { status: 202 });
     }
 
-    const extracted: Array<PutBlobResult & { originalName: string; bytes: number }> = [];
+    const extracted: Array<PutBlobResult & { originalName: string; bytes: number; sha256?: string }> = [];
     for (const [index, entry] of useful.entries()) {
       const fileBytes = extractEntry(bytes, entry);
       const normalized = normalizeArchivePath(entry.name);
