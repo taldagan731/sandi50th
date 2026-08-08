@@ -181,8 +181,8 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
     <section className="archiveFilmStack" id="archive-films" aria-labelledby="archive-films-title">
       <header>
         <span className="eyebrow">THE FILM ARCHIVE</span>
-        <h2 id="archive-films-title">Moments that still move.</h2>
-        <p>Home movies and shared clips gather here as one growing collection. Bring a film forward, then play it in place.</p>
+        <h2 id="archive-films-title">Press play on the good parts.</h2>
+        <p>Home movies and shared clips bring the room to life. Choose one, turn up the sound, and let it play.</p>
       </header>
 
       <div className="filmStackStage">
