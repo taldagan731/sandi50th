@@ -84,6 +84,43 @@ requireText("components/RevealExperience.tsx", "FamilyChorus", "the sequential f
 requireText("app/reveal/page.tsx", "decodeFamilyQaMetadata", "private reveal Family Q&A loading");
 forbidText("app/page.tsx", "FAMILY_QA_SEED", "private family Q&A on the public homepage");
 
+requireText("package.json", '"canvas-confetti": "1.9.4"', "the pinned canvas-confetti dependency");
+requireText("lib/confetti.ts", 'import("canvas-confetti")', "event-only dynamic confetti loading");
+requireText("lib/confetti.ts", 'prefers-reduced-motion: reduce', "reduced-motion suppression");
+requireText("lib/confetti.ts", "disableForReducedMotion: true", "canvas-confetti reduced-motion safeguard");
+requireText("lib/confetti.ts", 'max-width: 640px', "lower mobile particle count");
+forbidText("lib/confetti.ts", "requestAnimationFrame", "an application animation loop");
+forbidText("lib/confetti.ts", "setInterval", "a repeating confetti timer");
+requireText("components/MemoryContributionForm.tsx", "fireContributionConfetti();", "memory and photo contribution celebration");
+requireText("components/RecordingContributionForm.tsx", "fireContributionConfetti();", "voice and birthday-message celebration");
+requireText("components/RevealExperience.tsx", "fireRevealFinaleConfetti();", "the completed birthday-message reel celebration");
+
+const confettiSource = [...sourceFiles("app"), ...sourceFiles("components"), ...sourceFiles("lib")]
+  .filter(path => /\.(ts|tsx)$/.test(path));
+const allowedConfettiCallSites = new Set([
+  "lib/confetti.ts",
+  "components/MemoryContributionForm.tsx",
+  "components/RecordingContributionForm.tsx",
+  "components/RevealExperience.tsx"
+]);
+const allowedConfettiModuleSites = new Set([
+  "lib/confetti.ts",
+  "lib/canvas-confetti.d.ts"
+]);
+for (const path of confettiSource) {
+  const relativePath = relative(root, path).replaceAll("\\", "/");
+  const content = readFileSync(path, "utf8");
+  const referencesCelebration =
+    content.includes("fireContributionConfetti") ||
+    content.includes("fireRevealFinaleConfetti");
+  if (referencesCelebration && !allowedConfettiCallSites.has(relativePath)) {
+    failures.push(`${relativePath} introduces confetti outside the approved contribution and reveal-finale placements.`);
+  }
+  if (content.includes('"canvas-confetti"') && !allowedConfettiModuleSites.has(relativePath)) {
+    failures.push(`${relativePath} imports canvas-confetti directly instead of using the guarded event helper.`);
+  }
+}
+
 const publicSource = [...sourceFiles("app"), ...sourceFiles("components")]
   .filter(path => /\.(ts|tsx|css)$/.test(path));
 for (const path of publicSource) {
