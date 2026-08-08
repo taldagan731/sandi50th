@@ -27,8 +27,8 @@ function sourceFiles(directory) {
   });
 }
 
-requireText("app/layout.tsx", "noindex", "the sitewide noindex directive");
-requireText("app/robots.ts", "Disallow", "robots exclusion");
+requireText("app/layout.tsx", "robots: { index: false, follow: false }", "the sitewide noindex directive");
+requireText("app/robots.ts", "disallow: \"/\"", "robots exclusion");
 requireText("app/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("app/contribute/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("components/OpeningExperience.tsx", "The way we see you.", "the present-tense hero line");
