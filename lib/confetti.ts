@@ -49,9 +49,9 @@ async function launchCelebration(kind: CelebrationKind) {
 }
 
 export function fireContributionConfetti() {
-  void launchCelebration("contribution");
+  void launchCelebration("contribution").catch(() => undefined);
 }
 
 export function fireRevealFinaleConfetti() {
-  void launchCelebration("reveal-finale");
+  void launchCelebration("reveal-finale").catch(() => undefined);
 }
