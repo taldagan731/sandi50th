@@ -6,6 +6,7 @@ import { StoryWorkshop } from "@/components/StoryWorkshop";
 import { FamilyQaStudio } from "@/components/FamilyQaStudio";
 import { StudioLiveFeed } from "@/components/StudioLiveFeed";
 import { MemoryContributionForm } from "@/components/MemoryContributionForm";
+import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
 
 type MediaItem = {
   id: string;
@@ -335,6 +336,8 @@ export function StoryStudio() {
         lastRefreshed={lastRefreshed}
         onVisibilityChange={reviewSubmission}
       />
+
+      <DuplicateReviewStudio />
 
       <details className="studioTools">
         <summary>Organize, search, and edit contributions</summary>
