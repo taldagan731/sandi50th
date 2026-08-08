@@ -50,32 +50,50 @@ export async function GET() {
   let media: Array<Record<string, unknown>> = [];
 
   if (ids.length) {
-    const enriched = await owner.supabase
-      .from("media_assets")
-      .select(intelligenceColumns)
-      .in("submission_id", ids)
-      .order("display_order", { ascending: true });
+    const pageSize = 1000;
+    let enrichedError: { code?: string; message: string } | null = null;
 
-    if (enriched.error) {
-      const missingIntelligenceColumns = enriched.error.code === "42703" || /analysis_|exif_|inferred_year|assignment_/i.test(enriched.error.message);
+    for (let from = 0; ; from += pageSize) {
+      const enriched = await owner.supabase
+        .from("media_assets")
+        .select(intelligenceColumns)
+        .in("submission_id", ids)
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (enriched.error) {
+        enrichedError = enriched.error;
+        break;
+      }
+      const page = (enriched.data ?? []) as unknown as Array<Record<string, unknown>>;
+      media.push(...page);
+      if (page.length < pageSize) break;
+    }
+
+    if (enrichedError) {
+      const missingIntelligenceColumns = enrichedError.code === "42703" || /analysis_|exif_|inferred_year|assignment_/i.test(enrichedError.message);
       if (!missingIntelligenceColumns) {
-        return NextResponse.json({ error: enriched.error.message }, { status: 500 });
+        return NextResponse.json({ error: enrichedError.message }, { status: 500 });
       }
       intelligenceAvailable = false;
-      const fallback = await owner.supabase
-        .from("media_assets")
-        .select(baseMediaColumns)
-        .in("submission_id", ids)
-        .order("display_order", { ascending: true });
-      if (fallback.error) {
-        return NextResponse.json({
-          error: "The studio migration has not been installed yet.",
-          detail: fallback.error.message
-        }, { status: 503 });
+      media = [];
+
+      for (let from = 0; ; from += pageSize) {
+        const fallback = await owner.supabase
+          .from("media_assets")
+          .select(baseMediaColumns)
+          .in("submission_id", ids)
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (fallback.error) {
+          return NextResponse.json({
+            error: "The studio migration has not been installed yet.",
+            detail: fallback.error.message
+          }, { status: 503 });
+        }
+        const page = (fallback.data ?? []) as unknown as Array<Record<string, unknown>>;
+        media.push(...page);
+        if (page.length < pageSize) break;
       }
-      media = (fallback.data ?? []) as unknown as Array<Record<string, unknown>>;
-    } else {
-      media = (enriched.data ?? []) as unknown as Array<Record<string, unknown>>;
     }
   }
 
