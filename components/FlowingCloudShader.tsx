@@ -134,7 +134,6 @@ export function FlowingCloudShader({ palette, className = "" }: { palette: Cloud
     };
     const resume = () => {
       if (!visible || document.hidden || frame) return;
-      started = performance.now() - (performance.now() - started);
       frame = requestAnimationFrame(draw);
     };
     const stop = () => { if (frame) cancelAnimationFrame(frame); frame = 0; };

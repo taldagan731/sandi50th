@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FlowingCloudShader, type CloudPalette } from "@/components/FlowingCloudShader";
+import { ShaderPerformanceMeter } from "@/components/ShaderPerformanceMeter";
 
 const choices: Array<{ id: CloudPalette; title: string; description: string }> = [
   { id: "coral", title: "Bright Coral Sky", description: "The happiest and warmest: vivid coral clouds, raspberry pink and peach light." },
@@ -32,6 +33,7 @@ export function ShaderPalettePreview() {
           </button>
         ))}
       </div>
+      <ShaderPerformanceMeter sampleKey={selected} />
       <p className="shaderSelection"><strong>Selected:</strong> {active.title}. This page is comparison-only; none is wired into the live hero or reveal yet.</p>
     </section>
   );
