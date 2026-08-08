@@ -68,6 +68,8 @@ export function StoryStudio() {
   const [error, setError] = useState("");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
+  const [notificationTesting, setNotificationTesting] = useState(false);
+  const [notificationNotice, setNotificationNotice] = useState("");
   const [intelligenceAvailable, setIntelligenceAvailable] = useState(true);
   const [query, setQuery] = useState("");
   const [era, setEra] = useState("");
@@ -275,6 +277,20 @@ export function StoryStudio() {
     setPilotRunning(false);
   }
 
+  async function testArrivalEmail() {
+    setNotificationTesting(true);
+    setError("");
+    setNotificationNotice("");
+    const response = await fetch("/api/studio/notifications/test", { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setError(body.detail || body.error || "The test notification could not be delivered.");
+    } else {
+      setNotificationNotice("The test arrival notification was accepted by Resend. Check the configured inbox.");
+    }
+    setNotificationTesting(false);
+  }
+
   async function verifyBackups() {
     setBackingUp(true);
     setError("");
@@ -317,6 +333,9 @@ export function StoryStudio() {
             onClick={toggleRevealAccess}
           >
             {revealAccessWorking ? "Changing access…" : revealPublic ? "Reveal is open — close it" : "Open reveal publicly"}
+          </button>
+          <button className="secondary" type="button" disabled={notificationTesting} onClick={testArrivalEmail}>
+            {notificationTesting ? "Sending test…" : "Test arrival email"}
           </button>
           <button className="secondary" type="button" disabled={backingUp} onClick={verifyBackups}>{backingUp ? "Verifying backups…" : "Verify all backups"}</button>
           <a className="secondary" href="/api/studio/export">Download archive index</a>
@@ -414,6 +433,7 @@ export function StoryStudio() {
 
       {error && <p className="studioError" role="alert">{error}</p>}
       {backupNotice && <p className="studioNotice" role="status">{backupNotice}</p>}
+      {notificationNotice && <p className="studioNotice" role="status">{notificationNotice}</p>}
       {!visible.length && <div className="studioEmpty">Nothing is in this view.</div>}
 
       <div className="studioSubmissions">

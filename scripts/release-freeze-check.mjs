@@ -74,6 +74,8 @@ requireText("app/api/internal/photo-intelligence/route.ts", "before.remaining ==
 forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
 requireText("app/api/submissions/complete/route.ts", "sendContributionArrivalEmail", "arrival email scheduling");
 requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL", "explicit arrival-email recipient configuration");
+requireText("app/api/studio/notifications/test/route.ts", "requireStudioOwner", "owner authentication for arrival-email testing");
+requireText("app/api/studio/notifications/test/route.ts", "sendContributionArrivalEmail", "the owner-triggered Resend delivery test");
 
 requireText("lib/family-qa.ts", "FAMILY_QA_SEED", "the structured family Q&A seed");
 requireText("lib/family-qa.ts", "FAMILY_QA_PENDING", "the unanswered-family follow-up list");
