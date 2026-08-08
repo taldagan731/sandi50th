@@ -19,8 +19,7 @@ export async function GET() {
   const { data: submissions } = await supabase
     .from("submissions")
     .select("id,name")
-    .eq("project_id", project.id)
-    .eq("status", "approved");
+    .eq("project_id", project.id);
   const eligibleIds = (submissions ?? [])
     .filter(item => !TEST_CONTRIBUTOR.test(item.name ?? ""))
     .map(item => item.id);
