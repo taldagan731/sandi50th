@@ -17,7 +17,7 @@ type PreparedUpload = { pathname: string; name: string; type: string; size: numb
 type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
 
 export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
-  const [captureKind, setCaptureKind] = useState<CaptureKind>("audio");
+  const [captureKind, setCaptureKind] = useState<CaptureKind>(kind === "birthday" ? "video" : "audio");
   const [phase, setPhase] = useState<"idle" | "requesting" | "recording" | "preview" | "uploading" | "success">("idle");
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -56,10 +56,12 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
     }
   }, [phase]);
 
-  async function beginRecording() {
+  async function beginRecording(requestedKind: CaptureKind = effectiveKind) {
     setError("");
+    discardPreview();
+    setCaptureKind(requestedKind);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("Direct recording is not supported by this browser. Choose a recording made with the Camera or Voice Memos app instead.");
+      setError("This browser cannot record directly. Tap Use phone camera or Choose an existing recording instead.");
       setPhase("idle");
       return;
     }
@@ -67,14 +69,14 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
     try {
       const media = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: effectiveKind === "video"
+        video: requestedKind === "video"
           ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
           : false
       });
       stream.current = media;
       if (liveVideo.current) liveVideo.current.srcObject = media;
 
-      const mimeType = chooseMimeType(effectiveKind);
+      const mimeType = chooseMimeType(requestedKind);
       const nextRecorder = mimeType ? new MediaRecorder(media, { mimeType }) : new MediaRecorder(media);
       recorder.current = nextRecorder;
       chunks.current = [];
@@ -87,9 +89,15 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         setPhase("idle");
       };
       nextRecorder.onstop = () => {
-        const type = nextRecorder.mimeType || mimeType || (effectiveKind === "video" ? "video/webm" : "audio/webm");
+        const type = nextRecorder.mimeType || mimeType || (requestedKind === "video" ? "video/webm" : "audio/webm");
         const blob = new Blob(chunks.current, { type });
-        const extension = extensionFor(type, effectiveKind);
+        if (!blob.size) {
+          setError("The phone created an empty recording. Tap Use phone camera; it is the most reliable option on this device.");
+          stopTracks();
+          setPhase("idle");
+          return;
+        }
+        const extension = extensionFor(type, requestedKind);
         const file = new File([blob], (birthday ? "birthday-message" : "voice-memory") + "-" + Date.now() + "." + extension, {
           type,
           lastModified: Date.now()
@@ -106,7 +114,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       setPhase("recording");
     } catch (cause) {
       console.error("media-recorder-start", cause);
-      setError("Camera or microphone access was not available. You can still choose a recording from this phone.");
+      setError(mediaAccessMessage(cause, requestedKind));
       stopTracks();
       setPhase("idle");
     }
@@ -121,12 +129,16 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   }
 
   function recordAgain() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl("");
-    setRecordingFile(null);
+    discardPreview();
     setSeconds(0);
     setError("");
     setPhase("idle");
+  }
+
+  function discardPreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl("");
+    setRecordingFile(null);
   }
 
   function chooseFallback(event: ChangeEvent<HTMLInputElement>) {
@@ -189,19 +201,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       if (!prepareResponse.ok) throw new Error(prepared.error || "Could not prepare the recording.");
 
       const target = prepared.uploads[0] as PreparedUpload;
-      const blob = await upload(target.pathname, recordingFile, {
-        access: "private",
-        handleUploadUrl: "/api/uploads",
-        clientPayload: JSON.stringify({
-          submissionId: prepared.submissionId,
-          originalName: recordingFile.name,
-          bytes: recordingFile.size,
-          contentType
-        }),
-        contentType,
-        multipart: recordingFile.size >= MULTIPART_THRESHOLD,
-        onUploadProgress: event => setProgress(event.percentage)
-      });
+      const blob = await uploadRecordingWithRetry(target, recordingFile, String(prepared.submissionId), contentType, percentage => setProgress(percentage));
 
       const completed: CompletedFile = {
         ...blob,
@@ -255,11 +255,14 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
           : "Thirty to sixty seconds is enough. The pauses, the laugh, and the way you say her name are part of the memory."}</p>
       </header>
 
-      {birthday && phase === "idle" && (
-        <fieldset className="captureChoice">
-          <legend>How would you like to record?</legend>
-          <label><input type="radio" name="captureKind" checked={captureKind === "video"} onChange={() => setCaptureKind("video")} /> Camera and voice</label>
-          <label><input type="radio" name="captureKind" checked={captureKind === "audio"} onChange={() => setCaptureKind("audio")} /> Voice only</label>
+      {phase !== "uploading" && (
+        <fieldset className="recordingMethods">
+          <legend>Choose one option</legend>
+          {birthday && <button className="primary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("video")}>Record video now</button>}
+          <button className="secondary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("audio")}>Record voice now</button>
+          {birthday && <label className="filePicker secondary nativeCapture">Use phone camera<input type="file" accept="video/*" capture="user" disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback} /></label>}
+          <label className="filePicker secondary">Choose an existing recording<input type="file" accept={birthday ? "audio/*,video/*" : "audio/*"} disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback} /></label>
+          <small>Direct recording requires one browser permission tap. If that prompt fails, Use phone camera opens the phone's own recorder.</small>
         </fieldset>
       )}
 
@@ -281,13 +284,8 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
 
         {(phase === "idle" || phase === "requesting") && (
           <div className="recorderStart">
-            <button className="primary recordButton" type="button" disabled={phase === "requesting"} onClick={beginRecording}>
-              {phase === "requesting" ? "Opening " + (effectiveKind === "video" ? "camera…" : "microphone…") : effectiveKind === "video" ? "Start camera message" : "Start voice recording"}
-            </button>
-            <label className="filePicker secondary">
-              Choose an existing recording
-              <input type="file" accept={birthday ? "audio/*,video/*" : "audio/*"} onChange={chooseFallback} />
-            </label>
+            <strong>{phase === "requesting" ? "Opening " + (effectiveKind === "video" ? "camera..." : "microphone...") : "Choose any recording option above."}</strong>
+            <span>{birthday ? "Video, voice, the phone camera, and existing recordings are all accepted." : "Record here or choose a Voice Memos file from your phone."}</span>
           </div>
         )}
       </div>
@@ -368,4 +366,32 @@ function normalizedType(file: File) {
 
 function formatTime(seconds: number) {
   return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+}
+function mediaAccessMessage(cause: unknown, requestedKind: CaptureKind) {
+  const name = cause instanceof DOMException ? cause.name : "";
+  const device = requestedKind === "video" ? "camera and microphone" : "microphone";
+  if (name === "NotAllowedError" || name === "SecurityError") return `The ${device} permission was blocked. Allow it for sandi50th.com in the browser's site settings, or use the phone recorder option.`;
+  if (name === "NotFoundError" || name === "OverconstrainedError") return `This device did not provide the requested ${device}. Use the phone recorder option instead.`;
+  if (name === "NotReadableError" || name === "AbortError") return `Another app may be using the ${device}. Close the other app and try again, or use the phone recorder option.`;
+  return `The ${device} could not open here. Use the phone recorder option; your message can still be sent.`;
+}
+
+async function uploadRecordingWithRetry(target: PreparedUpload, file: File, submissionId: string, contentType: string, onProgress: (percentage: number) => void) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await upload(target.pathname, file, {
+        access: "private",
+        handleUploadUrl: "/api/uploads",
+        clientPayload: JSON.stringify({ submissionId, originalName: file.name, bytes: file.size, contentType }),
+        contentType,
+        multipart: file.size >= MULTIPART_THRESHOLD,
+        onUploadProgress: event => onProgress(event.percentage)
+      });
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await new Promise(resolve => window.setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("The recording could not be uploaded after three attempts.");
 }
