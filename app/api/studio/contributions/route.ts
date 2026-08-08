@@ -41,6 +41,11 @@ export async function GET() {
   const projectId = owner?.project.id ?? previewProject?.id;
   if (!projectId) return NextResponse.json({ error: "Project not found" }, { status: 404 });
   const supabase = owner?.supabase ?? createAdminClient();
+  const { count: ownerMembershipCount } = await supabase
+    .from("project_members")
+    .select("user_id", { count: "exact", head: true })
+    .eq("project_id", projectId)
+    .eq("role", "owner");
 
   const { data: submissions, error: submissionError } = await supabase
     .from("submissions")
@@ -119,10 +124,11 @@ export async function GET() {
   }));
 
   const report = buildContributionReport(enrichedSubmissions);
-  if (previewOwner) return NextResponse.json({ intelligenceAvailable, report });
+  if (previewOwner) return NextResponse.json({ intelligenceAvailable, ownerMembershipCount, report });
 
   return NextResponse.json({
     intelligenceAvailable,
+    ownerMembershipCount,
     report,
     submissions: enrichedSubmissions
   });
