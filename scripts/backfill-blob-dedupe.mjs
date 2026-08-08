@@ -24,7 +24,7 @@ do {
   cursor = page.hasMore ? page.cursor : undefined;
 } while (cursor);
 
-const images = all.filter(blob => /^image\//i.test(blob.contentType || ""));
+const images = all.filter(blob => /\.(?:jpe?g|png|webp|gif|heic|heif)$/i.test(blob.pathname));
 const firstByHash = new Map();
 const duplicates = [];
 let indexed = 0;
