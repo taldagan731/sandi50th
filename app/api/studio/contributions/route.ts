@@ -43,7 +43,7 @@ export async function GET() {
 
   const ids = submissions?.map(item => item.id) ?? [];
   let intelligenceAvailable = true;
-  let media: Array<Record<string, any>> = [];
+  let media: Array<Record<string, unknown>> = [];
 
   if (ids.length) {
     const enriched = await owner.supabase
@@ -75,7 +75,7 @@ export async function GET() {
     }
   }
 
-  const mediaBySubmission = new Map<string, Array<Record<string, any>>>();
+  const mediaBySubmission = new Map<string, Array<Record<string, unknown>>>();
   for (const item of media) {
     const current = mediaBySubmission.get(String(item.submission_id)) ?? [];
     current.push(item);
