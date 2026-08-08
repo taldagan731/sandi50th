@@ -99,7 +99,7 @@ export const FAMILY_QA_SEED: FamilyQaAnswer[] = [
     answer: "We are not really competitive with each other.",
     chapterNumber: 7,
     chorusKeys: [],
-    showInChapter: false
+    showInChapter: true
   },
   {
     ...jenny,
@@ -108,7 +108,7 @@ export const FAMILY_QA_SEED: FamilyQaAnswer[] = [
     answer: "No, we never shared a bedroom.",
     chapterNumber: 2,
     chorusKeys: [],
-    showInChapter: false
+    showInChapter: true
   },
   {
     ...jenny,
@@ -117,7 +117,7 @@ export const FAMILY_QA_SEED: FamilyQaAnswer[] = [
     answer: "Our last argument was on the phone over politics. Other than that, we do not really argue a lot.",
     chapterNumber: 7,
     chorusKeys: [],
-    showInChapter: false
+    showInChapter: true
   },
   {
     ...jenny,
