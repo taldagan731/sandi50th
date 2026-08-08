@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
+import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 
 type RevealMedia = {
@@ -156,10 +158,22 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   return (
     <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
       <header className="revealMasthead">
-        <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
-        <h1>Still Becoming</h1>
-        <p>Fifty years, told by the people who love Sandi.</p>
-        <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} />
+        <Image
+          className="revealMastheadPhoto"
+          src="/api/public/hero-photo"
+          alt="Sandi Yadegari, surrounded by the warmth and colour of her fiftieth-birthday story"
+          fill
+          priority
+          sizes="100vw"
+        />
+        <div className="revealMastheadPhotoScrim" aria-hidden="true" />
+        <SandiSignaturePrelude />
+        <div className="revealMastheadContent">
+          <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
+          <h1>Still Becoming</h1>
+          <p>Fifty years, told by the people who love Sandi.</p>
+          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} />
+        </div>
       </header>
 
       {chapter && (

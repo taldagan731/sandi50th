@@ -8,6 +8,7 @@ import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
 import "./name-chorus.css";
+import "./sandi-signature.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 

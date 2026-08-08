@@ -46,6 +46,17 @@ requireText("components/RevealExperience.tsx", "RevealSoundtrack", "the reveal s
 requireText("components/RevealExperience.tsx", "ducked={activeRecordingId !== null}", "automatic soundtrack ducking");
 requireText("components/RevealExperience.tsx", "data-reveal-photo=\"true\"", "tap-to-expand reveal photographs");
 requireText("components/RevealSoundtrackV2.tsx", "NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL", "the configurable reveal soundtrack");
+requireText("components/RevealExperience.tsx", "<SandiSignaturePrelude />", "the one-time reveal signature opening");
+requireText("components/RevealExperience.tsx", "revealMastheadPhoto", "the photograph revealed beneath the signature");
+requireText("components/RevealExperience.tsx", "priority", "concurrent priority loading for the reveal photograph");
+requireText("components/SandiSignaturePrelude.tsx", 'pathLength="100"', "measured hand-drawn SVG strokes");
+requireText("components/SandiSignaturePrelude.tsx", "sandi-flow", "the coral, mint, and periwinkle stroke gradient");
+requireText("app/reveal/sandi-signature.css", "stroke-dasharray:100", "the SVG write-on animation");
+requireText("app/reveal/sandi-signature.css", "sandi-colour-flow", "colour movement through the signature");
+requireText("app/reveal/sandi-signature.css", "@media(prefers-reduced-motion:reduce)", "a static reduced-motion signature");
+requireText("app/reveal/sandi-signature.css", "stroke-dashoffset:0;animation:none", "the fully drawn reduced-motion state");
+forbidText("components/SandiSignaturePrelude.tsx", "framer-motion", "a signature animation dependency");
+forbidText("components/SandiSignaturePrelude.tsx", "gsap", "a signature animation dependency");
 requireText("components/MemoryContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after memory success");
 requireText("components/RecordingContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after recorded contributions");
 requireText("components/ContributionHub.tsx", "<NameChorusRecorder standalone", "the return-visitor name-only path");
