@@ -154,6 +154,17 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
       {birthdayMessages.length > 0 && (
         <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
       )}
+
+      <section className="chapterNineInvitation" aria-labelledby="chapter-nine-title">
+        <div className="chapterNineInner">
+          <span className="eyebrow">STILL BECOMING</span>
+          <div className="chapterNineNumber">CHAPTER 09</div>
+          <h2 id="chapter-nine-title">The rest is yours to write.</h2>
+          <p>This story arrives at fifty without closing. It holds what the people who love you can see, and leaves room for everything only you can choose next.</p>
+          <p>Whenever you are ready, this chapter belongs to you.</p>
+          <div className="chapterNineRule" aria-hidden="true" />
+        </div>
+      </section>
     </div>
   );
 }
