@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StoryWorkshop } from "@/components/StoryWorkshop";
+import { FamilyQaStudio } from "@/components/FamilyQaStudio";
 
 type MediaItem = {
   id: string;
@@ -120,6 +121,7 @@ export function StoryStudio() {
     return <StudioLogin onSignedIn={load} error={error} />;
   }
 
+  const regularSubmissions = submissions.filter(submission => submission.status !== "family_qa");
   const normalizedQuery = query.trim().toLowerCase();
   const mediaMatchesFacets = (item: MediaItem) => {
     if (era && item.analysis_era !== era) return false;
@@ -131,7 +133,7 @@ export function StoryStudio() {
     return true;
   };
 
-  const visible = submissions.filter(submission => {
+  const visible = regularSubmissions.filter(submission => {
     const hidden = submission.review_status === "excluded";
     if (filter === "visible" ? hidden : !hidden) return false;
     if (person && !submission.people.some(value => value === person)) return false;
@@ -161,23 +163,23 @@ export function StoryStudio() {
     return searchable.includes(normalizedQuery);
   });
 
-  const allMedia = submissions.flatMap(submission => submission.media);
+  const allMedia = regularSubmissions.flatMap(submission => submission.media);
   const photoMedia = allMedia.filter(item => item.mime_type.startsWith("image/"));
   const analyzedPhotos = photoMedia.filter(item => item.analysis_status === "completed" || item.analysis_status === "review_required");
   const lowConfidencePhotos = photoMedia.filter(item => item.analysis_status === "review_required" || item.analysis_status === "failed");
   const untaggedPhotos = photoMedia.filter(item => !item.analysis_status || ["unprocessed", "queued", "processing"].includes(item.analysis_status));
   const eras = Array.from(new Set(photoMedia.map(item => item.analysis_era).filter((value): value is string => Boolean(value)))).sort();
   const settings = Array.from(new Set(photoMedia.map(item => item.analysis_setting).filter((value): value is string => Boolean(value)))).sort();
-  const people = Array.from(new Set(submissions.flatMap(item => item.people).filter(Boolean))).sort();
-  const places = Array.from(new Set(submissions.map(item => item.location).filter(Boolean))).sort();
+  const people = Array.from(new Set(regularSubmissions.flatMap(item => item.people).filter(Boolean))).sort();
+  const places = Array.from(new Set(regularSubmissions.map(item => item.location).filter(Boolean))).sort();
 
-  const storyCounts = submissions.reduce((totals, submission) => {
+  const storyCounts = regularSubmissions.reduce((totals, submission) => {
     if (submission.review_status === "excluded") totals.hidden += 1;
     else totals.visible += 1;
     return totals;
   }, { visible: 0, hidden: 0 });
 
-  const counts = submissions.reduce((totals, submission) => {
+  const counts = regularSubmissions.reduce((totals, submission) => {
     for (const item of submission.media) {
       totals.total += 1;
       if (item.review_status === "excluded") totals.hidden += 1;
@@ -267,7 +269,7 @@ export function StoryStudio() {
         <div>
           <span className="eyebrow">PRIVATE STORY STUDIO</span>
           <h1>The memories that have arrived.</h1>
-          <p>{submissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
+          <p>{regularSubmissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
         </div>
         <div className="studioToolbarActions">
           <button
@@ -404,6 +406,15 @@ export function StoryStudio() {
           </article>
         ))}
       </div>
+
+      <FamilyQaStudio
+        media={regularSubmissions.flatMap(submission => submission.media.map(item => ({
+          id: item.id,
+          originalName: item.original_name,
+          mimeType: item.mime_type,
+          contributorName: submission.name
+        })))}
+      />
 
       <StoryWorkshop />
     </div>
