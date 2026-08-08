@@ -17,7 +17,7 @@ export function OpeningExperience() {
     <section className="opening celebrationHero" aria-labelledby="birthday-hero-title">
       <Image
         className="celebrationHeroImage"
-        src="/api/public/hero-photo"
+        src="/images/sandi-hero.jpeg"
         alt="Sandi Yadegari, celebrated by family and friends for her fiftieth birthday"
         fill
         priority

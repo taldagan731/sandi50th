@@ -1,0 +1,23 @@
+/* Final supplied hero: keep Sandi clear while preserving room for the existing title. */
+body .celebrationHeroImage,
+body .revealMastheadPhoto {
+  object-position: 42% 48%;
+  filter: saturate(1.13) contrast(1.04) brightness(1.04);
+}
+
+body .celebrationHeroScrim {
+  background:
+    linear-gradient(90deg, rgba(71, 17, 73, .72), rgba(94, 29, 76, .26) 52%, rgba(75, 21, 65, .42)),
+    linear-gradient(180deg, rgba(69, 15, 62, .08), rgba(65, 14, 56, .58));
+}
+
+body .revealMastheadPhotoScrim {
+  background:
+    linear-gradient(90deg, rgba(66, 15, 71, .68), rgba(91, 27, 76, .24) 52%, rgba(69, 18, 62, .46)),
+    linear-gradient(180deg, rgba(61, 13, 58, .06), rgba(57, 12, 52, .58));
+}
+
+@media (max-width: 700px) {
+  body .celebrationHeroImage,
+  body .revealMastheadPhoto { object-position: 41% 48%; }
+}

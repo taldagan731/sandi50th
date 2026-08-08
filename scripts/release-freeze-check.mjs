@@ -84,8 +84,8 @@ requireText("components/RevealSoundtrackV2.tsx", "Mute all", "the master audio m
 requireText("components/NameChorusStudio.tsx", "Not recorded yet", "the missing-name roster");
 requireText("components/NameChorusStudio.tsx", "9999", "the optional last-voice pin");
 forbidText("components/RevealSoundtrackV2.tsx", "autoPlay", "soundtrack autoplay");
-if (!existsSync(join(root, "public/audio/still-becoming.mp3"))) failures.push("The supplied birthday song is missing from public/audio/still-becoming.mp3.");
-if (existsSync(join(root, "public/audio/still-becoming.mp3")) && statSync(join(root, "public/audio/still-becoming.mp3")).size < 1024) failures.push("The supplied birthday song is unexpectedly empty.");
+if (!existsSync(join(root, "public/audio/tavalodet-mobarak.mp3"))) failures.push("The supplied birthday song is missing from public/audio/tavalodet-mobarak.mp3.");
+if (existsSync(join(root, "public/audio/tavalodet-mobarak.mp3")) && statSync(join(root, "public/audio/tavalodet-mobarak.mp3")).size < 1024) failures.push("The supplied birthday song is unexpectedly empty.");
 forbidText("components/OpeningExperience.tsx", "framer-motion", "the removed homepage animation dependency");
 requireText("components/StoryStudio.tsx", "Open reveal publicly", "the no-deploy reveal access control");
 requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-only exclusion control");

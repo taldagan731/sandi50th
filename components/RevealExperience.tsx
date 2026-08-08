@@ -180,7 +180,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
       <header className="revealMasthead">
         <Image
           className="revealMastheadPhoto"
-          src="/api/public/hero-photo"
+          src="/images/sandi-hero.jpeg"
           alt="Sandi Yadegari, surrounded by the warmth and colour of her fiftieth-birthday story"
           fill
           priority

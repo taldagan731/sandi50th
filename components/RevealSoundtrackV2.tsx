@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_TRACK = "/audio/still-becoming.mp3";
+const DEFAULT_TRACK = "/audio/tavalodet-mobarak.mp3";
 
 type NameRecording = { id: string; contributorName: string; displayOrder: number };
 
