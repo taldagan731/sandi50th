@@ -58,6 +58,20 @@ requireText(".github/workflows/post-deploy-smoke.yml", "${GITHUB_SHA}", "exact-c
 requireText("lib/photo-intelligence/index.ts", "requestAnthropic(derivative", "derivative-only photo analysis");
 requireText("lib/photo-intelligence/index.ts", ".jpeg({ quality", "metadata-free derivative re-encoding");
 
+requireText("lib/family-qa.ts", "FAMILY_QA_SEED", "the structured family Q&A seed");
+requireText("lib/family-qa.ts", "FAMILY_QA_PENDING", "the unanswered-family follow-up list");
+forbidText("lib/family-qa.ts", "@yahoo.com", "a private source email address");
+forbidText("lib/family-qa.ts", "@hotmail.com", "a private source email address");
+forbidText("lib/family-qa.ts", "(212) 585-3242", "the unrelated medical signature");
+requireText("app/api/studio/family-qa/route.ts", "requireStudioOwner", "owner authentication for Family Q&A");
+requireText("app/api/studio/family-qa/route.ts", '.eq("status", "family_qa")', "Family Q&A record isolation");
+requireText("components/FamilyQaStudio.tsx", "Add the supplied family Q&A", "the idempotent supplied-material import");
+requireText("components/FamilyQaStudio.tsx", "Linked photographs", "photograph linking");
+requireText("components/RevealExperience.tsx", "ChapterFamilyVoices", "family voices woven into chapters");
+requireText("components/RevealExperience.tsx", "FamilyChorus", "the sequential family chorus");
+requireText("app/reveal/page.tsx", "decodeFamilyQaMetadata", "private reveal Family Q&A loading");
+forbidText("app/page.tsx", "FAMILY_QA_SEED", "private family Q&A on the public homepage");
+
 const publicSource = [...sourceFiles("app"), ...sourceFiles("components")]
   .filter(path => /\.(ts|tsx|css)$/.test(path));
 for (const path of publicSource) {
