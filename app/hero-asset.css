@@ -2,22 +2,29 @@
 body .celebrationHeroImage,
 body .revealMastheadPhoto {
   object-position: 42% 48%;
-  filter: saturate(1.13) contrast(1.04) brightness(1.04);
+  filter: saturate(1.72) contrast(1.09) brightness(1.19);
 }
 
 body .celebrationHeroScrim {
   background:
-    linear-gradient(90deg, rgba(71, 17, 73, .72), rgba(94, 29, 76, .26) 52%, rgba(75, 21, 65, .42)),
-    linear-gradient(180deg, rgba(69, 15, 62, .08), rgba(65, 14, 56, .58));
+    radial-gradient(circle at 48% 44%, rgba(255, 182, 151, .16), transparent 28%),
+    linear-gradient(90deg, rgba(79, 15, 71, .36), rgba(109, 30, 78, .06) 48%, rgba(79, 18, 67, .18)),
+    linear-gradient(180deg, rgba(255, 157, 172, .04), rgba(74, 13, 59, .26));
 }
 
 body .revealMastheadPhotoScrim {
   background:
-    linear-gradient(90deg, rgba(66, 15, 71, .68), rgba(91, 27, 76, .24) 52%, rgba(69, 18, 62, .46)),
-    linear-gradient(180deg, rgba(61, 13, 58, .06), rgba(57, 12, 52, .58));
+    radial-gradient(circle at 47% 43%, rgba(255, 193, 156, .14), transparent 30%),
+    linear-gradient(90deg, rgba(70, 14, 69, .32), rgba(105, 28, 76, .05) 50%, rgba(72, 16, 63, .2)),
+    linear-gradient(180deg, rgba(255, 159, 180, .03), rgba(65, 11, 54, .25));
 }
 
 @media (max-width: 700px) {
   body .celebrationHeroImage,
   body .revealMastheadPhoto { object-position: 41% 48%; }
+}
+
+body .celebrationHeroContent,
+body .revealMastheadContent {
+  text-shadow: 0 3px 16px rgba(55, 8, 46, .58), 0 12px 38px rgba(48, 7, 40, .28);
 }
