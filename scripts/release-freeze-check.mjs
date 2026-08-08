@@ -18,6 +18,11 @@ function requireText(path, text, label = text) {
   if (!content.includes(text)) failures.push(`${path} is missing: ${label}`);
 }
 
+function forbidText(path, text, label = text) {
+  const content = read(path);
+  if (content.includes(text)) failures.push(`${path} still contains prohibited release text: ${label}`);
+}
+
 function sourceFiles(directory) {
   const full = join(root, directory);
   if (!existsSync(full)) return [];
@@ -37,6 +42,13 @@ requireText("components/RecordingContributionForm.tsx", "VOICE_WALL", "voice con
 requireText("components/RecordingContributionForm.tsx", "BIRTHDAY_MESSAGE", "birthday message path");
 requireText("components/RecordingContributionForm.tsx", "playsInline", "inline mobile recording playback");
 requireText("components/RevealExperience.tsx", "The rest is yours to write.", "Chapter Nine invitation");
+requireText("components/StoryStudio.tsx", "Open reveal publicly", "the no-deploy reveal access control");
+requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-only exclusion control");
+requireText("app/reveal/page.tsx", '.neq("review_status", "excluded")', "default-visible reveal selection");
+requireText("app/api/reveal/media/[id]/route.ts", "reveal_public", "the private/public reveal media gate");
+requireText("app/api/studio/contributions/route.ts", "%MOBILE TEST%", "automatic test-record exclusion");
+requireText("supabase/default-visible-reveal-migration.sql", "reveal_public boolean not null default false", "the reveal access switch migration");
+forbidText("components/RecordingContributionForm.tsx", "until it is approved", "recording approval language");
 requireText("components/RevealArchive.tsx", "Move through the years.", "time scrubber");
 requireText("components/RevealArchive.tsx", "playsInline", "inline archive film playback");
 requireText("app/api/studio/backups/route.ts", "byteCountVerified", "per-file backup byte verification");
@@ -58,4 +70,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Reveal freeze check passed: privacy, deadline, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
+console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
