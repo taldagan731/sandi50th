@@ -181,7 +181,9 @@ export async function POST(request: Request) {
           fileCount: verifiedPrimary.length,
           receivedAt: completedAt
         });
-        if (!result.sent && process.env.RESEND_API_KEY) {
+        if (result.sent) {
+          console.info("contribution-email-sent", { submissionId: body.submissionId, emailId: result.id });
+        } else if (process.env.RESEND_API_KEY) {
           console.error("contribution-email-not-sent", result.reason);
         }
       } catch (error) {

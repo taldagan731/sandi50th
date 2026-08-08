@@ -63,5 +63,6 @@ export async function sendContributionArrivalEmail(arrival: ContributionArrival)
   if (!response.ok) {
     throw new Error(`Contribution email failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
   }
-  return { sent: true };
+  const accepted = await response.json().catch(() => ({})) as { id?: unknown };
+  return { sent: true, id: typeof accepted.id === "string" ? accepted.id : null };
 }

@@ -365,7 +365,7 @@ export async function applyChapterFallbacks(projectId: string) {
   const supabase = createAdminClient();
   const { data: submissions, error: submissionError } = await supabase
     .from("submissions")
-    .select("id,name,life_chapter,approximate_year,prompt")
+    .select("id,name,life_chapter,approximate_year,prompt,status,first_memory,story")
     .eq("project_id", projectId)
     .neq("review_status", "excluded");
   if (submissionError) return { available: false, assigned: 0, error: submissionError.message };
@@ -384,6 +384,26 @@ export async function applyChapterFallbacks(projectId: string) {
 
   const chapterCounts = Array.from({ length: 8 }, (_, index) => ({ chapter: index + 1, count: 0 }));
   for (const item of media ?? []) if (item.chapter_number) chapterCounts[item.chapter_number - 1].count += 1;
+  let textAssigned = 0;
+  const specialPrompts = new Set(["VOICE_WALL", "BIRTHDAY_MESSAGE", "NAME_CHORUS", "OWNER_ARCHIVE"]);
+  for (const submission of genuine) {
+    const hasText = submission.status === "family_qa"
+      || (!specialPrompts.has(submission.prompt ?? "") && Boolean(submission.first_memory?.trim() || submission.story?.trim()));
+    if (!hasText) continue;
+    const existingChapter = chapterNumberFromContributor(submission.life_chapter);
+    if (existingChapter) {
+      chapterCounts[existingChapter - 1].count += 1;
+      continue;
+    }
+    const suppliedYear = yearFromText(submission.approximate_year);
+    const leastFilled = [...chapterCounts].sort((a, b) => a.count - b.count || a.chapter - b.chapter)[0];
+    const chapter = chapterFromYear(suppliedYear) ?? leastFilled.chapter;
+    const { error } = await supabase.from("submissions").update({ life_chapter: `Chapter ${chapter}` }).eq("id", submission.id);
+    if (error) return { available: false, assigned: 0, textAssigned, error: error.message };
+    submission.life_chapter = `Chapter ${chapter}`;
+    chapterCounts[chapter - 1].count += 1;
+    textAssigned += 1;
+  }
   const decisions: Array<{ id: string; submissionId: string; chapter: number; confidence: number; rationale: string }> = [];
 
   for (const item of media ?? []) {
@@ -452,7 +472,7 @@ export async function applyChapterFallbacks(projectId: string) {
     })));
     if (error) return { available: false, assigned: index, error: error.message };
   }
-  return { available: true, assigned: decisions.length, chapters: chapterCounts };
+  return { available: true, assigned: decisions.length, textAssigned, chapters: chapterCounts };
 }
 export async function prepareGlobalPhotoPilot(limit = 10) {
   const supabase = createAdminClient();

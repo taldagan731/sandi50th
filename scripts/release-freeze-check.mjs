@@ -131,6 +131,9 @@ requireText("components/StoryStudio.tsx", "https://www.sandi50th.com/studio/rese
 forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
 requireText("app/api/submissions/complete/route.ts", "sendContributionArrivalEmail", "arrival email scheduling");
 requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL", "explicit arrival-email recipient configuration");
+requireText("lib/notifications/contribution-email.ts", "accepted.id", "Resend acceptance identifier");
+requireText("app/api/submissions/complete/route.ts", "contribution-email-sent", "arrival-email acceptance logging");
+requireText("lib/photo-intelligence/index.ts", "textAssigned", "written-memory chapter fallback");
 requireText("app/api/studio/notifications/test/route.ts", "requireStudioOwner", "owner authentication for arrival-email testing");
 requireText("app/api/studio/notifications/test/route.ts", "sendContributionArrivalEmail", "the owner-triggered Resend delivery test");
 
