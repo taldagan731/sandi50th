@@ -8,6 +8,7 @@ import { StudioLiveFeed } from "@/components/StudioLiveFeed";
 import { MemoryContributionForm } from "@/components/MemoryContributionForm";
 import { NameChorusStudio } from "@/components/NameChorusStudio";
 import { ContributionReadinessReport } from "@/components/ContributionReadinessReport";
+import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
 import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
@@ -344,6 +345,7 @@ export function StoryStudio() {
         onVisibilityChange={reviewSubmission}
       />
       <NameChorusStudio submissions={regularSubmissions} onSaved={load} />
+      <DuplicateReviewStudio />
 
 
       <details className="studioTools">

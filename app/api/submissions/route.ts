@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -85,26 +86,34 @@ export async function POST(request: Request) {
       prompt: body.prompt
     };
     const reviewStatus = defaultReviewStatus(archiveFields.name);
-    const { data: submission, error: submissionError } = await supabase
-      .from("submissions")
-      .insert({
-        project_id: project.id,
-        name: archiveFields.name,
-        contact: archiveFields.contact,
-        relationship: archiveFields.relationship,
-        first_memory: archiveFields.firstMemory,
-        story: body.story,
-        approximate_year: body.approximateYear,
-        location: body.place,
-        people: body.people ? body.people.split(",").map(value => value.trim()).filter(Boolean) : [],
-        life_chapter: body.lifeChapter,
-        prompt: archiveFields.prompt,
-        consent: body.consent,
-        review_status: reviewStatus,
-        status: reviewStatus === "excluded" ? "excluded" : "received"
-      })
-      .select("id")
-      .single();
+    const duplicateReviewToken = randomBytes(32).toString("base64url");
+    const duplicateReviewTokenHash = createHash("sha256").update(duplicateReviewToken).digest("hex");
+    const submissionRecord = {
+      project_id: project.id,
+      name: archiveFields.name,
+      contact: archiveFields.contact,
+      relationship: archiveFields.relationship,
+      first_memory: archiveFields.firstMemory,
+      story: body.story,
+      approximate_year: body.approximateYear,
+      location: body.place,
+      people: body.people ? body.people.split(",").map(value => value.trim()).filter(Boolean) : [],
+      life_chapter: body.lifeChapter,
+      prompt: archiveFields.prompt,
+      consent: body.consent,
+      review_status: reviewStatus,
+      status: reviewStatus === "excluded" ? "excluded" : "received",
+      duplicate_review_token_hash: duplicateReviewTokenHash
+    };
+    let submissionResult = await supabase.from("submissions").insert(submissionRecord).select("id").single();
+    let reviewTokenAvailable = true;
+    if (submissionResult.error && (submissionResult.error.code === "42703" || /duplicate_review_token_hash/i.test(submissionResult.error.message))) {
+      const legacyRecord = { ...submissionRecord } as Record<string, unknown>;
+      delete legacyRecord.duplicate_review_token_hash;
+      submissionResult = await supabase.from("submissions").insert(legacyRecord).select("id").single();
+      reviewTokenAvailable = false;
+    }
+    const { data: submission, error: submissionError } = submissionResult;
     if (submissionError || !submission) {
       throw submissionError ?? new Error("Could not create submission.");
     }
@@ -116,7 +125,11 @@ export async function POST(request: Request) {
       size: file.size
     }));
 
-    return NextResponse.json({ submissionId: submission.id, uploads });
+    return NextResponse.json({
+      submissionId: submission.id,
+      duplicateReviewToken: reviewTokenAvailable ? duplicateReviewToken : null,
+      uploads
+    });
   } catch (error) {
     console.error("submission-init", error);
     if (error instanceof z.ZodError) {

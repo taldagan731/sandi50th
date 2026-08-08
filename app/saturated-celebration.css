@@ -1,0 +1,411 @@
+:root {
+  --celebration-purple: #4b1768;
+  --celebration-purple-deep: #3e1759;
+  --celebration-plum: #76245f;
+  --celebration-rose: #a33f6f;
+  --celebration-coral-ground: #a8465e;
+  --celebration-dusk: #9a4b3c;
+  --celebration-coral: #ff9a88;
+  --celebration-amber: #f7b965;
+  --celebration-champagne: #ffe2ad;
+  --celebration-mint: #c9f7e5;
+  --celebration-periwinkle: #bcc4ff;
+  --celebration-cream: #fff8ee;
+  --celebration-ink: #2b1237;
+  --bg: var(--celebration-purple);
+  --surface: rgba(255, 248, 238, .13);
+  --surface2: rgba(255, 248, 238, .18);
+  --text: var(--celebration-cream);
+  --muted: rgba(255, 248, 238, .78);
+  --rose: var(--celebration-coral);
+  --orchid: var(--celebration-periwinkle);
+  --violet: #766fd0;
+  --lav: var(--celebration-periwinkle);
+  --champagne: var(--celebration-champagne);
+  --line: rgba(255, 248, 238, .24);
+}
+
+html,
+body,
+body > main {
+  background: var(--celebration-purple);
+  color: var(--celebration-cream);
+}
+
+body .topbar {
+  background: linear-gradient(to bottom, rgba(75, 23, 104, .96), rgba(118, 36, 95, .74));
+  border-bottom-color: rgba(169, 232, 205, .25);
+}
+
+body .mark {
+  border-color: var(--celebration-mint);
+  color: var(--celebration-mint);
+}
+
+body .brand small,
+body .nav nav a {
+  color: rgba(255, 248, 238, .82);
+}
+
+body .eyebrow,
+body .requestLabel,
+body .chapterRoom > span,
+body .chapterRoom > strong,
+body .chapters span,
+body .chapters .chapterRoom > strong,
+body .revealChapter > header span,
+body .revealChapterNav span,
+body .timelineYear strong,
+body .chapterNineNumber {
+  color: var(--celebration-mint);
+}
+
+body .primary,
+body .successMark,
+body .birthdayTransport .birthdayPlay,
+body .musicInvitation button {
+  background: linear-gradient(135deg, var(--celebration-mint), var(--celebration-champagne), var(--celebration-coral));
+  color: var(--celebration-ink);
+  box-shadow: 0 14px 42px rgba(65, 19, 81, .24);
+}
+
+body .secondary {
+  border-color: rgba(255, 248, 238, .42);
+  background: rgba(86, 27, 105, .42);
+}
+
+body .celebrationHero {
+  background:
+    linear-gradient(135deg, var(--celebration-purple) 0%, var(--celebration-plum) 52%, var(--celebration-dusk) 100%);
+}
+
+body .celebrationHeroScrim {
+  background:
+    linear-gradient(90deg, rgba(62, 23, 89, .88) 0%, rgba(75, 23, 104, .48) 46%, rgba(118, 36, 95, .18) 78%),
+    linear-gradient(0deg, rgba(74, 22, 88, .92) 0%, rgba(118, 36, 95, .12) 58%, rgba(75, 23, 104, .42) 100%);
+}
+
+body .celebrationGlowCoral { background: #ff7f72; opacity: .42; }
+body .celebrationGlowAmber { background: #ffbd63; opacity: .34; }
+body .celebrationKicker,
+body .celebrationFifty { color: var(--celebration-mint); }
+body .celebrationIdentity > span:last-child,
+body .celebrationLead strong { color: var(--celebration-champagne); }
+body .celebrationActions .secondary { background: rgba(74, 22, 88, .48); }
+body .celebrationDeadline {
+  border-left-color: var(--celebration-mint);
+  background: linear-gradient(90deg, rgba(169, 232, 205, .2), rgba(255, 154, 136, .12), transparent);
+}
+body .celebrationDeadline .countdown b { color: var(--celebration-mint); }
+body .momentRibbon {
+  background: linear-gradient(90deg, rgba(118, 36, 95, .9), rgba(168, 70, 94, .85), rgba(75, 23, 104, .9));
+}
+
+body .invitationSection {
+  background:
+    radial-gradient(circle at 10% 22%, rgba(169, 232, 205, .42), transparent 31rem),
+    radial-gradient(circle at 88% 70%, rgba(255, 185, 101, .42), transparent 30rem),
+    linear-gradient(135deg, #6d2268 0%, var(--celebration-rose) 52%, #b65061 100%);
+}
+
+body .memoryRequestCard {
+  border-color: rgba(255, 248, 238, .38);
+  background: linear-gradient(145deg, rgba(255, 248, 238, .24), rgba(188, 196, 255, .16));
+  box-shadow: 0 30px 70px rgba(71, 20, 82, .2);
+}
+
+body .memoryRequestCard li { border-bottom-color: rgba(255, 248, 238, .22); }
+body .memoryRequestCard p,
+body .memoryRequestCard a { color: var(--celebration-cream); }
+
+body .literarySection {
+  background:
+    radial-gradient(circle at 77% 30%, rgba(255, 154, 136, .52), transparent 31rem),
+    radial-gradient(circle at 12% 82%, rgba(169, 232, 205, .32), transparent 28rem),
+    linear-gradient(140deg, #514b98 0%, #713a89 42%, #a54172 100%);
+}
+
+body .literaryCard blockquote { color: var(--celebration-cream); }
+body .literaryCard cite { color: var(--celebration-mint); }
+
+body .chapterSection {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 185, 101, .38), transparent 29rem),
+    radial-gradient(circle at 87% 76%, rgba(188, 196, 255, .38), transparent 33rem),
+    linear-gradient(145deg, #7b285f 0%, #9e405e 44%, #9a4b3c 100%);
+}
+
+body .chapterRoom {
+  border-color: rgba(255, 248, 238, .34);
+  background: linear-gradient(150deg, #5b247b, #7d2f78 54%, #a8465e);
+  box-shadow: 0 18px 48px rgba(67, 18, 69, .18);
+}
+body .chapterRoom:nth-child(2) { background: linear-gradient(145deg, #514b98, #6f3c95 48%, #9a477b); }
+body .chapterRoom:nth-child(3) { background: linear-gradient(145deg, #8e356f, #b94e68 54%, #b3634f); }
+body .chapterRoom:nth-child(4) { background: linear-gradient(145deg, #4d4d91, #6f438b 48%, #a54872); }
+body .chapterRoom:nth-child(5) { background: linear-gradient(145deg, #833068, #a8456c 54%, #bb634f); }
+body .chapterRoom:nth-child(6) { background: linear-gradient(145deg, #56479b, #804080 52%, #ae4d65); }
+body .chapterRoom:nth-child(7) { background: linear-gradient(145deg, #75316f, #a14772 50%, #ae594e); }
+body .chapterRoom:nth-child(8) { background: linear-gradient(145deg, #4c3e8c, #773985 48%, #a33f6f); }
+body .chapterRoom:hover,
+body .chapterRoom:focus-visible { border-color: var(--celebration-mint); }
+body .chapters p { color: rgba(255, 248, 238, .86); }
+
+body .closingInvitation,
+body footer {
+  background:
+    radial-gradient(circle at 52% 22%, rgba(255, 185, 101, .42), transparent 30rem),
+    linear-gradient(140deg, #6c246f, #a43f70 55%, #a94f4f);
+  border-color: rgba(255, 248, 238, .2);
+}
+body .closingInner p,
+body .footerInner { color: rgba(255, 248, 238, .84); }
+
+body .contributeHero {
+  background:
+    radial-gradient(circle at 8% 20%, rgba(169, 232, 205, .38), transparent 30rem),
+    radial-gradient(circle at 88% 74%, rgba(255, 185, 101, .42), transparent 32rem),
+    linear-gradient(135deg, var(--celebration-purple) 0%, #7d2a72 52%, #a8465e 100%);
+}
+body .contributeIntro > p,
+body .submissionDeadline small { color: rgba(255, 248, 238, .82); }
+body .submissionDeadline { border-left-color: var(--celebration-mint); }
+body .submissionDeadline > span { color: var(--celebration-mint); }
+
+body .contributionSection {
+  background:
+    radial-gradient(circle at 86% 12%, rgba(188, 196, 255, .45), transparent 32rem),
+    radial-gradient(circle at 14% 80%, rgba(255, 154, 136, .4), transparent 34rem),
+    linear-gradient(150deg, #64307d, #8f3d79 48%, #ae4e64);
+}
+
+body .panel,
+body .recordingContribution,
+body .memoryOpening,
+body .formDetails,
+body .contributionGuide,
+body .uploadBox,
+body .selectedFiles article,
+body .recordingTip {
+  border-color: rgba(255, 248, 238, .3);
+  background: linear-gradient(145deg, rgba(255, 248, 238, .18), rgba(188, 196, 255, .1));
+}
+
+body .form input,
+body .form textarea,
+body .form select,
+body .studioGate input,
+body .studioSearchControls input,
+body .studioSearchControls select {
+  border-color: rgba(255, 248, 238, .36);
+  background: rgba(63, 23, 85, .68);
+  color: var(--celebration-cream);
+}
+
+body .uploadBox p,
+body .selectedFiles small,
+body .fileSummary,
+body .recordingTip p,
+body .helpAddress,
+body .secureNote,
+body .uploadProgress p,
+body .contributionGuide li {
+  color: rgba(255, 248, 238, .78);
+}
+
+body .uploadGlyph,
+body .fileType,
+body .helpAddress a,
+body .confirmationCode { color: var(--celebration-mint) !important; }
+body .uploadProgress > span { background: linear-gradient(90deg, var(--celebration-mint), var(--celebration-champagne), var(--celebration-coral)); }
+
+body .contributionSuccess {
+  border-color: rgba(255, 248, 238, .62);
+  background:
+    radial-gradient(circle at 80% 15%, rgba(255, 154, 136, .48), transparent 19rem),
+    linear-gradient(140deg, var(--celebration-champagne), #ffd6c0 48%, #c3ebdc);
+  color: var(--celebration-ink);
+  box-shadow: 0 28px 70px rgba(67, 18, 69, .2);
+}
+body .contributionSuccess p,
+body .contributionSuccess .eyebrow { color: #48214f; }
+body .contributionSuccess button { color: var(--celebration-ink); }
+
+body .contributionFooter {
+  background: linear-gradient(135deg, #713277, #a84372 55%, #a9554a);
+  border-color: rgba(255, 248, 238, .2);
+}
+body .contributionFooterInner,
+body .contributionFooterInner a { color: var(--celebration-cream); }
+
+body .revealLocked {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(169, 232, 205, .42), transparent 30rem),
+    radial-gradient(circle at 84% 82%, rgba(255, 185, 101, .45), transparent 30rem),
+    linear-gradient(140deg, var(--celebration-purple), #813078 56%, #ad4c61);
+}
+
+body .revealPage {
+  background: linear-gradient(180deg, var(--celebration-purple), var(--celebration-plum));
+}
+
+body .revealMasthead {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(169, 232, 205, .44), transparent 29rem),
+    radial-gradient(circle at 84% 72%, rgba(255, 185, 101, .48), transparent 30rem),
+    linear-gradient(140deg, #4b3f91 0%, #71307c 48%, #aa435f 100%);
+}
+body .revealMasthead > p { color: rgba(255, 248, 238, .86); }
+body .musicInvitation {
+  border-color: rgba(255, 248, 238, .42);
+  background: rgba(75, 23, 104, .34);
+}
+body .musicInvitation > span { background: var(--celebration-mint); color: var(--celebration-ink); }
+body .musicInvitation p { color: rgba(255, 248, 238, .78); }
+body .soundtrackDock {
+  border-color: rgba(169, 232, 205, .42);
+  background: rgba(75, 23, 104, .92);
+}
+
+body .revealChapterNav {
+  background: linear-gradient(90deg, #4b3f91, #782f7c 50%, #a74662);
+}
+body .revealChapterNav button {
+  border-color: rgba(255, 248, 238, .25);
+  background: rgba(255, 248, 238, .08);
+  color: rgba(255, 248, 238, .76);
+}
+body .revealChapterNav button[aria-current] {
+  border-color: var(--celebration-mint);
+  background: rgba(169, 232, 205, .18);
+  color: var(--celebration-cream);
+}
+
+body .revealChapter {
+  max-width: none;
+  width: 100%;
+  padding-inline: max(1.25rem, calc((100% - 86rem) / 2));
+  background: linear-gradient(140deg, #5b247b, #84356f 54%, #a94b5c);
+}
+body .revealChapter--2 { background: linear-gradient(140deg, #4b4a91, #703b8c 52%, #9a4676); }
+body .revealChapter--3 { background: linear-gradient(140deg, #7a2d72, #a6426b 52%, #b55a51); }
+body .revealChapter--4 { background: linear-gradient(140deg, #4d478e, #724080 50%, #a44968); }
+body .revealChapter--5 { background: linear-gradient(140deg, #7d2f67, #a94365 52%, #a95746); }
+body .revealChapter--6 { background: linear-gradient(140deg, #514a96, #794080 50%, #ac4c64); }
+body .revealChapter--7 { background: linear-gradient(140deg, #6c2b72, #993f72 52%, #aa514f); }
+body .revealChapter--8 { background: linear-gradient(140deg, #493e8a, #733581 48%, #a43f6f); }
+body .revealChapter::before { background: rgba(169, 232, 205, .22); }
+body .revealProse,
+body .memoryCarousel > header p { color: rgba(255, 248, 238, .9); }
+body .revealProse p:first-child::first-letter { color: var(--celebration-mint); }
+
+body .memoryPlate,
+body .timelineMemories article,
+body .familyVoice,
+body .chorusStage,
+body .voiceCard {
+  background: rgba(255, 248, 238, .1);
+  border-color: rgba(255, 248, 238, .28);
+}
+body .memoryPlate img,
+body .memoryPlate video,
+body .birthdayMedia,
+body .filmPlayer,
+body .timelineImage { background: #6b2c72; }
+body .memorySelect,
+body .photoFocus > button { background: rgba(75, 23, 104, .84); }
+body .memorySelect[aria-pressed="true"] { background: var(--celebration-mint); color: var(--celebration-ink); }
+body .photoFocus { background: rgba(75, 23, 104, .92); }
+
+body .familyChorus {
+  background:
+    radial-gradient(circle at 86% 14%, rgba(255, 185, 101, .42), transparent 30rem),
+    linear-gradient(140deg, #8c356e, #a94766 54%, #a95848);
+}
+body .familyVoice blockquote { border-color: var(--celebration-mint); }
+body .familyVoice figcaption strong,
+body .chorusStage figcaption strong,
+body .voiceCard h3,
+body .birthdayLowerThird strong,
+body .filmPlayer h3 { color: var(--celebration-champagne); }
+
+body .voiceWall {
+  background:
+    radial-gradient(circle at 15% 18%, rgba(169, 232, 205, .4), transparent 30rem),
+    radial-gradient(circle at 87% 78%, rgba(255, 154, 136, .4), transparent 30rem),
+    linear-gradient(140deg, #4c4a91, #703b8c 48%, #994373);
+}
+body .voiceCard:hover,
+body .voiceCard:focus-within,
+body .voiceCard.is-playing { border-color: var(--celebration-mint); background: rgba(169, 232, 205, .16); }
+body .voiceWave span { background: linear-gradient(to top, var(--celebration-periwinkle), var(--celebration-mint)); }
+
+body .birthdayReel {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 185, 101, .5), transparent 31rem),
+    linear-gradient(145deg, #9a3b6d, #b64f63 52%, #a85b43);
+}
+body .birthdayLowerThird { border-left-color: var(--celebration-mint); background: rgba(75, 23, 104, .74); }
+
+body .lifeTimeline {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(169, 232, 205, .44), transparent 29rem),
+    linear-gradient(145deg, #4d4a91, #714086 50%, #9e4674);
+}
+body .archiveFilmStack {
+  background:
+    radial-gradient(circle at 82% 32%, rgba(255, 185, 101, .48), transparent 32rem),
+    linear-gradient(145deg, #6f2b72, #98416f 52%, #aa514c);
+}
+body .chapterNineInvitation {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(169, 232, 205, .45), transparent 30rem),
+    radial-gradient(circle at 82% 72%, rgba(255, 185, 101, .42), transparent 28rem),
+    linear-gradient(140deg, #4a3f91, #7e347d 48%, #ab4b62);
+}
+body .chapterNineInvitation::before { color: rgba(255, 248, 238, .08); }
+
+body .storyStudioPage,
+body .studioComingSoon {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(169, 232, 205, .34), transparent 30rem),
+    radial-gradient(circle at 88% 78%, rgba(255, 185, 101, .36), transparent 30rem),
+    linear-gradient(140deg, var(--celebration-purple), #7e3477 54%, #a54a5f);
+}
+body .studioSubmission,
+body .studioGate form,
+body .studioIntelligence,
+body .studioTools,
+body .studioLiveItem {
+  border-color: rgba(255, 248, 238, .3);
+  background: rgba(255, 248, 238, .12);
+}
+body .studioFilters button,
+body .studioSubmissionDecision button {
+  border-color: rgba(255, 248, 238, .36);
+  color: var(--celebration-cream);
+}
+body .studioFilters button[aria-pressed="true"],
+body .studioSubmissionDecision button.include {
+  background: var(--celebration-mint);
+  color: var(--celebration-ink);
+}
+body .studioMemory blockquote { border-left-color: var(--celebration-mint); }
+body .studioMemory dt { color: var(--celebration-mint); }
+
+body :focus-visible {
+  outline-color: var(--celebration-mint);
+}
+
+@media (max-width: 700px) {
+  body .celebrationHeroScrim {
+    background:
+      linear-gradient(0deg, rgba(75, 23, 104, .96) 0%, rgba(118, 36, 95, .5) 56%, rgba(75, 23, 104, .3) 100%);
+  }
+  body .revealChapter { padding-inline: .9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .celebrationHeroImage { animation: none; transform: none; }
+}

@@ -10,6 +10,7 @@ import {
   encodeFamilyQaMetadata,
   type FamilyQaAnswer
 } from "@/lib/family-qa";
+import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 
 const answerSchema = z.object({
   id: z.string().uuid().optional(),
@@ -40,7 +41,7 @@ const columns = "id,name,relationship,first_memory,approximate_year,location,lif
 function rowToAnswer(row: Record<string, unknown>) {
   const metadata = decodeFamilyQaMetadata(String(row.reviewer_notes ?? ""));
   const chapterMatch = String(row.life_chapter ?? "").match(/\b([1-8])\b/);
-  return {
+  return applyFamilyQaSourceCorrections({
     id: String(row.id),
     sourceId: metadata?.sourceId ?? String(row.id),
     contributorName: String(row.name ?? ""),
@@ -57,7 +58,7 @@ function rowToAnswer(row: Record<string, unknown>) {
     editorialNote: metadata?.editorialNote ?? "",
     visible: row.review_status !== "excluded",
     createdAt: String(row.created_at ?? "")
-  };
+  });
 }
 
 function rowForAnswer(projectId: string, answer: FamilyQaAnswer, visible = true) {

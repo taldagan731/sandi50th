@@ -1,11 +1,11 @@
-import { copy, del, head, put } from "@vercel/blob";
+import { copy, head, put } from "@vercel/blob";
 import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chapterNumberFromContributor, defaultReviewStatus } from "@/lib/chapters";
 import { enqueueSubmissionPhotos } from "@/lib/photo-intelligence";
+import { enqueueSubmissionHashing, processHashJobs } from "@/lib/duplicate-detection";
 import { sendContributionArrivalEmail } from "@/lib/notifications/contribution-email";
-import { duplicateMarkerExists, SHA256_PATTERN, writeDuplicateMarker } from "@/lib/blob-dedupe";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -17,8 +17,7 @@ const fileSchema = z.object({
   contentType: z.string().min(1).max(150),
   contentDisposition: z.string().max(500),
   originalName: z.string().min(1).max(500),
-  bytes: z.number().int().positive(),
-  sha256: z.string().regex(SHA256_PATTERN).optional()
+  bytes: z.number().int().positive()
 });
 
 const schema = z.object({
@@ -74,8 +73,6 @@ export async function POST(request: Request) {
     }
 
     const verifiedPrimary: Array<{ file: z.infer<typeof fileSchema>; etag: string }> = [];
-    const duplicateFiles: string[] = [];
-    const hashesInThisBatch = new Set<string>();
 
     for (const file of body.files) {
       const stored = await head(file.pathname);
@@ -83,22 +80,6 @@ export async function POST(request: Request) {
         throw new Error(`${file.originalName} did not finish uploading. Please try that file again.`);
       }
 
-      const duplicate = Boolean(file.sha256) && (
-        hashesInThisBatch.has(file.sha256 as string) ||
-        await duplicateMarkerExists(file.sha256 as string)
-      );
-      if (duplicate) {
-        duplicateFiles.push(file.originalName);
-        await del(file.pathname);
-        const { error: removeMediaError } = await supabase
-          .from("media_assets")
-          .delete()
-          .eq("storage_path", file.pathname);
-        if (removeMediaError) throw removeMediaError;
-        continue;
-      }
-
-      if (file.sha256) hashesInThisBatch.add(file.sha256);
       const { error: mediaError } = await supabase.from("media_assets").upsert({
         submission_id: body.submissionId,
         storage_path: file.pathname,
@@ -109,16 +90,6 @@ export async function POST(request: Request) {
         chapter_number: chapterNumber
       }, { onConflict: "storage_path" });
       if (mediaError) throw mediaError;
-
-      if (file.sha256) {
-        await writeDuplicateMarker({
-          sha256: file.sha256,
-          submissionId: body.submissionId,
-          pathname: file.pathname,
-          originalName: file.originalName,
-          bytes: file.bytes
-        });
-      }
       verifiedPrimary.push({ file, etag: stored.etag });
     }
 
@@ -186,6 +157,21 @@ export async function POST(request: Request) {
 
     after(async () => {
       try {
+        const queued = await enqueueSubmissionHashing(body.submissionId);
+        if (queued.available && queued.queued) {
+          await processHashJobs({ limit: Math.min(6, queued.queued), submissionId: body.submissionId });
+        } else if (!queued.available) {
+          console.error("duplicate-hash-queue-unavailable", queued);
+        }
+      } catch (error) {
+        // Duplicate detection is downstream of successful storage and backup verification.
+        console.error("duplicate-hash-background", {
+          submissionId: body.submissionId,
+          error: error instanceof Error ? error.message : "Unknown hashing error"
+        });
+      }
+
+      try {
         const result = await sendContributionArrivalEmail({
           submissionId: body.submissionId,
           contributorName: submission.name || "A contributor",
@@ -211,8 +197,6 @@ export async function POST(request: Request) {
       ok: true,
       submissionId: body.submissionId,
       fileCount: verifiedPrimary.length,
-      duplicateCount: duplicateFiles.length,
-      duplicateFiles,
       backupVerified,
       backupError
     });

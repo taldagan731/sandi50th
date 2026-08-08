@@ -3,6 +3,7 @@ import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
 import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
+import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
@@ -32,6 +33,7 @@ type MediaRow = {
   inferred_year_start?: number | null;
   inferred_year_end?: number | null;
   date_inference_source?: string | null;
+  canonical_media_id?: string | null;
 };
 
 function contributorYearRange(value: string | null | undefined) {
@@ -99,7 +101,8 @@ export default async function RevealPage() {
   const submissionIds = submissionRows.map(item => item.id);
   const submissionsById = new Map(submissionRows.map(item => [item.id, item]));
 
-  const baseColumns = "id,submission_id,original_name,mime_type,caption,chapter_number,poster_path,display_order";
+  const legacyBaseColumns = "id,submission_id,original_name,mime_type,caption,chapter_number,poster_path,display_order";
+  const baseColumns = `${legacyBaseColumns},canonical_media_id`;
   let mediaRows: MediaRow[] = [];
   if (submissionIds.length) {
     const enriched = await supabase
@@ -108,10 +111,10 @@ export default async function RevealPage() {
       .in("submission_id", submissionIds)
       .neq("review_status", "excluded")
       .order("display_order");
-    if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference/i.test(enriched.error.message))) {
+    if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference|canonical_media_id/i.test(enriched.error.message))) {
       const fallback = await supabase
         .from("media_assets")
-        .select(baseColumns)
+        .select(legacyBaseColumns)
         .in("submission_id", submissionIds)
         .neq("review_status", "excluded")
         .order("display_order");
@@ -121,13 +124,22 @@ export default async function RevealPage() {
     }
   }
 
+  const presentationByCanonical = new Map<string, MediaRow>();
+  for (const item of mediaRows) {
+    const key = item.canonical_media_id ?? item.id;
+    const current = presentationByCanonical.get(key);
+    if (!current || item.id === key) presentationByCanonical.set(key, item);
+  }
+  const presentationMediaRows = [...presentationByCanonical.values()];
+
   const storedFamilyAnswers = submissionRows.flatMap(item => {
     if (item.status !== "family_qa") return [];
     const metadata = decodeFamilyQaMetadata(item.reviewer_notes);
     if (!metadata) return [];
     const chapterMatch = item.life_chapter?.match(/\b([1-8])\b/);
-    return [{
+    return [applyFamilyQaSourceCorrections({
       id: item.id,
+      sourceId: metadata.sourceId,
       contributorName: item.name,
       relationship: item.relationship || "Family",
       question: item.prompt || "",
@@ -137,8 +149,9 @@ export default async function RevealPage() {
       place: item.location || "",
       chorusKeys: metadata.chorusKeys,
       photoAssetIds: metadata.photoAssetIds,
-      showInChapter: metadata.showInChapter
-    }];
+      showInChapter: metadata.showInChapter,
+      editorialNote: metadata.editorialNote
+    })];
   });
   const familyAnswers = storedFamilyAnswers.length
     ? storedFamilyAnswers
@@ -168,7 +181,7 @@ export default async function RevealPage() {
           };
         })}
         familyAnswers={familyAnswers}
-        media={mediaRows.map(item => {
+        media={presentationMediaRows.map(item => {
           const submission = submissionsById.get(item.submission_id);
           const prompt = submission?.prompt?.toUpperCase();
           const suppliedRange = contributorYearRange(submission?.approximate_year);

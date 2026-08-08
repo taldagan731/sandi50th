@@ -3,6 +3,10 @@
     {
       "path": "/api/internal/photo-intelligence",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/internal/media-hashing",
+      "schedule": "*/2 * * * *"
     }
   ]
 }
