@@ -19,9 +19,7 @@ export async function GET(
 ) {
   const { id: submissionId, mediaId } = await context.params;
   const supabase = createAdminClient();
-  const token = request.headers.get("x-duplicate-review-token")
-    ?? new URL(request.url).searchParams.get("token")
-    ?? "";
+  const token = request.headers.get("x-duplicate-review-token") ?? "";
   const { data: submission } = await supabase
     .from("submissions")
     .select("duplicate_review_token_hash")
