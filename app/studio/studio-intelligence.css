@@ -1,0 +1,157 @@
+.studioIntelligence {
+  display: grid;
+  gap: 1.2rem;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  border: 1px solid rgba(215, 177, 108, .28);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(215, 177, 108, .07), rgba(255, 255, 255, .02));
+}
+.studioIntelligence > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: end;
+}
+.studioIntelligence h2 {
+  margin: .4rem 0 .5rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.9rem, 4vw, 3.4rem);
+  font-weight: 400;
+  line-height: 1;
+}
+.studioIntelligence header p {
+  max-width: 48rem;
+  margin: 0;
+  color: rgba(247, 239, 229, .7);
+  line-height: 1.65;
+}
+.studioIntelligence header dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(5.5rem, 1fr));
+  gap: .6rem;
+  margin: 0;
+}
+.studioIntelligence header dl div {
+  min-width: 5.5rem;
+  padding: .75rem;
+  border-left: 1px solid rgba(215, 177, 108, .3);
+}
+.studioIntelligence header dt {
+  color: rgba(247, 239, 229, .55);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.studioIntelligence header dd {
+  margin: .25rem 0 0;
+  color: #d7b16c;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.7rem;
+}
+.studioSearchControls {
+  display: grid;
+  grid-template-columns: minmax(17rem, 2fr) repeat(3, minmax(9rem, 1fr));
+  gap: .75rem;
+}
+.studioSearchControls label {
+  display: grid;
+  gap: .35rem;
+  color: #d7b16c;
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.studioSearchControls input,
+.studioSearchControls select {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid rgba(215, 177, 108, .28);
+  border-radius: .65rem;
+  background: #160d16;
+  color: #f7efe5;
+  padding: .72rem .8rem;
+  font: inherit;
+  font-size: 16px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.studioSearch { grid-column: span 2; }
+.studioSearchActions {
+  display: flex;
+  grid-column: span 2;
+  gap: .6rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.studioSearchActions button { min-height: 44px; }
+.studioWarning {
+  margin: 0;
+  padding: .9rem 1rem;
+  border: 1px solid rgba(232, 180, 92, .45);
+  border-radius: .75rem;
+  background: rgba(232, 180, 92, .08);
+  color: #f5d9a0;
+  line-height: 1.5;
+}
+.intelligenceCard {
+  display: grid;
+  gap: .7rem;
+  padding: .85rem;
+  border: 1px solid rgba(215, 177, 108, .2);
+  border-radius: .7rem;
+  background: rgba(255, 255, 255, .025);
+}
+.intelligenceCard.intelligence-review_required,
+.intelligenceCard.intelligence-failed {
+  border-color: rgba(225, 143, 112, .55);
+}
+.intelligenceStatus {
+  display: flex;
+  justify-content: space-between;
+  gap: .6rem;
+  color: #d7b16c;
+  font-size: .65rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.intelligenceCard > p {
+  margin: 0;
+  color: rgba(247, 239, 229, .78);
+  line-height: 1.55;
+}
+.intelligenceCard dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .35rem .75rem;
+  margin: 0;
+}
+.intelligenceCard dt {
+  color: rgba(215, 177, 108, .72);
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.intelligenceCard dd {
+  margin: 0;
+  color: rgba(247, 239, 229, .72);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+.intelligenceCard dd small { display: inline; }
+.assignmentRationale {
+  padding-top: .6rem;
+  border-top: 1px solid rgba(215, 177, 108, .15);
+  font-size: .8rem;
+}
+
+@media (max-width: 980px) {
+  .studioIntelligence > header { grid-template-columns: 1fr; }
+  .studioSearchControls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .studioSearch { grid-column: span 2; }
+}
+@media (max-width: 620px) {
+  .studioIntelligence header dl { grid-template-columns: 1fr 1fr; }
+  .studioSearchControls { grid-template-columns: 1fr; }
+  .studioSearch, .studioSearchActions { grid-column: 1; }
+  .studioSearchActions { display: grid; }
+}
