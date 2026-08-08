@@ -2,6 +2,7 @@
 
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
+import { fireContributionConfetti } from "@/lib/confetti";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const EMAIL_FALLBACK = "mailto:uploads@sandi50th.com?subject=Sandi%2050th%20recording";
@@ -27,9 +28,16 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const chunks = useRef<BlobPart[]>([]);
   const liveVideo = useRef<HTMLVideoElement>(null);
   const timer = useRef<number | null>(null);
+  const celebrated = useRef(false);
 
   const birthday = kind === "birthday";
   const effectiveKind: CaptureKind = birthday ? captureKind : "audio";
+
+  useEffect(() => {
+    if (phase !== "success" || celebrated.current) return;
+    celebrated.current = true;
+    fireContributionConfetti();
+  }, [phase]);
 
   useEffect(() => {
     return () => {
