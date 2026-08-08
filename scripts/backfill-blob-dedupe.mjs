@@ -32,7 +32,7 @@ let indexed = 0;
 for (const [index, blob] of images.entries()) {
   const response = await get(blob.pathname, { access: "private" });
   if (!response) throw new Error(`Could not read ${blob.pathname}`);
-  const sha256 = createHash("sha256").update(Buffer.from(await response.arrayBuffer())).digest("hex");
+  const sha256 = createHash("sha256").update(Buffer.from(await response.blob.arrayBuffer())).digest("hex");
   const first = firstByHash.get(sha256);
   if (first) {
     duplicates.push({ sha256, first, duplicate: blob.pathname });
