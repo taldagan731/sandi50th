@@ -27,3 +27,14 @@ export function chapterNumberFromContributor(value: string | null | undefined) {
   const exact = STORY_CHAPTERS.findIndex(title => title.toLowerCase() === normalized);
   return exact >= 0 ? exact + 1 : null;
 }
+
+
+const TEST_CONTRIBUTOR_PATTERN = /(?:MOBILE TEST|CODEX)/i;
+
+export function isTestContributor(name: string | null | undefined) {
+  return TEST_CONTRIBUTOR_PATTERN.test(name ?? "");
+}
+
+export function defaultReviewStatus(name: string | null | undefined) {
+  return isTestContributor(name) ? "excluded" as const : "included" as const;
+}
