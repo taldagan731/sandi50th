@@ -218,3 +218,5 @@
 .duplicateStudioActions button{min-height:44px;border:1px solid rgba(215,177,108,.36);border-radius:999px;background:transparent;color:#f7efe5;padding:.65rem .9rem;cursor:pointer}
 .duplicateStudioActions button:first-child{background:#d7b16c;color:#160d16;font-weight:700}
 @media(max-width:700px){.duplicateStudioHeader{display:grid}.duplicateStudioHeader dl{width:100%}.duplicateStudioMedia{grid-template-columns:repeat(2,minmax(0,1fr))}.duplicateStudioActions{display:grid}.duplicateStudioGroup>header{display:grid}}
+
+.duplicatePreviewPage{min-height:100dvh;padding:2rem 1rem;background:radial-gradient(circle at 50% 0,rgba(239,154,200,.14),transparent 38%),var(--bg)}
