@@ -127,9 +127,7 @@ export function RevealTimeline({
             <article key={item.id}>
               <div className="timelineImage">
                 {item.mimeType.startsWith("video/") ? (
-                  item.poster
-                    ? <img src={`${url}?poster=1`} alt={`Poster frame for ${item.caption || item.originalName}`} data-reveal-photo="true" role="button" tabIndex={0} />
-                    : <div className="timelinePlaceholder">Video memory</div>
+                  <InViewVideoPreview item={item} url={url} />
                 ) : (
                   <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
                 )}
@@ -142,6 +140,50 @@ export function RevealTimeline({
         })}
       </div>
     </section>
+  );
+}
+
+function InViewVideoPreview({ item, url }: { item: ArchiveMedia; url: string }) {
+  const previewRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = previewRef.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .55);
+      if (visible && document.visibilityState === "visible") {
+        video.muted = true;
+        video.loop = true;
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    }, { threshold: [.55], rootMargin: "0px 0px -8% 0px" });
+    const pauseWhenHidden = () => {
+      if (document.visibilityState !== "visible") video.pause();
+    };
+    observer.observe(video);
+    document.addEventListener("visibilitychange", pauseWhenHidden);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", pauseWhenHidden);
+      video.pause();
+    };
+  }, []);
+
+  return (
+    <video
+      ref={previewRef}
+      className="timelineVideoPreview"
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      poster={item.poster ? `${url}?poster=1` : undefined}
+      aria-label={`Silent preview of ${item.caption || item.originalName}`}
+    >
+      <source src={url} type={item.mimeType} />
+    </video>
   );
 }
 

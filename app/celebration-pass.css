@@ -621,20 +621,50 @@
   color: var(--celebration-coral);
 }
 .timelineMemories {
-  gap: 1.25rem;
-  animation: photoArrival .4s cubic-bezier(.34, 1.56, .64, 1) both;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 2.2rem clamp(1.2rem, 4vw, 3.5rem) 3.2rem;
 }
 .timelineMemories article {
+  --photo-rotate: -2.2deg;
+  --photo-overshoot: .8deg;
+  --photo-y: 0rem;
+  position: relative;
+  z-index: 1;
+  margin-inline: -.7rem;
   border: 0;
   background: transparent;
+  box-shadow: 0 22px 62px rgba(23, 5, 18, .35);
+  animation: scatteredPhotoArrival .58s cubic-bezier(.34, 1.56, .64, 1) both;
 }
-.timelineMemories article:nth-child(odd) { transform: rotate(-.75deg); }
-.timelineMemories article:nth-child(even) { transform: rotate(.8deg) translateY(.6rem); }
+.timelineMemories article:nth-child(even) { --photo-rotate: 1.8deg; --photo-overshoot: -.7deg; --photo-y: .9rem; z-index: 3; }
+.timelineMemories article:nth-child(3n) { --photo-rotate: -.6deg; --photo-overshoot: .35deg; --photo-y: -.65rem; z-index: 2; }
+.timelineMemories article:nth-child(4n) { --photo-rotate: 2.6deg; --photo-overshoot: -1deg; --photo-y: .35rem; z-index: 4; }
+.timelineMemories article:nth-child(n + 5) { margin-top: -2.1rem; }
+.timelineMemories article:nth-child(2) { animation-delay: .06s; }
+.timelineMemories article:nth-child(3) { animation-delay: .12s; }
+.timelineMemories article:nth-child(4) { animation-delay: .18s; }
+.timelineMemories article:nth-child(5) { animation-delay: .24s; }
+.timelineMemories article:nth-child(6) { animation-delay: .3s; }
+.timelineMemories article:nth-child(7) { animation-delay: .36s; }
+.timelineMemories article:nth-child(8) { animation-delay: .42s; }
 .timelineImage {
   box-shadow: 0 20px 54px rgba(0, 0, 0, .3);
 }
-.timelineImage img {
+.timelineImage img,
+.timelineImage video {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+}
+.timelineVideoPreview {
+  display: block;
+  background: #2d1025;
+}
+@keyframes scatteredPhotoArrival {
+  0% { opacity: 0; transform: translateY(3.4rem) scale(.72) rotate(-7deg); }
+  72% { opacity: 1; transform: translateY(-.45rem) scale(1.045) rotate(var(--photo-overshoot)); }
+  100% { opacity: 1; transform: translateY(var(--photo-y)) scale(1) rotate(var(--photo-rotate)); }
 }
 .archiveFilmStack {
   background:
@@ -739,8 +769,16 @@
   .memoryPlate.is-active {
     flex-basis: 91vw;
   }
+  .timelineMemories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+    padding-inline: .35rem;
+  }
   .timelineMemories article:nth-child(n) {
-    transform: none;
+    --photo-rotate: 0deg;
+    --photo-overshoot: 0deg;
+    --photo-y: 0rem;
+    margin: 0;
   }
 }
 

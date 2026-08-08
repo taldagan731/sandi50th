@@ -3,6 +3,7 @@
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrack";
+import { fireRevealFinaleConfetti } from "@/lib/confetti";
 
 type RevealMedia = {
   id: string;
@@ -414,6 +415,8 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
   const [index, setIndex] = useState(0);
   const [continuePlaying, setContinuePlaying] = useState(false);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const sequenceStartedAtFirst = useRef(false);
+  const finaleFired = useRef(false);
   const current = items[index];
   const playbackId = `birthday:${current.id}`;
   const playing = activeId === playbackId;
@@ -437,6 +440,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
 
   function select(nextIndex: number) {
     onActiveChange(null);
+    sequenceStartedAtFirst.current = false;
     setContinuePlaying(false);
     setIndex(nextIndex);
   }
@@ -450,6 +454,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
       onActiveChange(null);
       return;
     }
+    if (index === 0) sequenceStartedAtFirst.current = true;
     setContinuePlaying(true);
     onActiveChange(playbackId);
     void element.play().catch(() => {
@@ -462,6 +467,10 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
     if (continuePlaying && index < items.length - 1) {
       setIndex(value => value + 1);
       return;
+    }
+    if (continuePlaying && sequenceStartedAtFirst.current && !finaleFired.current) {
+      finaleFired.current = true;
+      fireRevealFinaleConfetti();
     }
     setContinuePlaying(false);
     onActiveChange(null);
