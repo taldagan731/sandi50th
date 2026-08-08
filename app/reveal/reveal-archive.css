@@ -39,7 +39,9 @@
 .timelineControl input[type="range"] { width: 100%; min-height: 44px; margin: -.35rem 0 0; accent-color: #d6b05c; touch-action: pan-x; }
 .timelineEndpoints { display: flex; justify-content: space-between; color: rgba(248, 240, 231, .45); font-size: .72rem; letter-spacing: .08em; }
 .timelineChapters { display: grid; grid-template-columns: repeat(8, minmax(8.5rem, 1fr)); gap: 1px; max-width: 1120px; margin: 2rem auto 0; overflow-x: auto; border: 1px solid rgba(214, 176, 92, .16); }
-.timelineChapters span { display: grid; align-content: center; min-height: 62px; padding: .65rem; background: rgba(255, 255, 255, .018); color: rgba(248, 240, 231, .67); font-family: var(--font-serif, Georgia, serif); }
+.timelineChapters button { display: grid; align-content: center; min-height: 62px; padding: .65rem; border: 0; background: rgba(255, 255, 255, .018); color: rgba(248, 240, 231, .67); font-family: var(--font-serif, Georgia, serif); text-align: left; cursor: pointer; }
+.timelineChapters button:hover { background: rgba(214, 176, 92, .08); color: #f8f0e7; }
+.timelineChapters button:focus-visible { outline: 2px solid #d6b05c; outline-offset: -2px; }
 .timelineChapters small { color: #d6b05c; font: .63rem var(--font-sans, Arial, sans-serif); letter-spacing: .14em; }
 .timelineNearest { max-width: 1120px; margin: 2rem auto 0; color: rgba(248, 240, 231, .55); font-size: .8rem; }
 .timelineMemories { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1rem; max-width: 1120px; margin: 2rem auto 0; animation: memory-develop .48s ease both; }
