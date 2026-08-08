@@ -8,6 +8,7 @@ import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
 import "./chapter-nine.css";
+import "./reveal-family-qa.css";
 
 export const dynamic = "force-dynamic";
 
