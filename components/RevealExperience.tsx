@@ -69,6 +69,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<ExpandedPhoto | null>(null);
   const [finaleSignal, setFinaleSignal] = useState(0);
+  const [openingStarted, setOpeningStarted] = useState(false);
   const chapter = chapters[chapterIndex];
   const archiveMedia = useMemo(() => media.filter(item => item.collection === "archive"), [media]);
   const voiceMemories = useMemo(
@@ -167,12 +168,12 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
           sizes="100vw"
         />
         <div className="revealMastheadPhotoScrim" aria-hidden="true" />
-        <SandiSignaturePrelude />
+        <SandiSignaturePrelude started={openingStarted} />
         <div className="revealMastheadContent">
           <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
           <h1>Still Becoming</h1>
           <p>Fifty years, told by the people who love Sandi.</p>
-          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} />
+          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={() => setOpeningStarted(true)} />
         </div>
       </header>
 

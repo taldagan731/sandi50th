@@ -9,11 +9,13 @@ type NameRecording = { id: string; contributorName: string; displayOrder: number
 export function RevealSoundtrack({
   ducked,
   names,
-  finaleSignal
+  finaleSignal,
+  onStart
 }: {
   ducked: boolean;
   names: NameRecording[];
   finaleSignal: number;
+  onStart: () => void;
 }) {
   const songRef = useRef<HTMLAudioElement>(null);
   const audioContext = useRef<AudioContext | null>(null);
@@ -135,7 +137,10 @@ export function RevealSoundtrack({
       const contextPromise = ensureAudioContext();
       await song.play();
       await contextPromise;
-      startedRef.current = true;
+      if (!startedRef.current) {
+        startedRef.current = true;
+        onStart();
+      }
       setPlaying(true);
       if (chorusEnabled) void playChorus();
     } catch {

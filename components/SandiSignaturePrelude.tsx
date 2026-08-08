@@ -1,6 +1,6 @@
-export function SandiSignaturePrelude() {
+export function SandiSignaturePrelude({ started }: { started: boolean }) {
   return (
-    <div className="sandiSignaturePrelude" aria-label="Sandi" role="img">
+    <div className={started ? "sandiSignaturePrelude is-playing" : "sandiSignaturePrelude"} aria-label="Sandi" aria-hidden={!started} role="img">
       <svg viewBox="0 0 940 360" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="sandi-flow" x1="0" y1="0" x2="1" y2=".7">

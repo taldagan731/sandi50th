@@ -46,7 +46,7 @@ requireText("components/RevealExperience.tsx", "RevealSoundtrack", "the reveal s
 requireText("components/RevealExperience.tsx", "ducked={activeRecordingId !== null}", "automatic soundtrack ducking");
 requireText("components/RevealExperience.tsx", "data-reveal-photo=\"true\"", "tap-to-expand reveal photographs");
 requireText("components/RevealSoundtrackV2.tsx", "NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL", "the configurable reveal soundtrack");
-requireText("components/RevealExperience.tsx", "<SandiSignaturePrelude />", "the one-time reveal signature opening");
+requireText("components/RevealExperience.tsx", "<SandiSignaturePrelude started={openingStarted}", "the one-time reveal signature opening");
 requireText("components/RevealExperience.tsx", "revealMastheadPhoto", "the photograph revealed beneath the signature");
 requireText("components/RevealExperience.tsx", "priority", "concurrent priority loading for the reveal photograph");
 requireText("components/SandiSignaturePrelude.tsx", 'pathLength="100"', "measured hand-drawn SVG strokes");
@@ -57,6 +57,14 @@ requireText("app/reveal/sandi-signature.css", "@media(prefers-reduced-motion:red
 requireText("app/reveal/sandi-signature.css", "stroke-dashoffset:0;animation:none", "the fully drawn reduced-motion state");
 forbidText("components/SandiSignaturePrelude.tsx", "framer-motion", "a signature animation dependency");
 forbidText("components/SandiSignaturePrelude.tsx", "gsap", "a signature animation dependency");
+requireText("components/RevealExperience.tsx", "onStart={() => setOpeningStarted(true)}", "the music-triggered signature handoff");
+requireText("components/RevealSoundtrackV2.tsx", "onStart();", "the successful-play signature trigger");
+requireText("app/reveal/sandi-signature-trigger.css", ".sandiSignaturePrelude.is-playing", "the dormant-until-play signature state");
+requireText("app/reveal/sandi-signature-trigger.css", "animation-name: none", "no page-load signature animation");
+requireText("app/reveal/sandi-signature-trigger.css", "sandi-static-cut", "the static reduced-motion hold and instant exit");
+forbidText("components/OpeningExperience.tsx", "SandiSignaturePrelude", "the reveal-only signature on the homepage");
+forbidText("components/ContributionHub.tsx", "SandiSignaturePrelude", "the reveal-only signature on the contribution page");
+forbidText("components/SandiSignaturePrelude.tsx", "setInterval", "a looping signature controller");
 requireText("components/MemoryContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after memory success");
 requireText("components/RecordingContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after recorded contributions");
 requireText("components/ContributionHub.tsx", "<NameChorusRecorder standalone", "the return-visitor name-only path");

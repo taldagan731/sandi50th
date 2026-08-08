@@ -9,6 +9,7 @@ import "./reveal-recordings.css";
 import "./reveal-archive.css";
 import "./name-chorus.css";
 import "./sandi-signature.css";
+import "./sandi-signature-trigger.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 
