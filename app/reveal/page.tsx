@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
+import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
@@ -85,7 +86,7 @@ export default async function RevealPage() {
 
   const { data: rawSubmissions } = await supabase
     .from("submissions")
-    .select("id,name,relationship,prompt,approximate_year,review_status")
+    .select("id,name,relationship,prompt,first_memory,approximate_year,location,life_chapter,status,review_status,reviewer_notes")
     .eq("project_id", projectId)
     .neq("review_status", "excluded")
     .not("name", "ilike", "%MOBILE TEST%")
@@ -116,6 +117,41 @@ export default async function RevealPage() {
     }
   }
 
+  const storedFamilyAnswers = submissionRows.flatMap(item => {
+    if (item.status !== "family_qa") return [];
+    const metadata = decodeFamilyQaMetadata(item.reviewer_notes);
+    if (!metadata) return [];
+    const chapterMatch = item.life_chapter?.match(/\b([1-8])\b/);
+    return [{
+      id: item.id,
+      contributorName: item.name,
+      relationship: item.relationship || "Family",
+      question: item.prompt || "",
+      answer: item.first_memory || "",
+      chapterNumber: chapterMatch ? Number(chapterMatch[1]) : 8,
+      when: item.approximate_year || "",
+      place: item.location || "",
+      chorusKeys: metadata.chorusKeys,
+      photoAssetIds: metadata.photoAssetIds,
+      showInChapter: metadata.showInChapter
+    }];
+  });
+  const familyAnswers = storedFamilyAnswers.length
+    ? storedFamilyAnswers
+    : FAMILY_QA_SEED.map(item => ({
+        id: item.id,
+        contributorName: item.contributorName,
+        relationship: item.relationship,
+        question: item.question,
+        answer: item.answer,
+        chapterNumber: item.chapterNumber,
+        when: item.when,
+        place: item.place,
+        chorusKeys: item.chorusKeys,
+        photoAssetIds: item.photoAssetIds,
+        showInChapter: item.showInChapter
+      }));
+
   return (
     <main className="revealPage">
       <RevealExperience
@@ -127,6 +163,7 @@ export default async function RevealPage() {
             text: approved?.approved_text || ""
           };
         })}
+        familyAnswers={familyAnswers}
         media={mediaRows.map(item => {
           const submission = submissionsById.get(item.submission_id);
           const prompt = submission?.prompt?.toUpperCase();
