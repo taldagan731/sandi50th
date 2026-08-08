@@ -168,7 +168,7 @@ export function RevealSoundtrack({
         {error && <small role="status">The soundtrack could not start. Tap once more, or continue in silence.</small>}
       </div>
 
-      <audio ref={songRef} preload="none" loop onEnded={() => setPlaying(false)}>
+      <audio ref={songRef} preload="auto" loop onEnded={() => setPlaying(false)}>
         <source src={track} type="audio/mpeg" />
       </audio>
 

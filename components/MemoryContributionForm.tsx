@@ -4,6 +4,7 @@ import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { PostUploadPhotoReview } from "@/components/PostUploadPhotoReview";
 import { fireContributionConfetti } from "@/lib/confetti";
+import { fireContributionBalloons } from "@/lib/balloons";
 import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 import {
   ChangeEvent,
@@ -98,6 +99,7 @@ export function MemoryContributionForm({
     if (!submitted || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
+    fireContributionBalloons();
   }, [submitted]);
 
   useEffect(() => {

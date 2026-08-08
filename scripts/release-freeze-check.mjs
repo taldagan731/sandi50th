@@ -57,7 +57,7 @@ requireText("app/reveal/sandi-signature.css", "@media(prefers-reduced-motion:red
 requireText("app/reveal/sandi-signature.css", "stroke-dashoffset:0;animation:none", "the fully drawn reduced-motion state");
 forbidText("components/SandiSignaturePrelude.tsx", "framer-motion", "a signature animation dependency");
 forbidText("components/SandiSignaturePrelude.tsx", "gsap", "a signature animation dependency");
-requireText("components/RevealExperience.tsx", "onStart={() => setOpeningStarted(true)}", "the music-triggered signature handoff");
+requireText("components/RevealExperience.tsx", "setOpeningStarted(true); fireRevealOpeningBalloons();", "the music-triggered signature and opening-balloon handoff");
 requireText("components/RevealSoundtrackV2.tsx", "onStart();", "the successful-play signature trigger");
 requireText("app/reveal/sandi-signature-trigger.css", ".sandiSignaturePrelude.is-playing", "the dormant-until-play signature state");
 requireText("app/reveal/sandi-signature-trigger.css", "animation-name: none", "no page-load signature animation");
@@ -142,6 +142,17 @@ forbidText("lib/confetti.ts", "setInterval", "a repeating confetti timer");
 requireText("components/MemoryContributionForm.tsx", "fireContributionConfetti();", "memory and photo contribution celebration");
 requireText("components/RecordingContributionForm.tsx", "fireContributionConfetti();", "voice and birthday-message celebration");
 requireText("components/RevealExperience.tsx", "fireRevealFinaleConfetti();", "the completed birthday-message reel celebration");
+
+requireText("package.json", '"balloons-js": "^0.0.3"', "the only approved balloon dependency");
+requireText("lib/balloons.ts", 'import("balloons-js")', "event-only dynamic balloon loading");
+requireText("lib/balloons.ts", 'prefers-reduced-motion: reduce', "reduced-motion balloon suppression");
+requireText("lib/balloons.ts", 'max-width: 640px', "lower mobile balloon count");
+requireText("lib/balloons.ts", 'text: "50"', "the reveal-opening 50 balloons");
+forbidText("lib/balloons.ts", "setInterval", "a repeating balloon timer");
+requireText("components/MemoryContributionForm.tsx", "fireContributionBalloons();", "memory contribution balloons");
+requireText("components/RecordingContributionForm.tsx", "fireContributionBalloons();", "recorded contribution balloons");
+requireText("components/RevealExperience.tsx", "fireRevealOpeningBalloons();", "opening 50 balloons");
+requireText("components/RevealExperience.tsx", "fireRevealFinaleBalloons();", "finale balloons");
 
 const confettiSource = [...sourceFiles("app"), ...sourceFiles("components"), ...sourceFiles("lib")]
   .filter(path => /\.(ts|tsx)$/.test(path));

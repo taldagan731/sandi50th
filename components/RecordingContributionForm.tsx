@@ -3,6 +3,7 @@
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { fireContributionConfetti } from "@/lib/confetti";
+import { fireContributionBalloons } from "@/lib/balloons";
 import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
@@ -39,6 +40,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
     if (phase !== "success" || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
+    fireContributionBalloons();
   }, [phase]);
 
   useEffect(() => {

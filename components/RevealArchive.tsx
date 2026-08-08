@@ -149,24 +149,16 @@ function InViewVideoPreview({ item, url }: { item: ArchiveMedia; url: string }) 
   useEffect(() => {
     const video = previewRef.current;
     if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .55);
-      if (visible && document.visibilityState === "visible") {
-        video.muted = true;
-        video.loop = true;
-        void video.play().catch(() => undefined);
-      } else {
-        video.pause();
-      }
-    }, { threshold: [.55], rootMargin: "0px 0px -8% 0px" });
-    const pauseWhenHidden = () => {
-      if (document.visibilityState !== "visible") video.pause();
+    const followPage = () => {
+      if (document.visibilityState === "visible") void video.play().catch(() => undefined);
+      else video.pause();
     };
-    observer.observe(video);
-    document.addEventListener("visibilitychange", pauseWhenHidden);
+    video.muted = true;
+    video.loop = true;
+    followPage();
+    document.addEventListener("visibilitychange", followPage);
     return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", pauseWhenHidden);
+      document.removeEventListener("visibilitychange", followPage);
       video.pause();
     };
   }, []);
@@ -178,6 +170,7 @@ function InViewVideoPreview({ item, url }: { item: ArchiveMedia; url: string }) 
       muted
       loop
       playsInline
+      autoPlay
       preload="metadata"
       poster={item.poster ? `${url}?poster=1` : undefined}
       aria-label={`Silent preview of ${item.caption || item.originalName}`}
@@ -194,19 +187,16 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .7);
-      if (visible) {
-        video.muted = true;
-        video.loop = true;
-        void video.play().catch(() => undefined);
-      } else {
-        video.pause();
-      }
-    }, { threshold: [.7] });
-    observer.observe(video);
+    const followPage = () => {
+      if (document.visibilityState === "visible") void video.play().catch(() => undefined);
+      else video.pause();
+    };
+    video.muted = true;
+    video.loop = true;
+    followPage();
+    document.addEventListener("visibilitychange", followPage);
     return () => {
-      observer.disconnect();
+      document.removeEventListener("visibilitychange", followPage);
       video.pause();
     };
   }, [index]);
@@ -240,7 +230,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
         </div>
 
         <article className="filmPlayer" key={current.id}>
-          <video ref={videoRef} controls muted loop preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
+          <video ref={videoRef} controls muted loop autoPlay preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
             <source src={currentUrl} type={current.mimeType} />
           </video>
           <div>

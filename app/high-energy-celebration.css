@@ -1,0 +1,159 @@
+/* The party-energy pass: saturated grounds, moving light, breathing media and full-scale type. */
+.revealExperience,
+.homePage,
+.contributePage {
+  background: #651d62;
+}
+
+.revealMasthead,
+.invitationSection,
+.contributeHero {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 132, 101, .86), transparent 34%),
+    radial-gradient(circle at 82% 24%, rgba(137, 116, 255, .82), transparent 36%),
+    linear-gradient(125deg, #76206f 0%, #a72f68 48%, #d95d65 100%);
+  background-size: 160% 160%;
+  animation: partyGroundDrift 14s ease-in-out infinite alternate;
+}
+
+.revealChapter {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6c2070, #a82f67 54%, #e06767);
+  box-shadow: 0 30px 90px rgba(65, 8, 61, .34);
+}
+.revealChapter[data-chapter="1"] { background: linear-gradient(132deg, #65266f, #a93470 52%, #ef7569); }
+.revealChapter[data-chapter="2"] { background: linear-gradient(132deg, #9b295e, #dc5666 52%, #ef966b); }
+.revealChapter[data-chapter="3"] { background: linear-gradient(132deg, #54257e, #7849a8 52%, #db6b91); }
+.revealChapter[data-chapter="4"] { background: linear-gradient(132deg, #7d214f, #be3e62 52%, #ef7d68); }
+.revealChapter[data-chapter="5"] { background: linear-gradient(132deg, #4a317f, #7754ba 52%, #de769f); }
+.revealChapter[data-chapter="6"] { background: linear-gradient(132deg, #6e255c, #aa3969 52%, #e65f71); }
+.revealChapter[data-chapter="7"] { background: linear-gradient(132deg, #403078, #6c54ac 52%, #d06792); }
+.revealChapter[data-chapter="8"] { background: linear-gradient(132deg, #85294f, #cc4f5e 52%, #f09a64); }
+
+.revealChapter::before,
+.revealChapter::after,
+.birthdayReel::before,
+.voiceWall::before,
+.closingInvitation::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 52vmax;
+  height: 52vmax;
+  border-radius: 50%;
+  filter: blur(55px);
+  opacity: .46;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 202, 113, .85), rgba(255, 115, 116, .2) 46%, transparent 68%);
+  animation: warmLightFloat 17s ease-in-out infinite alternate;
+}
+.revealChapter::before { left: -22vmax; top: -24vmax; }
+.revealChapter::after { right: -23vmax; bottom: -25vmax; animation-delay: -8s; background: radial-gradient(circle, rgba(130, 224, 188, .65), rgba(145, 129, 255, .2) 48%, transparent 70%); }
+
+.literarySection,
+.chapterSection:nth-of-type(odd),
+.voiceWall,
+.lifeTimeline {
+  background: linear-gradient(130deg, #55206d, #82306f 48%, #be506b);
+  background-size: 170% 170%;
+  animation: partyGroundDrift 18s ease-in-out infinite alternate;
+}
+.chapterSection:nth-of-type(even),
+.archiveFilmStack,
+.birthdayReel,
+.closingInvitation,
+.contributionSuccess {
+  background: linear-gradient(130deg, #8b2859, #ca4d65 52%, #e98568);
+  background-size: 170% 170%;
+  animation: partyGroundDrift 20s ease-in-out infinite alternate-reverse;
+}
+
+.revealMasthead h1,
+.revealChapter h2,
+.birthdayReel h2,
+.voiceWall h2,
+.lifeTimeline h2,
+.archiveFilmStack h2,
+.chapterSection h2 {
+  font-size: clamp(3.6rem, 9vw, 8.8rem);
+  line-height: .86;
+  letter-spacing: -.065em;
+  text-wrap: balance;
+  text-shadow: 0 12px 34px rgba(65, 9, 49, .3);
+}
+.eyebrow,
+.revealChapter > header > span {
+  font-size: clamp(.95rem, 1.6vw, 1.3rem);
+  letter-spacing: .055em;
+  text-transform: none;
+  font-weight: 800;
+}
+
+.memoryPlate,
+.timelineMedia img,
+.filmStack img,
+.chapterPhoto,
+.storyPhoto {
+  transform: rotate(var(--party-tilt, -2.2deg)) scale(1.015);
+  animation: photoBreath 7s ease-in-out infinite alternate;
+  box-shadow: 0 22px 54px rgba(53, 10, 54, .42);
+}
+.memoryPlate:nth-child(even), .timelineMedia:nth-child(even) img { --party-tilt: 2.5deg; animation-delay: -3s; }
+.memoryPlate:nth-child(3n), .timelineMedia:nth-child(3n) img { --party-tilt: -3.5deg; animation-delay: -5s; }
+.memoryPlate.is-active { animation: photoArrival .72s cubic-bezier(.18, 1.5, .45, 1) both, photoBreath 7s 1s ease-in-out infinite alternate; z-index: 3; }
+.memoryGallery, .timelineMedia { gap: clamp(.25rem, 1.2vw, 1rem); }
+.memoryPlate + .memoryPlate { margin-left: clamp(-2rem, -4vw, -.65rem); }
+
+.timelineVideoPreview,
+.filmPlayer video {
+  filter: saturate(1.16) contrast(1.03);
+  animation: videoBreathe 9s ease-in-out infinite alternate;
+}
+
+.sandiBalloons,
+.sandiTextBalloons {
+  z-index: 10000 !important;
+  filter: drop-shadow(0 18px 22px rgba(89, 23, 76, .24));
+  pointer-events: none !important;
+}
+
+@keyframes partyGroundDrift {
+  0% { background-position: 0% 30%; }
+  100% { background-position: 100% 70%; }
+}
+@keyframes warmLightFloat {
+  0% { transform: translate3d(-4%, -3%, 0) scale(.88); opacity: .34; }
+  100% { transform: translate3d(18%, 14%, 0) scale(1.15); opacity: .58; }
+}
+@keyframes photoBreath {
+  0% { transform: rotate(var(--party-tilt, -2deg)) scale(1.01) translateY(0); }
+  100% { transform: rotate(calc(var(--party-tilt, -2deg) * -.65)) scale(1.045) translateY(-9px); }
+}
+@keyframes photoArrival {
+  0% { opacity: 0; transform: translateY(90px) rotate(-9deg) scale(.72); }
+  72% { opacity: 1; transform: translateY(-13px) rotate(3.5deg) scale(1.08); }
+  100% { opacity: 1; transform: translateY(0) rotate(var(--party-tilt, -2deg)) scale(1.015); }
+}
+@keyframes videoBreathe {
+  from { transform: scale(1.005); }
+  to { transform: scale(1.035); }
+}
+
+@media (max-width: 700px) {
+  .revealChapter h2, .revealMasthead h1, .chapterSection h2 { font-size: clamp(3.15rem, 16vw, 5.7rem); }
+  .memoryPlate { transform: rotate(var(--party-tilt, -1.2deg)); }
+  .memoryPlate + .memoryPlate { margin-left: -.7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealMasthead, .invitationSection, .contributeHero, .revealChapter,
+  .literarySection, .chapterSection, .voiceWall, .lifeTimeline,
+  .archiveFilmStack, .birthdayReel, .closingInvitation, .contributionSuccess,
+  .memoryPlate, .timelineMedia img, .filmStack img, .chapterPhoto, .storyPhoto,
+  .timelineVideoPreview, .filmPlayer video,
+  .revealChapter::before, .revealChapter::after, .birthdayReel::before,
+  .voiceWall::before, .closingInvitation::before { animation: none !important; }
+  .sandiBalloons, .sandiTextBalloons { display: none !important; }
+}

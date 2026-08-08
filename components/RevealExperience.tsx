@@ -6,6 +6,7 @@ import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
 import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
+import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 
 type RevealMedia = {
   id: string;
@@ -173,7 +174,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
           <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
           <h1>Still Becoming</h1>
           <p>Fifty years, told by the people who love Sandi.</p>
-          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={() => setOpeningStarted(true)} />
+          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={() => { setOpeningStarted(true); fireRevealOpeningBalloons(); }} />
         </div>
       </header>
 
@@ -193,7 +194,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
             ))}
           </nav>
 
-          <article className="revealChapter" id="reveal-story-room" key={chapter.number}>
+          <article className="revealChapter" data-chapter={chapter.number} id="reveal-story-room" key={chapter.number}>
             <header>
               <span>CHAPTER {String(chapter.number).padStart(2, "0")}</span>
               <h2>{chapter.title}</h2>
@@ -492,6 +493,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange, onFinale }: Reco
     if (continuePlaying && sequenceStartedAtFirst.current && !finaleFired.current) {
       finaleFired.current = true;
       fireRevealFinaleConfetti();
+      fireRevealFinaleBalloons();
       onFinale();
     }
     setContinuePlaying(false);
