@@ -47,6 +47,7 @@ requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-on
 requireText("app/reveal/page.tsx", '.neq("review_status", "excluded")', "default-visible reveal selection");
 requireText("app/api/reveal/media/[id]/route.ts", "reveal_public", "the private/public reveal media gate");
 requireText("app/api/studio/contributions/route.ts", "%MOBILE TEST%", "automatic test-record exclusion");
+requireText("app/api/public/hero-photo/route.ts", '.not("reviewed_at", "is", null)', "public-homepage upload containment");
 requireText("supabase/default-visible-reveal-migration.sql", "reveal_public boolean not null default false", "the reveal access switch migration");
 forbidText("components/RecordingContributionForm.tsx", "until it is approved", "recording approval language");
 requireText("components/RevealArchive.tsx", "Move through the years.", "time scrubber");
