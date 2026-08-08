@@ -56,7 +56,7 @@ const jenny = {
 
 const emile = {
   contributorName: "Emile Banayan",
-  relationship: "Family member — please confirm",
+  relationship: "Brother-in-law",
   when: "",
   place: "",
   photoAssetIds: [] as string[],
@@ -77,11 +77,11 @@ export const FAMILY_QA_SEED: FamilyQaAnswer[] = [
     ...jenny,
     id: "jenny-greece-funny",
     question: "What is the funniest thing the two of you ever did together?",
-    answer: "One of the funniest things we did together was travel to Greece. It was very fun, and we have some very funny memories from that trip: the fly who was going to ‘die hard,’ the cab driver who burst into our room looking for the person who booked a ride and disappeared, walking to eat in one-hundred-degree weather, and being treated as outsiders on the ship.",
+    answer: "One of the funniest things we did together was travel to Greece. We still laugh about the fly who was going to ‘die hard,’ the cab driver who burst into our room looking for the person who booked a ride and disappeared, walking to eat in one-hundred-degree weather, and being on a ship where people thought we looked different and treated us like terrorists.",
     chapterNumber: 6,
     chorusKeys: [],
-    showInChapter: false,
-    editorialNote: "The source used a more charged description of the ship incident. This lightly edited display copy preserves the event without publishing that comparison; review before enabling."
+    showInChapter: true,
+    editorialNote: "Visible at the project owner's direction after the source audit; punctuation and grammar normalized without removing the incident Jenny described."
   },
   {
     ...jenny,
@@ -160,11 +160,11 @@ export const FAMILY_QA_SEED: FamilyQaAnswer[] = [
     ...jenny,
     id: "jenny-unrealized",
     question: "What is one thing people do not realize about Sandi?",
-    answer: "She is very sweet and calm, but if you make her angry, you had better watch out. She is not one to be pushed around.",
+    answer: "She is very sweet and calm, but if you piss her off, you had better watch out. She is not one to mess with.",
     chapterNumber: 8,
     chorusKeys: [],
-    showInChapter: false,
-    editorialNote: "The source uses profanity for emphasis. This display copy is lightly softened; review before enabling."
+    showInChapter: true,
+    editorialNote: "Visible at the project owner's direction after the source audit; Jenny's emphasis is retained."
   },
   {
     ...jenny,

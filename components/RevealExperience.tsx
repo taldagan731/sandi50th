@@ -3,6 +3,7 @@
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrack";
+import { fireRevealFinaleConfetti } from "@/lib/confetti";
 
 type RevealMedia = {
   id: string;
@@ -171,7 +172,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
             ))}
           </nav>
 
-          <article className="revealChapter" id="reveal-story-room" key={chapter.number}>
+          <article className={`revealChapter revealChapter--${chapter.number}`} id="reveal-story-room" key={chapter.number}>
             <header>
               <span>CHAPTER {String(chapter.number).padStart(2, "0")}</span>
               <h2>{chapter.title}</h2>
@@ -414,6 +415,8 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
   const [index, setIndex] = useState(0);
   const [continuePlaying, setContinuePlaying] = useState(false);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const sequenceStartedAtFirst = useRef(false);
+  const finaleFired = useRef(false);
   const current = items[index];
   const playbackId = `birthday:${current.id}`;
   const playing = activeId === playbackId;
@@ -437,6 +440,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
 
   function select(nextIndex: number) {
     onActiveChange(null);
+    sequenceStartedAtFirst.current = false;
     setContinuePlaying(false);
     setIndex(nextIndex);
   }
@@ -451,6 +455,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
       return;
     }
     setContinuePlaying(true);
+    if (index === 0) sequenceStartedAtFirst.current = true;
     onActiveChange(playbackId);
     void element.play().catch(() => {
       setContinuePlaying(false);
@@ -462,6 +467,10 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
     if (continuePlaying && index < items.length - 1) {
       setIndex(value => value + 1);
       return;
+    }
+    if (continuePlaying && sequenceStartedAtFirst.current && !finaleFired.current) {
+      finaleFired.current = true;
+      fireRevealFinaleConfetti();
     }
     setContinuePlaying(false);
     onActiveChange(null);
