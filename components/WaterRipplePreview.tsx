@@ -73,14 +73,14 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
 
 type MotionState = "checking" | "active" | "reduced" | "unavailable" | "failed";
 
-function WaterRippleLayer({ strength, onState }: { strength: RippleStrength; onState: (state: MotionState) => void }) {
+function WaterRippleLayer({ strength, forceMotion, onState }: { strength: RippleStrength; forceMotion: boolean; onState: (state: MotionState) => void }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const shell=shellRef.current,canvas=canvasRef.current;
     if(!shell||!canvas)return;
-    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){onState("reduced");return;}
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches&&!forceMotion){onState("reduced");return;}
     const gl=canvas.getContext("webgl2",{alpha:true,antialias:false,premultipliedAlpha:false,powerPreference:"low-power"});
     if(!gl){onState("unavailable");return;}
     const vertex=compile(gl,gl.VERTEX_SHADER,vertexShader),fragment=compile(gl,gl.FRAGMENT_SHADER,fragmentShader);
@@ -130,7 +130,7 @@ function WaterRippleLayer({ strength, onState }: { strength: RippleStrength; onS
     gl.uniform1f(gl.getUniformLocation(program,"shimmerAmount"),strengths[strength].shimmer);
     gl.clearColor(0,0,0,0);observer.observe(shell);resizeObserver.observe(shell);document.addEventListener("visibilitychange",visibility);resize();
     return()=>{stop();observer.disconnect();resizeObserver.disconnect();document.removeEventListener("visibilitychange",visibility);image.onload=null;image.onerror=null;gl.deleteTexture(texture);gl.deleteProgram(program);gl.deleteShader(vertex);gl.deleteShader(fragment);gl.deleteBuffer(buffer);};
-  },[strength,onState]);
+  },[strength,forceMotion,onState]);
 
   return <div ref={shellRef} className="waterRippleLayer" aria-hidden="true"><canvas ref={canvasRef}/></div>;
 }
@@ -138,13 +138,15 @@ function WaterRippleLayer({ strength, onState }: { strength: RippleStrength; onS
 export function WaterRipplePreview(){
   const [strength,setStrength]=useState<RippleStrength>("gentle");
   const [motionState,setMotionState]=useState<MotionState>("checking");
+  const [forceMotion,setForceMotion]=useState(false);
   const current=strengths[strength];
   return <section className="waterPreviewComparison">
     <header><p>PRIVATE MOTION STUDY</p><h1>Beach water, gently alive</h1><span>The photograph appears first. WebGL adds only the masked water layer afterward.</span></header>
     <div className="waterPreviewStage">
       <Image className="waterPreviewPhoto" src="/images/sandi-hero.jpeg" alt="Sandi standing in the water at the beach" fill priority sizes="100vw"/>
-      <WaterRippleLayer strength={strength} onState={setMotionState}/>
+      <WaterRippleLayer strength={strength} forceMotion={forceMotion} onState={setMotionState}/>
       <p className="waterMotionStatus" data-state={motionState} aria-live="polite">{motionState==="active"?"Motion active · masked water only":motionState==="reduced"?"Static by design · Reduced Motion is enabled on this device":motionState==="unavailable"?"Static fallback · WebGL2 is unavailable":motionState==="failed"?"Static fallback · the animation layer could not start":"Checking the animation layer…"}</p>
+      {motionState==="reduced"&&!forceMotion&&<button className="waterMotionOverride" type="button" onClick={()=>{setMotionState("checking");setForceMotion(true);}}>Show motion for this private preview</button>}
       <div className="waterPreviewCopy"><span>50</span><strong>Sandi Yadegari</strong></div>
     </div>
     <div className="waterPreviewChoices" role="radiogroup" aria-label="Water movement intensity">
