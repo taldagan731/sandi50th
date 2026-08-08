@@ -42,6 +42,11 @@ requireText("components/RecordingContributionForm.tsx", "VOICE_WALL", "voice con
 requireText("components/RecordingContributionForm.tsx", "BIRTHDAY_MESSAGE", "birthday message path");
 requireText("components/RecordingContributionForm.tsx", "playsInline", "inline mobile recording playback");
 requireText("components/RevealExperience.tsx", "The rest is yours to write.", "Chapter Nine invitation");
+requireText("components/RevealExperience.tsx", "RevealSoundtrack", "the reveal soundtrack");
+requireText("components/RevealExperience.tsx", "ducked={activeRecordingId !== null}", "automatic soundtrack ducking");
+requireText("components/RevealExperience.tsx", "data-reveal-photo=\"true\"", "tap-to-expand reveal photographs");
+requireText("components/RevealSoundtrack.tsx", "NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL", "the configurable reveal soundtrack");
+forbidText("components/OpeningExperience.tsx", "framer-motion", "the removed homepage animation dependency");
 requireText("components/StoryStudio.tsx", "Open reveal publicly", "the no-deploy reveal access control");
 requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-only exclusion control");
 requireText("components/StoryStudio.tsx", "20_000", "the twenty-second Studio live polling interval");
