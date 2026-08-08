@@ -56,7 +56,7 @@ const jenny = {
 
 const emile = {
   contributorName: "Emile Banayan",
-  relationship: "Family member — please confirm",
+  relationship: "Brother-in-law",
   when: "",
   place: "",
   photoAssetIds: [] as string[],
