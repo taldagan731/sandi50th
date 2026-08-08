@@ -25,10 +25,10 @@ jobs:
         run: |
           for attempt in {1..30}; do
             release="$(curl -fsS https://www.sandi50th.com/api/release 2>/dev/null || true)"
-            if echo "$release" | grep -q "private-story-studio-v1"; then exit 0; fi
+            if echo "$release" | grep -q "\\\"commit\\\":\\\"${GITHUB_SHA}\\\""; then exit 0; fi
             sleep 10
           done
-          echo "Production did not reach the expected release in five minutes."
+          echo "Production did not reach commit ${GITHUB_SHA} in five minutes."
           exit 1
       - name: Verify text, direct media upload, backup, and noindex
         id: live_smoke
