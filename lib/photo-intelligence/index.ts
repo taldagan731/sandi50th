@@ -3,9 +3,9 @@ import sharp from "sharp";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { readPrivateMedia } from "@/lib/photo-intelligence/media";
-import { STORY_CHAPTERS, chapterNumberFromContributor } from "@/lib/chapters";
+import { STORY_CHAPTERS, chapterNumberFromContributor, isTestContributor } from "@/lib/chapters";
 
-const MODEL = process.env.ANTHROPIC_PHOTO_MODEL || "claude-sonnet-4-20250514";
+const MODEL = process.env.ANTHROPIC_PHOTO_MODEL || "claude-sonnet-5";
 const REVIEW_THRESHOLD = 0.67;
 
 const confidenceSchema = z.number().min(0).max(1);
@@ -82,7 +82,6 @@ async function requestAnthropic(derivative: Buffer, context: Record<string, unkn
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 1500,
-      temperature: 0.15,
       system: "You analyze private family photographs for a human-reviewed birthday archive. Be literal, restrained, and honest about uncertainty. Never identify a person, infer sensitive traits, or invent an event. Return only valid JSON.",
       messages: [{
         role: "user",
@@ -149,6 +148,20 @@ async function completeJob(job: Job) {
     await supabase.from("submissions").update({ approximate_year: String(capturedAt.getUTCFullYear()) }).eq("id", submission.id);
   }
 
+  const exifYear = capturedAt?.getUTCFullYear() ?? null;
+  const { error: exifUpdateError } = await supabase.from("media_assets").update({
+    exif_status: exifStatus,
+    exif_captured_at: capturedAt?.toISOString() ?? null,
+    exif_latitude: latitude,
+    exif_longitude: longitude,
+    ...(exifYear ? {
+      inferred_year_start: exifYear,
+      inferred_year_end: exifYear,
+      date_inference_source: "exif"
+    } : {})
+  }).eq("id", media.id);
+  if (exifUpdateError) throw exifUpdateError;
+
   let derivative: Buffer;
   try {
     derivative = await sharp(original, { failOn: "none" })
@@ -174,7 +187,6 @@ async function completeJob(job: Job) {
   const chapterNumber = contributorAssignedChapter ?? analysis.chapterAssignment.chapterNumber;
   const chapterConfidence = contributorAssignedChapter ? 1 : analysis.chapterAssignment.confidence;
   const { start: aiStart, end: aiEnd } = decadeSpan(analysis.decadeGuess.value);
-  const exifYear = capturedAt?.getUTCFullYear() ?? null;
   const hasLowConfidence = [
     analysis.estimatedEra.confidence,
     analysis.decadeGuess.confidence,
@@ -283,6 +295,100 @@ export async function enqueueSubmissionPhotos(submissionId: string) {
   if (jobError) return { queued: 0, available: false, error: jobError.message };
   await supabase.from("media_assets").update({ analysis_status: "queued" }).in("id", images.map(image => image.id)).eq("analysis_status", "unprocessed");
   return { queued: jobs.length, available: true };
+}
+
+export async function prepareGlobalPhotoPilot(limit = 10) {
+  const supabase = createAdminClient();
+  const { data: projects, error: projectError } = await supabase.from("projects").select("id").limit(1);
+  const projectId = projects?.[0]?.id;
+  if (projectError || !projectId) {
+    return { available: false, projectId: null, selected: [], error: projectError?.message || "Project not found." };
+  }
+
+  const { data: submissions, error: submissionError } = await supabase
+    .from("submissions")
+    .select("id,name,created_at")
+    .eq("project_id", projectId)
+    .order("created_at");
+  if (submissionError) return { available: false, projectId, selected: [], error: submissionError.message };
+
+  const genuine = (submissions ?? []).filter(item => !isTestContributor(item.name));
+  const submissionIds = genuine.map(item => item.id);
+  if (!submissionIds.length) return { available: true, projectId, selected: [] };
+
+  const { data: images, error: imageError } = await supabase
+    .from("media_assets")
+    .select("id,submission_id,analysis_status,created_at")
+    .in("submission_id", submissionIds)
+    .like("mime_type", "image/%")
+    .neq("review_status", "excluded")
+    .order("created_at")
+    .limit(1000);
+  if (imageError) return { available: false, projectId, selected: [], error: imageError.message };
+
+  const imageRows = images ?? [];
+  const bySubmission = new Map<string, typeof imageRows>();
+  for (const image of imageRows) {
+    const current = bySubmission.get(image.submission_id) ?? [];
+    current.push(image);
+    bySubmission.set(image.submission_id, current);
+  }
+
+  const selected: typeof imageRows = [];
+  for (const submission of genuine) {
+    const first = bySubmission.get(submission.id)?.[0];
+    if (first && !selected.some(item => item.id === first.id)) selected.push(first);
+    if (selected.length >= limit) break;
+  }
+  for (const image of imageRows) {
+    if (selected.length >= limit) break;
+    if (!selected.some(item => item.id === image.id)) selected.push(image);
+  }
+
+  await supabase
+    .from("photo_analysis_jobs")
+    .update({ pilot_rank: null })
+    .eq("project_id", projectId)
+    .not("pilot_rank", "is", null);
+
+  const now = new Date().toISOString();
+  for (const [index, image] of selected.entries()) {
+    const finished = ["completed", "review_required"].includes(image.analysis_status || "");
+    const { error } = await supabase.from("photo_analysis_jobs").upsert({
+      project_id: projectId,
+      media_asset_id: image.id,
+      pilot_rank: index + 1,
+      ...(finished ? {} : { status: "queued", attempts: 0, next_attempt_at: now, last_error: null })
+    }, { onConflict: "media_asset_id" });
+    if (error) return { available: false, projectId, selected: [], error: error.message };
+    if (!finished) {
+      await supabase
+        .from("media_assets")
+        .update({ analysis_status: "queued", analysis_error: null })
+        .eq("id", image.id);
+    }
+  }
+
+  return { available: true, projectId, selected: selected.map(item => item.id) };
+}
+
+export async function globalPhotoPilotStatus() {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("photo_analysis_jobs")
+    .select("id,status,pilot_rank")
+    .not("pilot_rank", "is", null)
+    .order("pilot_rank");
+  if (error) return { available: false, total: 0, finished: 0, remaining: 0, error: error.message };
+
+  const rows = data ?? [];
+  const finished = rows.filter(item => ["completed", "review_required"].includes(item.status)).length;
+  return {
+    available: true,
+    total: rows.length,
+    finished,
+    remaining: Math.max(0, rows.length - finished)
+  };
 }
 
 export async function processPhotoAnalysisJobs(options: ProcessOptions = {}) {

@@ -63,6 +63,12 @@ requireText("app/api/release/route.ts", "VERCEL_GIT_COMMIT_SHA", "commit-specifi
 requireText(".github/workflows/post-deploy-smoke.yml", "${GITHUB_SHA}", "exact-commit production wait");
 requireText("lib/photo-intelligence/index.ts", "requestAnthropic(derivative", "derivative-only photo analysis");
 requireText("lib/photo-intelligence/index.ts", ".jpeg({ quality", "metadata-free derivative re-encoding");
+requireText("lib/photo-intelligence/index.ts", "exifUpdateError", "EXIF persistence before AI analysis");
+requireText("lib/photo-intelligence/index.ts", "prepareGlobalPhotoPilot", "the global ten-photo pilot");
+requireText("app/api/internal/photo-intelligence/route.ts", "before.remaining === 0", "the pilot stop gate");
+forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
+requireText("app/api/submissions/complete/route.ts", "sendContributionArrivalEmail", "arrival email scheduling");
+requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL", "explicit arrival-email recipient configuration");
 
 requireText("lib/family-qa.ts", "FAMILY_QA_SEED", "the structured family Q&A seed");
 requireText("lib/family-qa.ts", "FAMILY_QA_PENDING", "the unanswered-family follow-up list");
