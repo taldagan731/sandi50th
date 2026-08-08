@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 export type ArchiveMedia = {
   id: string;
@@ -128,10 +128,10 @@ export function RevealTimeline({
               <div className="timelineImage">
                 {item.mimeType.startsWith("video/") ? (
                   item.poster
-                    ? <img src={`${url}?poster=1`} alt={`Poster frame for ${item.caption || item.originalName}`} />
+                    ? <img src={`${url}?poster=1`} alt={`Poster frame for ${item.caption || item.originalName}`} data-reveal-photo="true" role="button" tabIndex={0} />
                     : <div className="timelinePlaceholder">Video memory</div>
                 ) : (
-                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" />
+                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
                 )}
                 {item.mimeType.startsWith("video/") && <span>FILM</span>}
               </div>
@@ -148,6 +148,26 @@ export function RevealTimeline({
 export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
   const [index, setIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .7);
+      if (visible) {
+        video.muted = true;
+        video.loop = true;
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    }, { threshold: [.7] });
+    observer.observe(video);
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
+  }, [index]);
   if (!items.length) return null;
   const current = items[index];
   const currentUrl = `/api/reveal/media/${current.id}`;
@@ -178,7 +198,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
         </div>
 
         <article className="filmPlayer" key={current.id}>
-          <video ref={videoRef} controls preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
+          <video ref={videoRef} controls muted loop preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
             <source src={currentUrl} type={current.mimeType} />
           </video>
           <div>
