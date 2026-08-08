@@ -1,0 +1,771 @@
+:root {
+  --celebration-coral: #ff8e78;
+  --celebration-amber: #f5bd62;
+  --celebration-champagne: #ffe0a6;
+  --celebration-cream: #fff7e9;
+  --celebration-plum: #6f304e;
+}
+
+/* Homepage: a living birthday, led by Sandi rather than an emblem. */
+.celebrationHero {
+  min-height: 100svh;
+  display: grid;
+  align-items: end;
+  isolation: isolate;
+  background: #100812;
+}
+.celebrationHeroImage {
+  z-index: -4;
+  object-fit: cover;
+  object-position: center 36%;
+  animation: birthdayKenBurns 15s ease-in-out infinite alternate;
+}
+.celebrationHeroScrim {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background:
+    linear-gradient(90deg, rgba(12, 5, 13, .84) 0%, rgba(12, 5, 13, .42) 48%, rgba(12, 5, 13, .2) 76%),
+    linear-gradient(0deg, rgba(12, 5, 13, .94) 0%, rgba(12, 5, 13, .08) 58%, rgba(12, 5, 13, .4) 100%);
+}
+.celebrationGlow {
+  position: absolute;
+  z-index: -2;
+  width: 42rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(82px);
+  opacity: .26;
+  pointer-events: none;
+}
+.celebrationGlowCoral {
+  right: -16rem;
+  top: 12%;
+  background: var(--celebration-coral);
+}
+.celebrationGlowAmber {
+  left: -15rem;
+  bottom: -18rem;
+  background: var(--celebration-amber);
+}
+.celebrationHeroContent {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: end;
+  min-height: 100svh;
+  padding-top: clamp(8rem, 18vh, 12rem);
+  padding-bottom: clamp(7.5rem, 14vh, 9.5rem);
+}
+.celebrationKicker {
+  margin: 0 0 1rem;
+  color: var(--celebration-champagne);
+  font-size: .77rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.celebrationIdentity {
+  display: grid;
+  width: min(48rem, 100%);
+}
+.celebrationFifty {
+  color: var(--celebration-amber);
+  font: 500 clamp(5.5rem, 13vw, 10rem)/.65 var(--serif);
+  text-shadow: 0 12px 42px rgba(0, 0, 0, .25);
+}
+.celebrationIdentity h1 {
+  margin: .4rem 0 0;
+  color: var(--celebration-cream);
+  font: 600 clamp(3.8rem, 9vw, 7.8rem)/.82 var(--serif);
+  letter-spacing: -.055em;
+  text-wrap: balance;
+  text-shadow: 0 8px 36px rgba(0, 0, 0, .44);
+}
+.celebrationIdentity > span:last-child {
+  margin-top: .8rem;
+  color: #ffe9ca;
+  font: italic 500 clamp(1.5rem, 3vw, 2.25rem)/1 var(--serif);
+}
+.celebrationLead {
+  max-width: 42rem;
+  margin: 1.55rem 0 1.4rem;
+  color: rgba(255, 248, 237, .9);
+  font-size: clamp(1.05rem, 2vw, 1.34rem);
+  line-height: 1.55;
+}
+.celebrationActions {
+  justify-content: flex-start;
+}
+.celebrationActions .primary {
+  background: linear-gradient(135deg, var(--celebration-amber), var(--celebration-coral));
+  box-shadow: 0 14px 46px rgba(255, 142, 120, .24);
+}
+.celebrationActions .secondary {
+  border-color: rgba(255, 239, 209, .36);
+  background: rgba(12, 5, 13, .26);
+  backdrop-filter: blur(8px);
+}
+.celebrationDeadline {
+  display: flex;
+  align-items: end;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  width: min(54rem, 100%);
+  margin-top: 2rem;
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--celebration-coral);
+  background: linear-gradient(90deg, rgba(255, 142, 120, .13), transparent);
+}
+.celebrationDeadline strong,
+.celebrationDeadline span {
+  display: block;
+}
+.celebrationDeadline span {
+  margin-top: .25rem;
+  color: rgba(255, 248, 237, .7);
+  font-size: .8rem;
+  line-height: 1.45;
+}
+.celebrationDeadline .countdown {
+  flex: 0 0 auto;
+  gap: 1rem;
+  margin: 0;
+}
+.celebrationDeadline .countdown b {
+  color: var(--celebration-champagne);
+  font-size: 1.75rem;
+}
+.momentRibbon {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 0;
+  overflow: hidden;
+  padding: .75rem 0;
+  background: rgba(79, 27, 52, .54);
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+}
+.momentRibbon > div {
+  display: flex;
+  width: max-content;
+  gap: 3.5rem;
+  animation: celebrationRibbon 42s linear infinite;
+}
+.momentRibbon span {
+  color: rgba(255, 245, 229, .82);
+  font: italic 500 1rem var(--serif);
+}
+@keyframes birthdayKenBurns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+@keyframes celebrationRibbon {
+  to { transform: translateX(-50%); }
+}
+
+/* Shared tonal shift: less engraving, more candlelight. */
+.eyebrow,
+.requestLabel,
+.chapterRoom > span,
+.chapterRoom > strong {
+  color: var(--celebration-coral);
+  letter-spacing: .075em;
+}
+.invitationSection,
+.chapterSection,
+.closingInvitation,
+.literarySection {
+  position: relative;
+  overflow: hidden;
+  border-top: 0;
+}
+.invitationSection {
+  background:
+    radial-gradient(circle at 12% 24%, rgba(255, 142, 120, .17), transparent 30rem),
+    radial-gradient(circle at 92% 70%, rgba(245, 189, 98, .13), transparent 27rem),
+    #120a14;
+}
+.memoryRequestCard {
+  border-color: rgba(255, 173, 132, .24);
+  background: linear-gradient(145deg, rgba(255, 142, 120, .11), rgba(245, 189, 98, .05));
+  transform: rotate(1.1deg);
+}
+.literarySection {
+  background:
+    radial-gradient(circle at 75% 35%, rgba(255, 142, 120, .2), transparent 32rem),
+    linear-gradient(145deg, #2a1120, #120a15 62%);
+}
+.literaryCard {
+  border: 0;
+  background: transparent;
+}
+.literaryCard blockquote {
+  color: var(--celebration-cream);
+}
+.literaryCard cite {
+  color: var(--celebration-champagne);
+  letter-spacing: .06em;
+  text-transform: none;
+  font: italic 500 1rem var(--serif);
+}
+.chapterSection {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(245, 189, 98, .12), transparent 28rem),
+    radial-gradient(circle at 85% 72%, rgba(255, 142, 120, .15), transparent 32rem),
+    #0e0812;
+}
+.chapterRoom {
+  border-color: rgba(255, 225, 170, .14);
+  background:
+    linear-gradient(to top, rgba(19, 8, 17, .94), rgba(70, 30, 53, .2)),
+    radial-gradient(circle at top right, rgba(255, 142, 120, .32), transparent 48%),
+    #251326;
+  transition: transform .24s cubic-bezier(.34, 1.56, .64, 1), border-color .2s ease;
+}
+.chapterRoom:nth-child(even) {
+  background:
+    linear-gradient(to top, rgba(19, 8, 17, .94), rgba(57, 31, 55, .18)),
+    radial-gradient(circle at top left, rgba(245, 189, 98, .28), transparent 48%),
+    #211325;
+}
+.chapterRoom:nth-child(3n + 1) { transform: rotate(-.6deg); }
+.chapterRoom:nth-child(3n + 2) { transform: rotate(.5deg); }
+.chapterRoom:hover,
+.chapterRoom:focus-visible {
+  transform: translateY(-7px) rotate(0deg) scale(1.015);
+  border-color: rgba(255, 173, 132, .55);
+}
+.chapters h3 {
+  color: var(--celebration-cream);
+  font-size: 2.15rem;
+}
+.closingInvitation {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 142, 120, .2), transparent 31rem),
+    linear-gradient(180deg, #120a14, #2b1220);
+}
+
+/* The reveal begins with an invitation to listen, then keeps the control nearby. */
+.revealPage {
+  background:
+    radial-gradient(circle at 12% 5%, rgba(255, 142, 120, .2), transparent 32rem),
+    radial-gradient(circle at 88% 18%, rgba(245, 189, 98, .14), transparent 29rem),
+    #100911;
+}
+.revealExperience {
+  padding: 0;
+}
+.revealMasthead {
+  min-height: 88dvh;
+  padding: clamp(7rem, 14vw, 12rem) max(1.25rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255, 142, 120, .24), transparent 30rem),
+    radial-gradient(circle at 83% 72%, rgba(245, 189, 98, .2), transparent 28rem),
+    linear-gradient(145deg, #2a1020, #0c0710 68%);
+}
+.revealMasthead .eyebrow {
+  font-size: .78rem;
+}
+.revealMasthead h1 {
+  color: var(--celebration-cream);
+  text-shadow: 0 18px 60px rgba(0, 0, 0, .25);
+}
+.revealMasthead > p {
+  color: rgba(255, 245, 230, .8);
+  font-size: clamp(1.25rem, 2.5vw, 1.9rem);
+}
+.musicInvitation {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  width: min(42rem, 100%);
+  margin: 2.5rem auto 0;
+  padding: 1rem;
+  border: 1px solid rgba(255, 224, 166, .3);
+  border-radius: 1.1rem;
+  background: rgba(255, 248, 237, .07);
+  text-align: left;
+  backdrop-filter: blur(12px);
+}
+.musicInvitation > span {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--celebration-coral);
+  color: #250e19;
+  font-size: 1.35rem;
+}
+.musicInvitation strong {
+  color: var(--celebration-cream);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+.musicInvitation p {
+  margin: .15rem 0 0;
+  color: rgba(255, 245, 230, .65);
+  font: .84rem/1.45 var(--sans);
+}
+.musicInvitation button {
+  min-height: 44px;
+  padding: .7rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--celebration-amber), var(--celebration-coral));
+  color: #250e19;
+  font-weight: 700;
+  cursor: pointer;
+}
+.musicInvitation small {
+  grid-column: 2 / -1;
+  color: #ffd0bd;
+}
+.soundtrackDock {
+  position: fixed;
+  z-index: 80;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: auto minmax(5rem, 9rem) auto;
+  gap: .65rem;
+  align-items: center;
+  padding: .7rem;
+  border: 1px solid rgba(255, 224, 166, .3);
+  border-radius: 999px;
+  background: rgba(28, 12, 23, .9);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(14px);
+}
+.soundtrackDock button {
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--celebration-cream);
+  cursor: pointer;
+}
+.soundtrackDock input {
+  width: 100%;
+  accent-color: var(--celebration-coral);
+}
+.soundtrackDucked {
+  grid-column: 1 / -1;
+  color: var(--celebration-champagne);
+  font-size: .7rem;
+  text-align: center;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.revealChapterNav {
+  gap: .55rem;
+  padding: 1rem;
+  border: 0;
+  background: #160b16;
+}
+.revealChapterNav button {
+  border: 1px solid rgba(255, 224, 166, .13);
+  border-radius: .9rem;
+  background: rgba(255, 255, 255, .025);
+  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
+}
+.revealChapterNav button:hover,
+.revealChapterNav button:focus-visible {
+  transform: translateY(-3px);
+}
+.revealChapterNav button[aria-current] {
+  color: var(--celebration-cream);
+  border-color: rgba(255, 142, 120, .48);
+  background: linear-gradient(135deg, rgba(255, 142, 120, .18), rgba(245, 189, 98, .08));
+}
+.revealChapterNav span {
+  color: var(--celebration-coral);
+  letter-spacing: .08em;
+}
+.revealChapter {
+  position: relative;
+  width: min(92rem, calc(100% - 2rem));
+  padding: clamp(4rem, 8vw, 7rem) clamp(1rem, 4vw, 4rem);
+  overflow: hidden;
+  animation: chapterTurn .38s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.revealChapter::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 40rem;
+  aspect-ratio: 1;
+  right: -19rem;
+  top: 16%;
+  border-radius: 50%;
+  background: rgba(255, 142, 120, .14);
+  filter: blur(72px);
+}
+.revealChapter > header {
+  text-align: left;
+}
+.revealChapter > header span {
+  color: var(--celebration-coral);
+  letter-spacing: .08em;
+}
+.revealChapter h2 {
+  color: var(--celebration-cream);
+}
+.revealProse {
+  margin-left: 0;
+  color: rgba(255, 247, 235, .88);
+  font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+  line-height: 1.72;
+}
+.revealProse p:first-child::first-letter {
+  color: var(--celebration-coral);
+}
+@keyframes chapterTurn {
+  0% { opacity: 0; transform: translateX(2rem) rotate(.8deg) scale(.985); }
+  72% { opacity: 1; transform: translateX(-.25rem) rotate(-.12deg) scale(1.004); }
+  100% { opacity: 1; transform: none; }
+}
+
+.memoryCarousel > header {
+  align-items: center;
+}
+.memoryCarousel > header p {
+  color: rgba(255, 245, 230, .7);
+  font: italic 500 1.1rem var(--serif);
+}
+.memoryRail {
+  gap: clamp(.8rem, 2vw, 1.5rem);
+  padding: 1.8rem 1rem 2.2rem;
+}
+.memoryPlate {
+  border: 0;
+  border-radius: .35rem;
+  background: transparent;
+  box-shadow: 0 20px 54px rgba(0, 0, 0, .32);
+  transform: rotate(-1.5deg);
+  transition: flex-basis .3s cubic-bezier(.34, 1.56, .64, 1), transform .3s cubic-bezier(.34, 1.56, .64, 1);
+  animation: photoArrival .44s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.memoryPlate:nth-child(even) { transform: rotate(1.35deg) translateY(.65rem); }
+.memoryPlate:nth-child(3n) { transform: rotate(-.5deg) translateY(-.45rem); }
+.memoryPlate:nth-child(2) { animation-delay: .05s; }
+.memoryPlate:nth-child(3) { animation-delay: .1s; }
+.memoryPlate:nth-child(4) { animation-delay: .15s; }
+.memoryPlate.is-active {
+  border: 0;
+  transform: rotate(.2deg) scale(1.015);
+}
+.memoryPlate img,
+.memoryPlate video {
+  object-fit: cover;
+  border-radius: .35rem;
+  background: #160b14;
+}
+.memoryPlate img[data-reveal-photo="true"],
+.familyVoice img[data-reveal-photo="true"],
+.chorusStage img[data-reveal-photo="true"],
+.timelineImage img[data-reveal-photo="true"] {
+  cursor: zoom-in;
+}
+.memoryPlate img[data-reveal-photo="true"]:focus-visible,
+.familyVoice img[data-reveal-photo="true"]:focus-visible,
+.chorusStage img[data-reveal-photo="true"]:focus-visible,
+.timelineImage img[data-reveal-photo="true"]:focus-visible {
+  outline: 3px solid var(--celebration-coral);
+  outline-offset: 4px;
+}
+.memoryPlate > span {
+  color: #fff7ed;
+  font: italic 500 1.12rem var(--serif);
+}
+.memorySelect {
+  border-color: rgba(255, 239, 209, .55);
+  background: rgba(31, 12, 25, .76);
+}
+.memorySelect[aria-pressed="true"] {
+  background: var(--celebration-coral);
+  color: #250e19;
+}
+@keyframes photoArrival {
+  0% { opacity: 0; transform: translateY(2.2rem) scale(.84) rotate(-4deg); }
+  72% { opacity: 1; transform: translateY(-.2rem) scale(1.025) rotate(1deg); }
+  100% { opacity: 1; }
+}
+
+.photoFocus {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgba(12, 5, 12, .88);
+  backdrop-filter: blur(12px);
+}
+.photoFocus img {
+  display: block;
+  width: auto;
+  max-width: 96vw;
+  height: auto;
+  max-height: 92dvh;
+  object-fit: contain;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, .55);
+  animation: photoFocusArrival .4s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.photoFocus > button {
+  position: absolute;
+  z-index: 1;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 239, 209, .4);
+  border-radius: 999px;
+  background: rgba(31, 12, 25, .8);
+  color: white;
+  cursor: pointer;
+}
+@keyframes photoFocusArrival {
+  0% { opacity: 0; transform: scale(.72) rotate(-2deg); }
+  70% { opacity: 1; transform: scale(1.025) rotate(.25deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+.chapterFamilyVoices,
+.familyChorus,
+.voiceWall,
+.birthdayReel,
+.lifeTimeline,
+.archiveFilmStack,
+.chapterNineInvitation {
+  border-top: 0 !important;
+}
+.familyVoice blockquote {
+  border-color: var(--celebration-coral);
+}
+.familyVoicePhotos img {
+  border-radius: .35rem;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .25);
+}
+.familyVoicePhotos img:nth-child(odd) { transform: rotate(-1.4deg); }
+.familyVoicePhotos img:nth-child(even) { transform: rotate(1.1deg); }
+.familyVoice figcaption strong,
+.chorusStage figcaption strong,
+.voiceCard h3,
+.birthdayLowerThird strong,
+.filmPlayer h3 {
+  color: var(--celebration-champagne);
+  font: italic 500 clamp(1.2rem, 2.4vw, 1.65rem) var(--serif);
+}
+.familyVoice figcaption span,
+.chorusStage figcaption span,
+.birthdayLowerThird span {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.chorusQuestion,
+.familyVoiceQuestion,
+.voiceCardTopline {
+  letter-spacing: .04em;
+  text-transform: none;
+}
+.voiceWall {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 142, 120, .22), transparent 31rem),
+    radial-gradient(circle at 88% 78%, rgba(245, 189, 98, .16), transparent 28rem),
+    #251326;
+}
+.voiceCard {
+  border-color: rgba(255, 224, 166, .16);
+  border-radius: 1.1rem;
+  background: rgba(255, 248, 237, .055);
+}
+.voiceCard:hover,
+.voiceCard:focus-within,
+.voiceCard.is-playing {
+  border-color: rgba(255, 142, 120, .6);
+  background: rgba(255, 142, 120, .1);
+}
+.voiceWave span {
+  background: linear-gradient(to top, rgba(245, 189, 98, .4), var(--celebration-coral));
+}
+.birthdayReel {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 142, 120, .23), transparent 34rem),
+    linear-gradient(180deg, #160b16, #301321);
+}
+.birthdayLowerThird {
+  border-left-color: var(--celebration-coral);
+  background: rgba(38, 14, 28, .78);
+}
+.birthdayTransport .birthdayPlay {
+  border-color: var(--celebration-coral);
+  background: linear-gradient(135deg, var(--celebration-amber), var(--celebration-coral));
+}
+.lifeTimeline {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255, 142, 120, .2), transparent 30rem),
+    #1b0d19;
+}
+.timelineYear strong {
+  color: var(--celebration-coral);
+}
+.timelineMemories {
+  gap: 1.25rem;
+  animation: photoArrival .4s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.timelineMemories article {
+  border: 0;
+  background: transparent;
+}
+.timelineMemories article:nth-child(odd) { transform: rotate(-.75deg); }
+.timelineMemories article:nth-child(even) { transform: rotate(.8deg) translateY(.6rem); }
+.timelineImage {
+  box-shadow: 0 20px 54px rgba(0, 0, 0, .3);
+}
+.timelineImage img {
+  object-fit: cover;
+}
+.archiveFilmStack {
+  background:
+    radial-gradient(circle at 78% 38%, rgba(245, 189, 98, .18), transparent 32rem),
+    #130a14;
+}
+.filmPlayer {
+  border: 0;
+  border-radius: .5rem;
+}
+.filmPlayer video {
+  object-fit: cover;
+}
+.chapterNineInvitation {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 142, 120, .22), transparent 30rem),
+    linear-gradient(180deg, #2b1121, #160b16);
+}
+.chapterNineInvitation::before {
+  color: rgba(255, 224, 166, .045);
+}
+.chapterNineNumber {
+  color: var(--celebration-coral);
+}
+
+@media (max-width: 700px) {
+  .celebrationHero {
+    align-items: end;
+  }
+  .celebrationHeroImage {
+    object-position: 58% center;
+  }
+  .celebrationHeroScrim {
+    background:
+      linear-gradient(0deg, rgba(12, 5, 13, .98) 0%, rgba(12, 5, 13, .42) 55%, rgba(12, 5, 13, .34) 100%);
+  }
+  .celebrationHeroContent {
+    padding-top: calc(6rem + env(safe-area-inset-top));
+    padding-bottom: 7.25rem;
+  }
+  .celebrationFifty {
+    font-size: 6.5rem;
+  }
+  .celebrationIdentity h1 {
+    font-size: clamp(3.5rem, 17vw, 5.4rem);
+  }
+  .celebrationLead {
+    font-size: 1rem;
+  }
+  .celebrationActions {
+    display: grid;
+  }
+  .celebrationDeadline {
+    display: grid;
+    gap: 1rem;
+  }
+  .celebrationDeadline .countdown {
+    justify-content: flex-start;
+  }
+  .memoryRequestCard {
+    transform: none;
+  }
+  .chapterRoom:nth-child(n) {
+    transform: none;
+  }
+  .revealMasthead {
+    min-height: 92dvh;
+    place-content: center;
+    text-align: left;
+  }
+  .musicInvitation {
+    grid-template-columns: auto 1fr;
+  }
+  .musicInvitation button,
+  .musicInvitation small {
+    grid-column: 1 / -1;
+  }
+  .musicInvitation button {
+    width: 100%;
+  }
+  .soundtrackDock {
+    left: max(.75rem, env(safe-area-inset-left));
+    right: max(.75rem, env(safe-area-inset-right));
+    bottom: max(.75rem, env(safe-area-inset-bottom));
+    grid-template-columns: auto 1fr auto;
+  }
+  .revealChapter {
+    width: 100%;
+    padding-inline: .9rem;
+  }
+  .memoryRail {
+    padding-inline: .5rem;
+  }
+  .memoryPlate,
+  .memoryPlate:nth-child(n),
+  .memoryPlate.is-active {
+    transform: none;
+  }
+  .memoryPlate {
+    flex-basis: 79vw;
+  }
+  .memoryPlate.is-active {
+    flex-basis: 91vw;
+  }
+  .timelineMemories article:nth-child(n) {
+    transform: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .chapterRoom:hover,
+  .revealChapterNav button:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrationHeroImage,
+  .momentRibbon > div,
+  .revealChapter,
+  .memoryPlate,
+  .timelineMemories,
+  .photoFocus img {
+    animation: none !important;
+  }
+  .celebrationHeroImage,
+  .memoryPlate,
+  .memoryPlate:nth-child(n),
+  .memoryPlate.is-active,
+  .timelineMemories article:nth-child(n) {
+    transform: none !important;
+  }
+  .memoryPlate,
+  .revealChapterNav button,
+  .chapterRoom {
+    transition: none !important;
+  }
+}
