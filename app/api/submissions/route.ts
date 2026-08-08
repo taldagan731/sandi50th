@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { defaultReviewStatus } from "@/lib/chapters";
+import { requireStudioOwner } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,7 @@ const ALLOWED_PREFIXES = ["image/", "video/", "audio/"];
 const ALLOWED_EXACT = new Set(["application/pdf", "application/zip", "application/x-zip-compressed"]);
 
 const requestSchema = z.object({
+  sourceType: z.enum(["contributor", "owner_archive"]).default("contributor"),
   name: z.string().trim().min(1).max(120),
   contact: z.string().trim().min(1).max(200),
   relationship: z.string().trim().max(100).default("Other"),
@@ -45,6 +47,10 @@ function safeName(name: string) {
 export async function POST(request: Request) {
   try {
     const body = requestSchema.parse(await request.json());
+    const isOwnerArchive = body.sourceType === "owner_archive";
+    if (isOwnerArchive && !await requireStudioOwner()) {
+      return NextResponse.json({ error: "Owner archive imports require a Studio owner session." }, { status: 401 });
+    }
     const totalBytes = body.files.reduce((sum, file) => sum + file.size, 0);
     if (totalBytes > MAX_TOTAL_BYTES) {
       return NextResponse.json({ error: "This contribution exceeds the 10 GB session limit." }, { status: 400 });
@@ -65,21 +71,34 @@ export async function POST(request: Request) {
       .single();
     if (projectError || !project) throw projectError ?? new Error("Project not found.");
 
-    const reviewStatus = defaultReviewStatus(body.name);
+    const archiveFields = isOwnerArchive ? {
+      name: "Owner archive",
+      contact: "Private owner import",
+      relationship: "Owner archive",
+      firstMemory: "Owner archive batch",
+      prompt: "OWNER_ARCHIVE"
+    } : {
+      name: body.name,
+      contact: body.contact,
+      relationship: body.relationship,
+      firstMemory: body.firstMemory,
+      prompt: body.prompt
+    };
+    const reviewStatus = defaultReviewStatus(archiveFields.name);
     const { data: submission, error: submissionError } = await supabase
       .from("submissions")
       .insert({
         project_id: project.id,
-        name: body.name,
-        contact: body.contact,
-        relationship: body.relationship,
-        first_memory: body.firstMemory,
+        name: archiveFields.name,
+        contact: archiveFields.contact,
+        relationship: archiveFields.relationship,
+        first_memory: archiveFields.firstMemory,
         story: body.story,
         approximate_year: body.approximateYear,
         location: body.place,
         people: body.people ? body.people.split(",").map(value => value.trim()).filter(Boolean) : [],
         life_chapter: body.lifeChapter,
-        prompt: body.prompt,
+        prompt: archiveFields.prompt,
         consent: body.consent,
         review_status: reviewStatus,
         status: reviewStatus === "excluded" ? "excluded" : "received"
