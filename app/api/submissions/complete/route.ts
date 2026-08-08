@@ -3,7 +3,8 @@ import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chapterNumberFromContributor, defaultReviewStatus } from "@/lib/chapters";
-import { enqueueSubmissionPhotos, processPhotoAnalysisJobs } from "@/lib/photo-intelligence";
+import { enqueueSubmissionPhotos } from "@/lib/photo-intelligence";
+import { sendContributionArrivalEmail } from "@/lib/notifications/contribution-email";
 import { duplicateMarkerExists, SHA256_PATTERN, writeDuplicateMarker } from "@/lib/blob-dedupe";
 
 export const runtime = "nodejs";
@@ -177,18 +178,34 @@ export async function POST(request: Request) {
 
     try {
       const queued = await enqueueSubmissionPhotos(body.submissionId);
-      if (queued.available && queued.queued > 0) {
-        after(async () => {
-          const result = await processPhotoAnalysisJobs({ limit: 2, submissionId: body.submissionId });
-          if (!result.available) console.error("photo-analysis-worker-unavailable", result.error);
-        });
-      } else if (!queued.available) {
-        console.error("photo-analysis-queue-unavailable", queued);
-      }
+      if (!queued.available) console.error("photo-analysis-queue-unavailable", queued);
     } catch (error) {
       // Analysis is downstream of a successful contribution and must never block or roll back the upload.
       console.error("photo-analysis-enqueue", { submissionId: body.submissionId, error });
     }
+
+    after(async () => {
+      try {
+        const result = await sendContributionArrivalEmail({
+          submissionId: body.submissionId,
+          contributorName: submission.name || "A contributor",
+          relationship: submission.relationship || null,
+          prompt: submission.prompt || null,
+          lifeChapter: submission.life_chapter || null,
+          fileCount: verifiedPrimary.length,
+          receivedAt: completedAt
+        });
+        if (!result.sent && process.env.RESEND_API_KEY) {
+          console.error("contribution-email-not-sent", result.reason);
+        }
+      } catch (error) {
+        // A notification can fail without affecting the contribution or its verified backup.
+        console.error("contribution-email", {
+          submissionId: body.submissionId,
+          error: error instanceof Error ? error.message : "Unknown notification error"
+        });
+      }
+    });
 
     return NextResponse.json({
       ok: true,
