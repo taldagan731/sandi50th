@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { isTestContributor } from "@/lib/chapters";
+import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
+import { getRevealProject } from "@/lib/reveal-visibility";
 
 export const runtime = "nodejs";
 
@@ -11,16 +13,13 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const owner = await requireStudioOwner();
+  const ownerPreview = !owner && await hasRevealPreviewAccess();
   const supabase = owner?.supabase ?? createAdminClient();
 
   let projectId = owner?.project.id ?? null;
   if (!projectId) {
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id,reveal_public")
-      .eq("slug", "sandi50th")
-      .single();
-    if (!project?.reveal_public) return new NextResponse("Not found", { status: 404 });
+    const project = await getRevealProject();
+    if (!project || (!ownerPreview && !project.revealPublic)) return new NextResponse("Not found", { status: 404 });
     projectId = project.id;
   }
 

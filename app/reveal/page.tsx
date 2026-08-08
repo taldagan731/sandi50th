@@ -6,6 +6,8 @@ import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
 import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
+import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
+import { getRevealProject, isRevealPublic } from "@/lib/reveal-visibility";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
 import "./name-chorus.css";
@@ -16,10 +18,15 @@ import "./reveal-family-qa.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Still Becoming — Private Reveal",
-  robots: { index: false, follow: false, noarchive: true, nosnippet: true }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const publicReveal = await isRevealPublic();
+  return {
+    title: publicReveal ? "Still Becoming \u2014 The Story of Sandi" : "Still Becoming \u2014 Private Reveal",
+    robots: publicReveal
+      ? { index: true, follow: true }
+      : { index: false, follow: false, noarchive: true, nosnippet: true }
+  };
+}
 
 type MediaRow = {
   id: string;
@@ -69,17 +76,14 @@ function LockedReveal() {
 export default async function RevealPage({ searchParams }: { searchParams?: Promise<{ review?: string }> }) {
   const params = await searchParams;
   const owner = await requireStudioOwner();
+  const ownerPreview = !owner && await hasRevealPreviewAccess();
   const includeTests = Boolean(owner && params?.review === "all");
   const supabase = owner?.supabase ?? createAdminClient();
   let projectId = owner?.project.id ?? null;
 
   if (!owner) {
-    const { data: publicProject, error: projectError } = await supabase
-      .from("projects")
-      .select("id,reveal_public")
-      .eq("slug", "sandi50th")
-      .single();
-    if (projectError || !publicProject?.reveal_public) return <LockedReveal />;
+    const publicProject = await getRevealProject();
+    if (!publicProject || (!ownerPreview && !publicProject.revealPublic)) return <LockedReveal />;
     projectId = publicProject.id;
   }
   if (!projectId) return <LockedReveal />;

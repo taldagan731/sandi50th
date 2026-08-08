@@ -32,8 +32,10 @@ function sourceFiles(directory) {
   });
 }
 
-requireText("app/layout.tsx", "robots: { index: false, follow: false }", "the sitewide noindex directive");
-requireText("app/robots.ts", "disallow: \"/\"", "robots exclusion");
+requireText("app/layout.tsx", "isRevealPublic", "the database-driven indexing switch");
+requireText("app/robots.txt/route.ts", "isRevealPublic", "the database-driven robots switch");
+requireText("app/robots.txt/route.ts", "Disallow: /studio", "Studio remains excluded after release");
+requireText("app/robots.txt/route.ts", "Disallow: /api/", "API routes remain excluded after release");
 requireText("app/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("app/contribute/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("components/OpeningExperience.tsx", "The way we see you.", "the present-tense hero line");
@@ -96,7 +98,12 @@ requireText("lib/studio/auth.ts", "refreshSession", "the refreshable owner sessi
 requireText("lib/studio/auth.ts", ".sandi50th.com", "the apex/www production owner cookie");
 requireText("app/api/studio/session/route.ts", "refreshToken", "the refresh token handoff");
 requireText("app/reveal/page.tsx", '.neq("review_status", "excluded")', "default-visible reveal selection");
-requireText("app/api/reveal/media/[id]/route.ts", "reveal_public", "the private/public reveal media gate");
+requireText("app/api/reveal/media/[id]/route.ts", "getRevealProject", "the private/public reveal media gate");
+requireText("lib/reveal-preview.ts", "timingSafeEqual", "constant-time signed preview verification");
+requireText("app/api/reveal/owner-preview/route.ts", "response.cookies.set", "owner preview cookie exchange");
+requireText("lib/reveal-preview.ts", "httpOnly: true", "HTTP-only owner preview cookie");
+requireText("app/reveal/page.tsx", "hasRevealPreviewAccess", "private reveal page bypass");
+requireText("app/api/reveal/media/[id]/route.ts", "hasRevealPreviewAccess", "private reveal media bypass");
 requireText("app/api/studio/contributions/route.ts", "%MOBILE TEST%", "automatic test-record exclusion");
 requireText("app/api/public/hero-photo/route.ts", '.not("reviewed_at", "is", null)', "public-homepage upload containment");
 requireText("supabase/default-visible-reveal-migration.sql", "reveal_public boolean not null default false", "the reveal access switch migration");
