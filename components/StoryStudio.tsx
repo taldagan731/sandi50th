@@ -215,8 +215,14 @@ export function StoryStudio() {
     setBackupNotice("");
     const response = await fetch("/api/studio/backups", { method: "POST" });
     const body = await response.json();
-    if (!response.ok) setError(body.error || "Backup verification failed.");
-    else setBackupNotice(`Verified ${body.fileCount} files across ${body.submissionCount} contributions.`);
+    if (!response.ok || !body.ok) {
+      const firstFailure = body.failures?.[0];
+      setError(firstFailure
+        ? `Backup verification found ${body.failureCount} problem${body.failureCount === 1 ? "" : "s"}. First: ${firstFailure.name} — ${firstFailure.reason}`
+        : body.error || "Backup verification failed.");
+    } else {
+      setBackupNotice(`Verified ${body.fileCount} files across ${body.submissionCount} contributions. Every primary and backup object matched its recorded byte count.`);
+    }
     setBackingUp(false);
   }
 
