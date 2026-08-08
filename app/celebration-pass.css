@@ -93,6 +93,10 @@
   font-size: clamp(1.05rem, 2vw, 1.34rem);
   line-height: 1.55;
 }
+.celebrationLead strong {
+  color: var(--celebration-champagne);
+  font: italic 600 1.12em var(--serif);
+}
 .celebrationActions {
   justify-content: flex-start;
 }
