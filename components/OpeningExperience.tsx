@@ -80,7 +80,7 @@ export function OpeningExperience() {
               transition={{ delay: reduceMotion ? 0 : .35, duration: 1 }}
             >
               <span className="eyebrow">A SECRET CELEBRATION · AUGUST 11, 2026</span>
-              <h1>Every life leaves a <em>constellation.</em></h1>
+              <h1>Every life holds a <em>constellation.</em></h1>
               <p>
                 We are gathering the photographs, home movies, stories, voices, and little forgotten moments that together tell the story of Sandi’s first fifty years.
               </p>
