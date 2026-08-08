@@ -1,133 +1,60 @@
-"use client";
-
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Countdown } from "@/components/Countdown";
 
-const whispers = [
+const moments = [
   "New Hyde Park · where the story began",
-  "Roslyn · a childhood shaped by family and books",
+  "Roslyn · family, books, and lifelong friendship",
   "Boston · English, psychology, and a wider world",
-  "England · a semester that became part of her story",
+  "England · a semester that opened another chapter",
   "Oracle · leadership, systems, and global impact",
   "Iceland · Spain · France · Italy · Israel",
   "Some families begin with birth. Others begin with choice."
 ];
 
 export function OpeningExperience() {
-  const reduceMotion = useReducedMotion();
-  const [entered, setEntered] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
-
-  useEffect(() => {
-    if (!reduceMotion) return;
-    const timer = window.setTimeout(() => setIntroDone(true), 0);
-    return () => window.clearTimeout(timer);
-  }, [reduceMotion]);
-
   return (
-    <section className="opening" aria-label="The Story of Sandi introduction">
-      <div className="aurora auroraOne" />
-      <div className="aurora auroraTwo" />
-      <div className="constellation" aria-hidden="true" />
+    <section className="opening celebrationHero" aria-labelledby="birthday-hero-title">
+      <Image
+        className="celebrationHeroImage"
+        src="/api/public/hero-photo"
+        alt="Sandi Yadegari, celebrated by family and friends for her fiftieth birthday"
+        fill
+        priority
+        sizes="100vw"
+      />
+      <div className="celebrationHeroScrim" aria-hidden="true" />
+      <div className="celebrationGlow celebrationGlowCoral" aria-hidden="true" />
+      <div className="celebrationGlow celebrationGlowAmber" aria-hidden="true" />
 
-      <AnimatePresence mode="wait">
-        {!entered ? (
-          <motion.div
-            key="cover"
-            className="cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.02 }}
-            transition={{ duration: reduceMotion ? 0 : 1.2 }}
-          >
-            <motion.p
-              className="coverLine"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduceMotion ? 0 : 0.6, duration: 1 }}
-              onAnimationComplete={() => setIntroDone(true)}
-            >
-              The way we see you.
-            </motion.p>
-            <motion.button
-              className="beginButton"
-              type="button"
-              onClick={() => setEntered(true)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: introDone ? 1 : 0 }}
-              transition={{ duration: .8 }}
-            >
-              Begin
-              <span aria-hidden="true">↘</span>
-            </motion.button>
-            <p className="privateNote">A private 50th-birthday film for Sandi Yadegari</p>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="story"
-            className="openingStory shell"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduceMotion ? 0 : 1.3 }}
-          >
-            <motion.div
-              className="storyCopy"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduceMotion ? 0 : .35, duration: 1 }}
-            >
-              <span className="eyebrow">A SECRET CELEBRATION · AUGUST 11, 2026</span>
-              <h1>Every life holds a <em>constellation.</em></h1>
-              <p>
-                We are gathering the photographs, home movies, stories, voices, and little forgotten moments that together tell the story of Sandi’s first fifty years.
-              </p>
-              <div className="deadlineCallout">
-                <span>✦</span>
-                <div>
-                  <strong>Please contribute by August 10.</strong>
-                  <small>Baby pictures, childhood videos, family photographs, keepsakes, audio memories, and birthday messages are all welcome.</small>
-                </div>
-              </div>
-              <div className="actions leftActions">
-                <Link className="primary" href="/contribute">Share a memory</Link>
-                <a className="secondary" href="#invitation">See what we’re creating</a>
-              </div>
-              <Countdown />
-            </motion.div>
-
-            <div className="storyMark" aria-hidden="true">
-              <div className="storyPortrait">
-                <Image
-                  className="storyPortraitImage"
-                  src="/api/public/hero-photo"
-                  alt=""
-                  fill
-                  priority
-                  sizes="(max-width: 650px) 285px, (max-width: 930px) 345px, 470px"
-                  onError={event => { event.currentTarget.style.display = "none"; }}
-                />
-                <div className="storyPortraitScrim" />
-                <div className="storyPortraitTitle">
-                  <span className="fifty">50</span>
-                  <span className="sandiName">Sandi Yadegari</span>
-                  <span className="filmName">Still Becoming</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {entered && (
-        <div className="whisperRail" aria-hidden="true">
-          <div className="whisperTrack">
-            {[...whispers, ...whispers].map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}
-          </div>
+      <div className="shell celebrationHeroContent">
+        <p className="celebrationKicker">A SECRET CELEBRATION · AUGUST 11, 2026</p>
+        <div className="celebrationIdentity">
+          <span className="celebrationFifty">50</span>
+          <h1 id="birthday-hero-title">Sandi Yadegari</h1>
+          <span>Still Becoming</span>
         </div>
-      )}
+        <p className="celebrationLead">
+          The way we see you: curious, funny, generous, formidable—and only getting started.
+        </p>
+        <div className="actions celebrationActions">
+          <Link className="primary" href="/contribute">Add to the celebration</Link>
+          <a className="secondary" href="#invitation">See what everyone is making</a>
+        </div>
+        <div className="celebrationDeadline">
+          <div>
+            <strong>Please contribute by August 10.</strong>
+            <span>Photographs, films, stories, voices, and birthday messages are all welcome.</span>
+          </div>
+          <Countdown />
+        </div>
+      </div>
+
+      <div className="momentRibbon" aria-hidden="true">
+        <div>
+          {[...moments, ...moments].map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}
+        </div>
+      </div>
     </section>
   );
 }
