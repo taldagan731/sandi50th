@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { StoryStudio } from "@/components/StoryStudio";
+import "./studio-intelligence.css";
 
 export const metadata: Metadata = {
   title: "Private Story Studio",
