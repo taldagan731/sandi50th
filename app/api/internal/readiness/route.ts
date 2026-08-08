@@ -33,9 +33,16 @@ export async function GET(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const supabase = createAdminClient();
-  const { data: project, error: projectError } = await supabase
+  const enrichedProject = await supabase
     .from("projects").select("id,reveal_public").eq("slug", "sandi50th").single();
-  if (projectError || !project) return NextResponse.json({ error: "Project unavailable" }, { status: 503 });
+  let project: { id: string; reveal_public?: boolean } | null = enrichedProject.data;
+  let revealAccessMigrationInstalled = true;
+  if (enrichedProject.error && (enrichedProject.error.code === "42703" || /reveal_public/i.test(enrichedProject.error.message))) {
+    revealAccessMigrationInstalled = false;
+    const fallback = await supabase.from("projects").select("id").eq("slug", "sandi50th").single();
+    project = fallback.data;
+  }
+  if (!project) return NextResponse.json({ error: "Project unavailable" }, { status: 503 });
 
   const { data: memberships, error: membershipError } = await supabase
     .from("project_members").select("user_id,role")
@@ -58,14 +65,27 @@ export async function GET(request: Request) {
   if (submissionError) return NextResponse.json({ error: "Contributions unavailable" }, { status: 503 });
   const submissions = (rawSubmissions ?? []).filter(item => !isTestContributor(item.name));
   const ids = submissions.map(item => item.id);
-  const { data: media, error: mediaError } = ids.length
-    ? await supabase.from("media_assets")
-        .select("id,submission_id,original_name,mime_type,review_status,chapter_number,canonical_media_id,poster_path")
-        .in("submission_id", ids).order("created_at")
-    : { data: [], error: null };
-  if (mediaError) return NextResponse.json({ error: "Media unavailable", detail: mediaError.message }, { status: 503 });
+  let duplicateMigrationInstalled = true;
+  let media: AuditMedia[] = [];
+  if (ids.length) {
+    const enrichedMedia = await supabase.from("media_assets")
+      .select("id,submission_id,original_name,mime_type,review_status,chapter_number,canonical_media_id,poster_path")
+      .in("submission_id", ids).order("created_at");
+    if (enrichedMedia.error && (enrichedMedia.error.code === "42703" || /canonical_media_id/i.test(enrichedMedia.error.message))) {
+      duplicateMigrationInstalled = false;
+      const fallback = await supabase.from("media_assets")
+        .select("id,submission_id,original_name,mime_type,review_status,chapter_number,poster_path")
+        .in("submission_id", ids).order("created_at");
+      if (fallback.error) return NextResponse.json({ error: "Media unavailable", detail: fallback.error.message }, { status: 503 });
+      media = (fallback.data ?? []).map(item => ({ ...item, canonical_media_id: null })) as AuditMedia[];
+    } else if (enrichedMedia.error) {
+      return NextResponse.json({ error: "Media unavailable", detail: enrichedMedia.error.message }, { status: 503 });
+    } else {
+      media = (enrichedMedia.data ?? []) as AuditMedia[];
+    }
+  }
 
-  const mediaRows = (media ?? []) as AuditMedia[];
+  const mediaRows = media;
   const bySubmission = new Map<string, AuditMedia[]>();
   for (const item of mediaRows) {
     const current = bySubmission.get(item.submission_id) ?? [];
@@ -96,7 +116,9 @@ export async function GET(request: Request) {
       membershipQuerySucceeded: !membershipError,
       ownerMembershipCount: memberships?.length ?? 0,
       owners,
-      supabaseSiteUrlMustNotBeLocalhost: true
+      supabaseSiteUrlMustNotBeLocalhost: true,
+      revealAccessMigrationInstalled,
+      duplicateMigrationInstalled
     },
     report,
     reveal: {
