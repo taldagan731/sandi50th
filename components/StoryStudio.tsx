@@ -7,6 +7,8 @@ import { FamilyQaStudio } from "@/components/FamilyQaStudio";
 import { StudioLiveFeed } from "@/components/StudioLiveFeed";
 import { MemoryContributionForm } from "@/components/MemoryContributionForm";
 import { NameChorusStudio } from "@/components/NameChorusStudio";
+import { ContributionReadinessReport } from "@/components/ContributionReadinessReport";
+import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
   id: string;
@@ -65,6 +67,7 @@ export function StoryStudio() {
   const [sessionReady, setSessionReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [report, setReport] = useState<ContributionReport | null>(null);
   const [error, setError] = useState("");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
@@ -119,6 +122,7 @@ export function StoryStudio() {
     }
     knownSubmissionIds.current = nextIds;
     setSubmissions(nextSubmissions);
+    setReport(body.report as ContributionReport);
     setLastRefreshed(new Date());
     window.localStorage.setItem("sandi-studio-last-seen-at", new Date().toISOString());
     setIntelligenceAvailable(body.intelligenceAvailable !== false);
@@ -298,6 +302,7 @@ export function StoryStudio() {
     await fetch("/api/studio/session", { method: "DELETE" });
     setSignedIn(false);
     setSubmissions([]);
+    setReport(null);
   }
 
   return (
@@ -329,6 +334,8 @@ export function StoryStudio() {
         <summary>Import owner archive photographs</summary>
         <MemoryContributionForm mode="ownerArchive" />
       </details>
+
+      {report && <ContributionReadinessReport report={report} />}
 
       <StudioLiveFeed
         submissions={regularSubmissions}
@@ -471,15 +478,17 @@ export function StoryStudio() {
 }
 
 function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Promise<void>; error: string }) {
+  const [email, setEmail] = useState("");
   const [error, setError] = useState(initialError);
   const [working, setWorking] = useState(false);
+  const [resetWorking, setResetWorking] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setWorking(true);
     setError("");
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
     const supabase = createBrowserSupabaseClient();
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
@@ -498,7 +507,10 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     });
     const body = await response.json();
     if (!response.ok) {
-      setError(body.error || "This account is not authorized.");
+      await supabase.auth.signOut();
+      setError(response.status === 403
+        ? "Your email and password were accepted, but this Supabase user is not linked to the sandi50th project as owner. Add or repair the owner row in project_members."
+        : body.error || "This account is not authorized.");
       setWorking(false);
       return;
     }
@@ -506,16 +518,35 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     setWorking(false);
   }
 
+  async function requestPasswordReset() {
+    setError("");
+    setResetSent(false);
+    if (!email.trim()) {
+      setError("Enter the owner email first.");
+      return;
+    }
+    setResetWorking(true);
+    const supabase = createBrowserSupabaseClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/studio/reset-password`
+    });
+    if (resetError) setError(resetError.message);
+    else setResetSent(true);
+    setResetWorking(false);
+  }
+
   return (
     <section className="studioGate">
       <form onSubmit={signIn}>
         <span className="eyebrow">PRIVATE STORY STUDIO</span>
         <h1>Enter the editing room.</h1>
-        <p>Only the project owner can organize memories or retrieve files.</p>
-        <label>Email<input name="email" type="email" autoComplete="username" required /></label>
+        <p>Use the email and password for the Supabase Auth user linked to this project as owner.</p>
+        <label>Email<input name="email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></label>
         <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
         {error && <p className="studioError" role="alert">{error}</p>}
-        <button className="primary" type="submit" disabled={working}>{working ? "Signing in…" : "Sign in"}</button>
+        {resetSent && <p className="studioNotice" role="status">If that Supabase user exists, a secure password link is on its way. Open it on this device and choose a new password.</p>}
+        <button className="primary" type="submit" disabled={working}>{working ? "Signing in..." : "Sign in"}</button>
+        <button className="secondary studioResetButton" type="button" disabled={resetWorking} onClick={requestPasswordReset}>{resetWorking ? "Sending..." : "Set or reset password"}</button>
       </form>
     </section>
   );

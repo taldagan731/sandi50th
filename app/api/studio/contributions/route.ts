@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { isTestContributor } from "@/lib/chapters";
+import { buildContributionReport } from "@/lib/studio/contribution-report";
 
 const baseMediaColumns = "id,submission_id,storage_path,original_name,mime_type,bytes,review_status,chapter_number,caption,reviewer_notes,poster_path,display_order,reviewed_at,created_at";
 const intelligenceColumns = [
@@ -104,11 +105,14 @@ export async function GET() {
     mediaBySubmission.set(String(item.submission_id), current);
   }
 
+  const enrichedSubmissions = visibleSubmissions.map(item => ({
+    ...item,
+    media: mediaBySubmission.get(item.id) ?? []
+  }));
+
   return NextResponse.json({
     intelligenceAvailable,
-    submissions: visibleSubmissions.map(item => ({
-      ...item,
-      media: mediaBySubmission.get(item.id) ?? []
-    }))
+    report: buildContributionReport(enrichedSubmissions),
+    submissions: enrichedSubmissions
   });
 }
