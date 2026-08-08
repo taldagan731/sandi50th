@@ -27,7 +27,7 @@ export function hammingDistance(left: string, right: string) {
   let bits = BigInt(`0x${left}`) ^ BigInt(`0x${right}`);
   let count = 0;
   while (bits) {
-    bits &= bits - 1n;
+    bits &= bits - BigInt(1);
     count += 1;
   }
   return count;
@@ -44,12 +44,12 @@ function hashBands(hash: string) {
 
 export function differenceHash(pixels: Uint8Array) {
   if (pixels.length !== 72) throw new Error("dHash requires exactly 9 x 8 grayscale pixels.");
-  let value = 0n;
+  let value = BigInt(0);
   for (let row = 0; row < 8; row += 1) {
     for (let column = 0; column < 8; column += 1) {
-      value <<= 1n;
+      value <<= BigInt(1);
       const offset = row * 9 + column;
-      if (pixels[offset] > pixels[offset + 1]) value |= 1n;
+      if (pixels[offset] > pixels[offset + 1]) value |= BigInt(1);
     }
   }
   return value.toString(16).padStart(16, "0");
