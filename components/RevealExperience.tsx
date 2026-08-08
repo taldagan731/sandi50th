@@ -57,8 +57,8 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
-        <h1>The approved story will appear here.</h1>
-        <p>The private reveal remains empty until chapters or recordings are reviewed and approved in Story Studio.</p>
+        <h1>Her story is gathering here.</h1>
+        <p>Contributions appear here as they arrive; the page remains private until August 11.</p>
       </section>
     );
   }
@@ -109,7 +109,7 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
                 <div className="memoryRail">
                   {chapterMedia.map((item, index) => {
                     const expanded = activeMediaId === item.id || (!activeMediaId && index === 0);
-                    const url = `/api/studio/media/${item.id}`;
+                    const url = `/api/reveal/media/${item.id}`;
                     return (
                       <article className={expanded ? "memoryPlate is-active" : "memoryPlate"} key={item.id}>
                         <button className="memorySelect" type="button" aria-pressed={expanded} onClick={() => setActiveMediaId(item.id)}>
@@ -224,7 +224,7 @@ function VoiceCard({ item, number, activeId, onActiveChange }: {
       {item.caption && <p>{item.caption}</p>}
       <button type="button" aria-pressed={playing} onClick={toggle}>{playing ? "Pause memory" : "Play memory"}</button>
       <audio ref={audioRef} preload="metadata" onEnded={() => onActiveChange(null)}>
-        <source src={`/api/studio/media/${item.id}`} type={item.mimeType} />
+        <source src={`/api/reveal/media/${item.id}`} type={item.mimeType} />
       </audio>
     </article>
   );
@@ -287,7 +287,7 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
     onActiveChange(null);
   }
 
-  const mediaUrl = `/api/studio/media/${current.id}`;
+  const mediaUrl = `/api/reveal/media/${current.id}`;
   const mediaClass = `${current.mimeType.startsWith("video/") ? "birthdayMedia birthdayVideo" : "birthdayMedia birthdayAudio"}${playing ? " is-playing" : ""}`;
   return (
     <section className="birthdayReel" aria-labelledby="birthday-reel-title">
