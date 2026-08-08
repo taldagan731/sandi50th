@@ -5,6 +5,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StoryWorkshop } from "@/components/StoryWorkshop";
 import { FamilyQaStudio } from "@/components/FamilyQaStudio";
 import { StudioLiveFeed } from "@/components/StudioLiveFeed";
+import { MemoryContributionForm } from "@/components/MemoryContributionForm";
 
 type MediaItem = {
   id: string;
@@ -322,6 +323,11 @@ export function StoryStudio() {
           <button className="secondary" type="button" onClick={signOut}>Sign out</button>
         </div>
       </header>
+
+      <details className="studioTools ownerArchiveImporter">
+        <summary>Import owner archive photographs</summary>
+        <MemoryContributionForm mode="ownerArchive" />
+      </details>
 
       <StudioLiveFeed
         submissions={regularSubmissions}
