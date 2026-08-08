@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 
 type RevealMedia = {
   id: string;
@@ -12,6 +13,9 @@ type RevealMedia = {
   contributorName: string;
   relationship: string;
   collection: "archive" | "voice" | "birthday";
+  yearStart: number | null;
+  yearEnd: number | null;
+  yearSource: "contributor" | "exif" | "visual-decade" | null;
 };
 
 type RevealChapter = {
@@ -40,8 +44,12 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
     () => media.filter(item => item.collection === "birthday" && (item.mimeType.startsWith("audio/") || item.mimeType.startsWith("video/"))),
     [media]
   );
+  const archiveVideos = useMemo(
+    () => archiveMedia.filter(item => item.mimeType.startsWith("video/")),
+    [archiveMedia]
+  );
   const chapterMedia = useMemo(
-    () => archiveMedia.filter(item => item.chapterNumber === chapter?.number),
+    () => archiveMedia.filter(item => item.chapterNumber === chapter?.number && !item.mimeType.startsWith("video/")),
     [archiveMedia, chapter]
   );
 
@@ -134,6 +142,10 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
           </article>
         </>
       )}
+
+      {archiveMedia.length > 0 && <RevealTimeline items={archiveMedia} chapters={chapters} />}
+
+      {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
 
       {voiceMemories.length > 0 && (
         <VoiceWall items={voiceMemories} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
