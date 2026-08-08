@@ -203,6 +203,7 @@ export async function POST(request: Request) {
     }
 
     const answer = body.answer;
+    const answerId = body.action === "update" ? body.answer.id : undefined;
     const normalized: FamilyQaAnswer = {
       id: "id" in answer && answer.id ? answer.id : `manual-${crypto.randomUUID()}`,
       contributorName: answer.contributorName,
@@ -238,7 +239,7 @@ export async function POST(request: Request) {
           review_status: answer.visible ? "included" : "excluded",
           reviewer_notes: encodeFamilyQaMetadata(normalized)
         })
-        .eq("id", answer.id)
+        .eq("id", answerId as string)
         .eq("project_id", owner.project.id)
         .eq("status", "family_qa");
       if (result.error) throw result.error;
