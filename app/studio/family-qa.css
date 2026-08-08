@@ -100,7 +100,7 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: start;
+  align-items: flex-start;
 }
 .familyQaEditor > header div { display: grid; gap: .2rem; }
 .familyQaEditor > header span {
