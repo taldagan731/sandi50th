@@ -4,7 +4,7 @@ import { requireStudioOwner } from "@/lib/studio/auth";
 
 const schema = z.object({
   mediaId: z.string().uuid(),
-  reviewStatus: z.enum(["pending", "included", "excluded"]),
+  reviewStatus: z.enum(["included", "excluded"]),
   chapterNumber: z.number().int().min(1).max(8).nullable().optional(),
   caption: z.string().trim().max(1000).optional().default(""),
   notes: z.string().trim().max(3000).optional().default(""),
@@ -23,12 +23,6 @@ export async function POST(request: Request) {
       .eq("id", body.mediaId)
       .single();
     if (mediaError || !media) return NextResponse.json({ error: "Media not found." }, { status: 404 });
-
-    if (body.reviewStatus === "included" && media.mime_type.startsWith("video/") && !media.poster_path) {
-      return NextResponse.json({
-        error: "Choose a poster frame before including this video."
-      }, { status: 409 });
-    }
 
     const { data: submission } = await owner.supabase
       .from("submissions")
@@ -55,18 +49,18 @@ export async function POST(request: Request) {
       .from("media_assets")
       .select("id")
       .eq("submission_id", media.submission_id)
-      .eq("review_status", "included")
+      .neq("review_status", "excluded")
       .limit(1);
 
     await owner.supabase
       .from("submissions")
-      .update({ status: included?.length ? "approved" : "reviewed" })
+      .update({ status: included?.length ? "visible" : "excluded" })
       .eq("id", media.submission_id);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json({
-      error: error instanceof Error ? error.message : "Review could not be saved."
+      error: error instanceof Error ? error.message : "Visibility could not be saved."
     }, { status: 400 });
   }
 }
