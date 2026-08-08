@@ -107,6 +107,7 @@ export function OpeningExperience() {
                   fill
                   priority
                   sizes="(max-width: 650px) 285px, (max-width: 930px) 345px, 470px"
+                  onError={event => { event.currentTarget.style.display = "none"; }}
                 />
                 <div className="storyPortraitScrim" />
                 <div className="storyPortraitTitle">
