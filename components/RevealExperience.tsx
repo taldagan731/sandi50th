@@ -96,7 +96,11 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     setActiveRecordingId(null);
     if (scroll) {
       requestAnimationFrame(() => {
-        document.getElementById("reveal-story-room")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document.getElementById("reveal-story-room")?.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "start"
+        });
       });
     }
   }
