@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
+import { ArchiveVideoStack, RevealTimeline, UnassignedArchive } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
 import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
@@ -22,6 +22,7 @@ type RevealMedia = {
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
   displayOrder: number;
+  testRecord: boolean;
 };
 
 type ExpandedPhoto = { src: string; alt: string };
@@ -71,6 +72,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   const [expandedPhoto, setExpandedPhoto] = useState<ExpandedPhoto | null>(null);
   const [finaleSignal, setFinaleSignal] = useState(0);
   const [openingStarted, setOpeningStarted] = useState(false);
+  const [rehearsalRuntime, setRehearsalRuntime] = useState<number | null>(null);
+  const rehearsalStartedAt = useRef<number | null>(null);
   const chapter = chapters[chapterIndex];
   const archiveMedia = useMemo(() => media.filter(item => item.collection === "archive"), [media]);
   const voiceMemories = useMemo(
@@ -85,6 +88,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     () => media.filter(item => item.collection === "birthday" && (item.mimeType.startsWith("audio/") || item.mimeType.startsWith("video/"))),
     [media]
   );
+  const reviewIncludesTests = media.some(item => item.testRecord);
   const archiveVideos = useMemo(
     () => archiveMedia.filter(item => item.mimeType.startsWith("video/")),
     [archiveMedia]
@@ -132,6 +136,19 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     setExpandedPhoto(photo);
   }
 
+  function startReveal() {
+    setOpeningStarted(true);
+    if (rehearsalStartedAt.current === null) rehearsalStartedAt.current = Date.now();
+    fireRevealOpeningBalloons();
+  }
+
+  function completeRevealFinale() {
+    setFinaleSignal(value => value + 1);
+    if (rehearsalStartedAt.current === null) return;
+    const elapsed = Date.now() - rehearsalStartedAt.current;
+    setRehearsalRuntime(elapsed);
+    window.localStorage.setItem("sandi-rehearsal-runtime-ms", String(elapsed));
+  }
   function chooseChapter(index: number, scroll = false) {
     setChapterIndex(index);
     setActiveMediaId(null);
@@ -159,6 +176,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
 
   return (
     <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
+      {reviewIncludesTests && <aside className="testReviewBanner"><strong>Owner review mode</strong><span>Automated and test uploads are included and clearly marked. They remain excluded from real counts and the public reveal.</span></aside>}
       <header className="revealMasthead">
         <Image
           className="revealMastheadPhoto"
@@ -174,7 +192,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
           <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
           <h1>Still Becoming</h1>
           <p>Fifty years, told by the people who love Sandi.</p>
-          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={() => { setOpeningStarted(true); fireRevealOpeningBalloons(); }} />
+          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={startReveal} />
         </div>
       </header>
 
@@ -216,7 +234,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
                     const expanded = activeMediaId === item.id || (!activeMediaId && index === 0);
                     const url = `/api/reveal/media/${item.id}`;
                     return (
-                      <article className={expanded ? "memoryPlate is-active" : "memoryPlate"} key={item.id}>
+                      <article className={`${expanded ? "memoryPlate is-active" : "memoryPlate"}${item.testRecord ? " is-test-record" : ""}`} key={item.id}>
+                        {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
                         <button className="memorySelect" type="button" aria-pressed={expanded} onClick={() => setActiveMediaId(item.id)}>
                           {expanded ? "Selected" : "Bring forward"}
                         </button>
@@ -259,6 +278,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         />
       )}
 
+      {archiveMedia.some(item => !item.chapterNumber) && <UnassignedArchive items={archiveMedia.filter(item => !item.chapterNumber)} />}
+
       {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
 
       {chorusGroups.length > 0 && <FamilyChorus groups={chorusGroups} />}
@@ -268,9 +289,17 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
       )}
 
       {birthdayMessages.length > 0 && (
-        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={() => setFinaleSignal(value => value + 1)} />
+        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={completeRevealFinale} />
       )}
 
+
+      {rehearsalRuntime !== null && (
+        <aside className="rehearsalRuntime" role="status">
+          <span>FULL REHEARSAL RUNTIME</span>
+          <strong>{Math.floor(rehearsalRuntime / 60000)}:{String(Math.floor((rehearsalRuntime % 60000) / 1000)).padStart(2, "0")}</strong>
+          <p>Measured from the first press of Play to the final balloons and confetti on this device.</p>
+        </aside>
+      )}
       {expandedPhoto && <PhotoFocus photo={expandedPhoto} onClose={() => setExpandedPhoto(null)} />}
 
       <section className="chapterNineInvitation" aria-labelledby="chapter-nine-title">
@@ -420,7 +449,8 @@ function VoiceCard({ item, number, activeId, onActiveChange }: {
   }
 
   return (
-    <article className={playing ? "voiceCard is-playing" : "voiceCard"}>
+    <article className={`${playing ? "voiceCard is-playing" : "voiceCard"}${item.testRecord ? " is-test-record" : ""}`}>
+      {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
       <div className="voiceCardTopline"><span>{String(number).padStart(2, "0")}</span><span>{item.relationship || "Someone who loves Sandi"}</span></div>
       <Waveform />
       <h3>{item.contributorName}</h3>
@@ -511,7 +541,8 @@ function BirthdayMessageReel({ items, activeId, onActiveChange, onFinale }: Reco
       </header>
 
       <div className="birthdayStage" aria-live="polite">
-        <div className={mediaClass}>
+        <div className={`${mediaClass}${current.testRecord ? " is-test-record" : ""}`}>
+          {current.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
           {current.mimeType.startsWith("video/") ? (
             <video
               ref={node => { mediaRef.current = node; }}

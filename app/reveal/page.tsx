@@ -66,8 +66,10 @@ function LockedReveal() {
   );
 }
 
-export default async function RevealPage() {
+export default async function RevealPage({ searchParams }: { searchParams?: Promise<{ review?: string }> }) {
+  const params = await searchParams;
   const owner = await requireStudioOwner();
+  const includeTests = Boolean(owner && params?.review === "all");
   const supabase = owner?.supabase ?? createAdminClient();
   let projectId = owner?.project.id ?? null;
 
@@ -90,14 +92,20 @@ export default async function RevealPage() {
     .order("chapter_number");
   const approvedByNumber = new Map((chapterRows ?? []).map(item => [item.chapter_number, item]));
 
-  const { data: rawSubmissions } = await supabase
+  let submissionQuery = supabase
     .from("submissions")
     .select("id,name,relationship,prompt,first_memory,approximate_year,location,life_chapter,status,review_status,reviewer_notes")
-    .eq("project_id", projectId)
-    .neq("review_status", "excluded")
-    .not("name", "ilike", "%MOBILE TEST%")
-    .not("name", "ilike", "%CODEX%");
-  const submissionRows = (rawSubmissions ?? []).filter(item => !isTestContributor(item.name));
+    .eq("project_id", projectId);
+  if (!includeTests) {
+    submissionQuery = submissionQuery
+      .neq("review_status", "excluded")
+      .not("name", "ilike", "%MOBILE TEST%")
+      .not("name", "ilike", "%CODEX%");
+  }
+  const { data: rawSubmissions } = await submissionQuery;
+  const submissionRows = includeTests
+    ? (rawSubmissions ?? [])
+    : (rawSubmissions ?? []).filter(item => !isTestContributor(item.name));
   const submissionIds = submissionRows.map(item => item.id);
   const submissionsById = new Map(submissionRows.map(item => [item.id, item]));
 
@@ -105,19 +113,19 @@ export default async function RevealPage() {
   const baseColumns = `${legacyBaseColumns},canonical_media_id`;
   let mediaRows: MediaRow[] = [];
   if (submissionIds.length) {
-    const enriched = await supabase
+    let enrichedQuery = supabase
       .from("media_assets")
       .select(`${baseColumns},inferred_year_start,inferred_year_end,date_inference_source`)
-      .in("submission_id", submissionIds)
-      .neq("review_status", "excluded")
-      .order("display_order");
+      .in("submission_id", submissionIds);
+    if (!includeTests) enrichedQuery = enrichedQuery.neq("review_status", "excluded");
+    const enriched = await enrichedQuery.order("display_order");
     if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference|canonical_media_id/i.test(enriched.error.message))) {
-      const fallback = await supabase
+      let fallbackQuery = supabase
         .from("media_assets")
         .select(legacyBaseColumns)
-        .in("submission_id", submissionIds)
-        .neq("review_status", "excluded")
-        .order("display_order");
+        .in("submission_id", submissionIds);
+      if (!includeTests) fallbackQuery = fallbackQuery.neq("review_status", "excluded");
+      const fallback = await fallbackQuery.order("display_order");
       mediaRows = (fallback.data ?? []) as unknown as MediaRow[];
     } else {
       mediaRows = (enriched.data ?? []) as unknown as MediaRow[];
@@ -213,7 +221,8 @@ export default async function RevealPage() {
             yearStart: suppliedRange?.start ?? inferredStart,
             yearEnd: suppliedRange?.end ?? inferredEnd,
             yearSource,
-            displayOrder: item.display_order
+            displayOrder: item.display_order,
+            testRecord: isTestContributor(submission?.name)
           };
         })}
       />

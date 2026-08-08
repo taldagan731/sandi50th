@@ -14,6 +14,7 @@ export type ArchiveMedia = {
   yearStart: number | null;
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
+  testRecord: boolean;
 };
 
 type Chapter = { number: number; title: string; text: string };
@@ -124,7 +125,8 @@ export function RevealTimeline({
         {visible.map(item => {
           const url = `/api/reveal/media/${item.id}`;
           return (
-            <article key={item.id}>
+            <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
+              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
               <div className="timelineImage">
                 {item.mimeType.startsWith("video/") ? (
                   <InViewVideoPreview item={item} url={url} />
@@ -143,6 +145,36 @@ export function RevealTimeline({
   );
 }
 
+export function UnassignedArchive({ items }: { items: ArchiveMedia[] }) {
+  return (
+    <section className="unassignedArchive" aria-labelledby="unassigned-archive-title">
+      <header>
+        <span className="eyebrow">THE WHOLE ARCHIVE</span>
+        <h2 id="unassigned-archive-title">Every memory has a place here.</h2>
+        <p>These items have not been assigned to a chapter yet. They remain visible in owner review so nothing disappears while the story is being assembled.</p>
+      </header>
+      <div className="unassignedArchiveGrid">
+        {items.map(item => {
+          const url = `/api/reveal/media/${item.id}`;
+          return (
+            <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
+              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
+              {item.mimeType.startsWith("image/") ? (
+                <img src={url} alt={item.caption || item.originalName} loading="lazy" data-reveal-photo="true" />
+              ) : item.mimeType.startsWith("video/") ? (
+                <InViewVideoPreview item={item} url={url} />
+              ) : (
+                <a href={`${url}?download=1`}>Open {item.originalName}</a>
+              )}
+              <p>{item.caption || item.originalName}</p>
+              <small>{item.contributorName}</small>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 function InViewVideoPreview({ item, url }: { item: ArchiveMedia; url: string }) {
   const previewRef = useRef<HTMLVideoElement>(null);
 

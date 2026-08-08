@@ -57,7 +57,10 @@ requireText("app/reveal/sandi-signature.css", "@media(prefers-reduced-motion:red
 requireText("app/reveal/sandi-signature.css", "stroke-dashoffset:0;animation:none", "the fully drawn reduced-motion state");
 forbidText("components/SandiSignaturePrelude.tsx", "framer-motion", "a signature animation dependency");
 forbidText("components/SandiSignaturePrelude.tsx", "gsap", "a signature animation dependency");
-requireText("components/RevealExperience.tsx", "setOpeningStarted(true); fireRevealOpeningBalloons();", "the music-triggered signature and opening-balloon handoff");
+requireText("components/RevealExperience.tsx", "onStart={startReveal}", "the music-triggered opening handoff");
+requireText("components/RevealExperience.tsx", "setOpeningStarted(true);", "the signature start state");
+requireText("components/RevealExperience.tsx", "fireRevealOpeningBalloons();", "the opening balloon trigger");
+requireText("components/RevealExperience.tsx", "sandi-rehearsal-runtime-ms", "the measured press-play-to-finale rehearsal runtime");
 requireText("components/RevealSoundtrackV2.tsx", "onStart();", "the successful-play signature trigger");
 requireText("app/reveal/sandi-signature-trigger.css", ".sandiSignaturePrelude.is-playing", "the dormant-until-play signature state");
 requireText("app/reveal/sandi-signature-trigger.css", "animation-name: none", "no page-load signature animation");

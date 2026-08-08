@@ -327,6 +327,7 @@ export function StoryStudio() {
           <button className="secondary" type="button" disabled={backingUp} onClick={verifyBackups}>{backingUp ? "Verifying backups…" : "Verify all backups"}</button>
           <a className="secondary" href="/api/studio/export">Download archive index</a>
           <a className="secondary" href="/reveal">Open private reveal</a>
+          <a className="secondary" href="/reveal?review=all">Open every upload for review</a>
           <button className="secondary" type="button" onClick={signOut}>Sign out</button>
         </div>
       </header>
@@ -530,9 +531,9 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     setResetWorking(true);
     const supabase = createBrowserSupabaseClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/studio/reset-password`
+      redirectTo: process.env.NEXT_PUBLIC_STUDIO_RESET_URL || "https://sandi50th-kk7k2j1vf-tal-9080s-projects.vercel.app/studio/reset-password"
     });
-    if (resetError) setError(resetError.message);
+    if (resetError) setError(/rate limit/i.test(resetError.message) ? "Supabase has temporarily limited password emails. Please wait before trying once more; repeated clicks extend the problem." : resetError.message);
     else setResetSent(true);
     setResetWorking(false);
   }
@@ -548,7 +549,7 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
         {error && <p className="studioError" role="alert">{error}</p>}
         {resetSent && <p className="studioNotice" role="status">If that Supabase user exists, a secure password link is on its way. Open it on this device and choose a new password.</p>}
         <button className="primary" type="submit" disabled={working}>{working ? "Signing in..." : "Sign in"}</button>
-        <button className="secondary studioResetButton" type="button" disabled={resetWorking} onClick={requestPasswordReset}>{resetWorking ? "Sending..." : "Set or reset password"}</button>
+        <button className="secondary studioResetButton" type="button" disabled={resetWorking || resetSent} onClick={requestPasswordReset}>{resetWorking ? "Sending..." : "Set or reset password"}</button>
       </form>
     </section>
   );
