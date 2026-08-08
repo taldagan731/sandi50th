@@ -98,3 +98,22 @@ if (failures.length) {
 }
 
 console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
+
+
+const contributionForm = read("components/MemoryContributionForm.tsx");
+forbidText("components/MemoryContributionForm.tsx", "calculateFileSha256", "no contributor-path hashing");
+forbidText("components/MemoryContributionForm.tsx", "crypto.subtle", "no browser hashing");
+forbidText("app/api/submissions/complete/route.ts", "duplicateMarkerExists", "no confirmation-path dedupe");
+forbidText("app/api/submissions/complete/route.ts", "del(", "no post-upload deletion");
+requireText("app/api/submissions/complete/route.ts", "enqueueSubmissionHashing", "background duplicate hash queue");
+requireText("lib/duplicate-detection/index.ts", "differenceHash", "direct dependency-free dHash");
+requireText("lib/duplicate-detection/index.ts", "dhash_band_0", "indexed perceptual hash bands");
+requireText("supabase/duplicate-detection-migration.sql", "canonical_media_id", "reversible canonical photo link");
+requireText("components/PostUploadPhotoReview.tsx", "If you do nothing, we’ll keep yours.", "default-keep contributor wording");
+requireText("components/PostUploadPhotoReview.tsx", "Your original remains safely stored", "non-destructive contributor decision");
+requireText("components/DuplicateReviewStudio.tsx", "All originals remain stored", "non-destructive Studio merge");
+const successIndex = contributionForm.indexOf("confirmationCode");
+const comparisonIndex = contributionForm.indexOf("<PostUploadPhotoReview");
+if (successIndex < 0 || comparisonIndex < successIndex) {
+  failures.push("post-upload comparison must render only after the success confirmation");
+}
