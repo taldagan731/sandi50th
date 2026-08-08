@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { FlowingCloudShader, type CloudPalette } from "@/components/FlowingCloudShader";
 import { ShaderPerformanceMeter } from "@/components/ShaderPerformanceMeter";
@@ -17,6 +18,7 @@ export function ShaderPalettePreview() {
     <section className="shaderComparison" aria-labelledby="shader-preview-title">
       <div className="shaderStage">
         <FlowingCloudShader palette={selected} />
+        <Image className="shaderPreviewPhoto" src="/images/sandi-hero.jpeg" alt="Sandi standing in the ocean at the beach" fill priority sizes="(max-width: 760px) 100vw, 1120px" />
         <div className="shaderPhotoWash" />
         <div className="shaderSampleCopy">
           <span>STILL BECOMING</span>
