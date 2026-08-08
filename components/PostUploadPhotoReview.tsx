@@ -81,6 +81,7 @@ export function PostUploadPhotoReview({
 
   useEffect(() => {
     if (demoMatches || !reviewToken || !submissionId) return;
+    const scopedReviewToken = reviewToken;
     let cancelled = false;
     let attempts = 0;
     let timer = 0;
@@ -89,7 +90,7 @@ export function PostUploadPhotoReview({
       attempts += 1;
       try {
         const response = await fetch(`/api/submissions/${submissionId}/duplicates`, {
-          headers: { "x-duplicate-review-token": reviewToken },
+          headers: { "x-duplicate-review-token": scopedReviewToken },
           cache: "no-store"
         });
         const body = await response.json();
