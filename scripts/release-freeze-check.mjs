@@ -104,7 +104,7 @@ requireText("lib/duplicate-detection/index.ts", "dhash_band_0", "indexed percept
 requireText("supabase/duplicate-detection-migration.sql", "canonical_media_id", "reversible canonical photo link");
 requireText("components/PostUploadPhotoReview.tsx", "If you do nothing, we’ll keep yours.", "default-keep contributor wording");
 requireText("components/PostUploadPhotoReview.tsx", "Your original remains safely stored", "non-destructive contributor decision");
-requireText("components/DuplicateReviewStudio.tsx", "All originals remain stored", "non-destructive Studio merge");
+requireText("components/DuplicateReviewStudio.tsx", "originals remain stored", "non-destructive Studio merge");
 const successIndex = contributionForm.indexOf("confirmationCode");
 const comparisonIndex = contributionForm.indexOf("<PostUploadPhotoReview");
 if (successIndex < 0 || comparisonIndex < successIndex) {
