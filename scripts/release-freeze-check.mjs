@@ -169,6 +169,13 @@ requireText("components/MemoryContributionForm.tsx", "fireContributionBalloons()
 requireText("components/RecordingContributionForm.tsx", "fireContributionBalloons();", "recorded contribution balloons");
 requireText("components/RevealExperience.tsx", "fireRevealOpeningBalloons();", "opening 50 balloons");
 requireText("components/RevealExperience.tsx", "fireRevealFinaleBalloons();", "finale balloons");
+requireText("components/FlowingCloudShader.tsx", 'matchMedia("(prefers-reduced-motion: reduce)")', "shader reduced-motion short circuit");
+requireText("components/FlowingCloudShader.tsx", 'getContext("webgl2"', "WebGL2 with silent CSS fallback");
+requireText("components/FlowingCloudShader.tsx", "IntersectionObserver", "off-screen shader pause");
+requireText("components/FlowingCloudShader.tsx", "visibilitychange", "hidden-tab shader pause");
+requireText("components/FlowingCloudShader.tsx", "Math.min(window.devicePixelRatio || 1, 2) * .5", "one-times maximum shader density");
+forbidText("components/FlowingCloudShader.tsx", "pointermove", "passive shader pointer tracking");
+requireText("app/shader-preview/page.tsx", "hasRevealPreviewAccess", "owner-only shader color review");
 
 const confettiSource = [...sourceFiles("app"), ...sourceFiles("components"), ...sourceFiles("lib")]
   .filter(path => /\.(ts|tsx)$/.test(path));
