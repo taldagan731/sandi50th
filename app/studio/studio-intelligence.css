@@ -10,7 +10,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2rem;
-  align-items: end;
+  align-items: flex-end;
 }
 .studioIntelligence h2 {
   margin: .4rem 0 .5rem;
@@ -80,7 +80,7 @@
   display: flex;
   grid-column: span 2;
   gap: .6rem;
-  align-items: end;
+  align-items: flex-end;
   flex-wrap: wrap;
 }
 .studioSearchActions button { min-height: 44px; }

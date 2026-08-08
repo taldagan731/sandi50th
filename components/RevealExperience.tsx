@@ -24,13 +24,39 @@ type RevealChapter = {
   text: string;
 };
 
+type FamilyAnswer = {
+  id: string;
+  contributorName: string;
+  relationship: string;
+  question: string;
+  answer: string;
+  chapterNumber: number;
+  when: string;
+  place: string;
+  chorusKeys: string[];
+  photoAssetIds: string[];
+  showInChapter: boolean;
+};
+
+type ChorusGroup = {
+  key: string;
+  question: string;
+  answers: FamilyAnswer[];
+};
+
+const CHORUS_QUESTIONS = [
+  { key: "who-is-sandi", question: "Who is Sandi to you?" },
+  { key: "what-do-you-admire", question: "What do you admire most about Sandi?" },
+  { key: "what-makes-you-laugh", question: "What makes you laugh together?" }
+] as const;
+
 type RecordingCollectionProps = {
   items: RevealMedia[];
   activeId: string | null;
   onActiveChange: (id: string | null) => void;
 };
 
-export function RevealExperience({ chapters, media }: { chapters: RevealChapter[]; media: RevealMedia[] }) {
+export function RevealExperience({ chapters, media, familyAnswers }: { chapters: RevealChapter[]; media: RevealMedia[]; familyAnswers: FamilyAnswer[] }) {
   const [chapterIndex, setChapterIndex] = useState(0);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
@@ -52,8 +78,19 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
     () => archiveMedia.filter(item => item.chapterNumber === chapter?.number && !item.mimeType.startsWith("video/")),
     [archiveMedia, chapter]
   );
+  const chapterAnswers = useMemo(
+    () => familyAnswers.filter(item => item.showInChapter && item.chapterNumber === chapter?.number),
+    [familyAnswers, chapter]
+  );
+  const chorusGroups = useMemo(
+    () => CHORUS_QUESTIONS.map(group => ({
+      ...group,
+      answers: familyAnswers.filter(answer => answer.chorusKeys.includes(group.key))
+    })).filter(group => group.answers.length > 1),
+    [familyAnswers]
+  );
 
-  if (!chapters.length && !voiceMemories.length && !birthdayMessages.length) {
+  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length) {
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
@@ -99,6 +136,8 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
             <div className="revealProse">
               {chapter.text.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             </div>
+
+            {chapterAnswers.length > 0 && <ChapterFamilyVoices answers={chapterAnswers} />}
 
             {chapterMedia.length > 0 && (
               <section className="memoryCarousel" aria-label={`Memories for ${chapter.title}`}>
@@ -147,6 +186,8 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
 
       {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
 
+      {chorusGroups.length > 0 && <FamilyChorus groups={chorusGroups} />}
+
       {voiceMemories.length > 0 && (
         <VoiceWall items={voiceMemories} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
       )}
@@ -166,6 +207,91 @@ export function RevealExperience({ chapters, media }: { chapters: RevealChapter[
         </div>
       </section>
     </div>
+  );
+}
+
+function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
+  return (
+    <section className="chapterFamilyVoices" aria-label="Family voices in this chapter">
+      <header>
+        <span className="eyebrow">IN THEIR WORDS</span>
+        <p>Memories and observations from the people who know this part of Sandi’s story.</p>
+      </header>
+      <div>
+        {answers.map(answer => (
+          <figure key={answer.id} className={answer.photoAssetIds.length ? "familyVoice hasPhoto" : "familyVoice"}>
+            {answer.photoAssetIds.length > 0 && (
+              <div className="familyVoicePhotos">
+                {answer.photoAssetIds.map(photoId => (
+                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" />
+                ))}
+              </div>
+            )}
+            <div>
+              <p className="familyVoiceQuestion">{answer.question}</p>
+              <blockquote>{answer.answer}</blockquote>
+              <figcaption>
+                <strong>{answer.contributorName}</strong>
+                <span>{answer.relationship}</span>
+                {(answer.when || answer.place) && <small>{[answer.when, answer.place].filter(Boolean).join(" · ")}</small>}
+              </figcaption>
+            </div>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
+  const [groupIndex, setGroupIndex] = useState(0);
+  const [answerIndex, setAnswerIndex] = useState(0);
+  const group = groups[Math.min(groupIndex, groups.length - 1)];
+  const answer = group.answers[Math.min(answerIndex, group.answers.length - 1)];
+
+  function chooseGroup(nextIndex: number) {
+    setGroupIndex(nextIndex);
+    setAnswerIndex(0);
+  }
+
+  function move(delta: number) {
+    setAnswerIndex(current => Math.min(group.answers.length - 1, Math.max(0, current + delta)));
+  }
+
+  return (
+    <section className="familyChorus" aria-labelledby="family-chorus-title">
+      <header>
+        <span className="eyebrow">A CHORUS</span>
+        <h2 id="family-chorus-title">The same question. A different way of seeing her.</h2>
+        <p>One voice at a time, from the family who has known Sandi in different seasons of her life.</p>
+      </header>
+
+      <nav aria-label="Chorus questions">
+        {groups.map((item, index) => (
+          <button type="button" key={item.key} aria-pressed={index === groupIndex} onClick={() => chooseGroup(index)}>
+            {item.question}
+          </button>
+        ))}
+      </nav>
+
+      <div className="chorusStage" aria-live="polite">
+        <p className="chorusQuestion">{group.question}</p>
+        <figure key={answer.id}>
+          {answer.photoAssetIds.length > 0 && (
+            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" />
+          )}
+          <div>
+            <blockquote>{answer.answer}</blockquote>
+            <figcaption><strong>{answer.contributorName}</strong><span>{answer.relationship}</span></figcaption>
+          </div>
+        </figure>
+        <div className="chorusTransport">
+          <button type="button" disabled={answerIndex === 0} onClick={() => move(-1)}>Previous voice</button>
+          <span>{answerIndex + 1} of {group.answers.length}</span>
+          <button type="button" disabled={answerIndex === group.answers.length - 1} onClick={() => move(1)}>Next voice</button>
+        </div>
+      </div>
+    </section>
   );
 }
 

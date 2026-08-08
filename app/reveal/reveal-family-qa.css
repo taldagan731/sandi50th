@@ -1,0 +1,176 @@
+.chapterFamilyVoices {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(3rem, 7vw, 6rem);
+  padding-top: clamp(2rem, 5vw, 4rem);
+  border-top: 1px solid rgba(215, 184, 122, .24);
+}
+.chapterFamilyVoices > header {
+  display: grid;
+  gap: .55rem;
+  max-width: 42rem;
+}
+.chapterFamilyVoices > header p {
+  margin: 0;
+  color: rgba(251, 247, 251, .64);
+  line-height: 1.65;
+}
+.chapterFamilyVoices > div { display: grid; gap: clamp(3rem, 7vw, 6rem); }
+.familyVoice {
+  display: grid;
+  grid-template-columns: minmax(0, 44rem);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  margin: 0;
+}
+.familyVoice.hasPhoto { grid-template-columns: minmax(15rem, .72fr) minmax(0, 1fr); align-items: center; }
+.familyVoice:nth-child(even) { margin-left: clamp(0rem, 8vw, 7rem); }
+.familyVoicePhotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .55rem;
+}
+.familyVoicePhotos img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: .2rem;
+}
+.familyVoiceQuestion {
+  margin: 0 0 1rem;
+  color: var(--champagne);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.familyVoice blockquote {
+  margin: 0;
+  padding-left: clamp(1rem, 3vw, 2rem);
+  border-left: 1px solid rgba(215, 184, 122, .55);
+  color: var(--text);
+  font: italic 500 clamp(1.65rem, 3.7vw, 3rem)/1.25 var(--serif);
+}
+.familyVoice figcaption {
+  display: grid;
+  gap: .2rem;
+  margin: 1.2rem 0 0 clamp(1rem, 3vw, 2rem);
+}
+.familyVoice figcaption strong { color: var(--champagne); font-size: .88rem; }
+.familyVoice figcaption span,
+.familyVoice figcaption small { color: rgba(251, 247, 251, .55); }
+
+.familyChorus {
+  width: min(76rem, calc(100% - 2rem));
+  margin: clamp(7rem, 14vw, 13rem) auto;
+}
+.familyChorus > header {
+  max-width: 52rem;
+  margin-bottom: clamp(2.5rem, 6vw, 5rem);
+}
+.familyChorus > header h2 {
+  margin: .7rem 0 1rem;
+  font: 500 clamp(2.7rem, 6vw, 5.8rem)/.95 var(--serif);
+  letter-spacing: -.035em;
+}
+.familyChorus > header p {
+  max-width: 42rem;
+  color: rgba(251, 247, 251, .64);
+  line-height: 1.7;
+}
+.familyChorus > nav {
+  display: flex;
+  gap: .6rem 1.2rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(215, 184, 122, .2);
+}
+.familyChorus > nav button {
+  min-height: 44px;
+  padding: .4rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: rgba(251, 247, 251, .48);
+  text-align: left;
+}
+.familyChorus > nav button[aria-pressed="true"] {
+  border-bottom-color: var(--champagne);
+  color: var(--champagne);
+}
+.chorusStage {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  min-height: 31rem;
+  padding: clamp(3rem, 8vw, 7rem) 0 0;
+}
+.chorusQuestion {
+  margin: 0;
+  color: rgba(215, 184, 122, .7);
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.chorusStage figure {
+  display: grid;
+  grid-template-columns: auto minmax(0, 50rem);
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-items: center;
+  margin: 0;
+  animation: chorusArrival .5s ease both;
+}
+.chorusStage figure > img {
+  width: clamp(10rem, 21vw, 18rem);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+.chorusStage blockquote {
+  margin: 0;
+  color: var(--text);
+  font: italic 500 clamp(2rem, 5vw, 4.6rem)/1.08 var(--serif);
+  letter-spacing: -.025em;
+}
+.chorusStage figcaption {
+  display: flex;
+  gap: .65rem;
+  align-items: baseline;
+  margin-top: 1.7rem;
+}
+.chorusStage figcaption strong { color: var(--champagne); }
+.chorusStage figcaption span { color: rgba(251, 247, 251, .5); }
+.chorusTransport {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  padding-top: 1rem;
+}
+.chorusTransport button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+.chorusTransport button:last-child { justify-self: end; }
+.chorusTransport button:disabled { color: rgba(251, 247, 251, .25); }
+.chorusTransport span { color: rgba(251, 247, 251, .45); font-size: .8rem; }
+
+@keyframes chorusArrival {
+  from { opacity: 0; transform: translateY(.65rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 700px) {
+  .familyVoice.hasPhoto,
+  .chorusStage figure { grid-template-columns: 1fr; }
+  .familyVoice:nth-child(even) { margin-left: 0; }
+  .familyVoicePhotos { order: 2; }
+  .chorusStage { min-height: 33rem; }
+  .chorusStage figure > img { width: min(15rem, 70vw); }
+  .chorusTransport { gap: .5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chorusStage figure { animation: none; }
+}

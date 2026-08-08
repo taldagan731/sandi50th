@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StoryWorkshop } from "@/components/StoryWorkshop";
+import { FamilyQaStudio } from "@/components/FamilyQaStudio";
+import { StudioLiveFeed } from "@/components/StudioLiveFeed";
 
 type MediaItem = {
   id: string;
@@ -62,7 +64,6 @@ export function StoryStudio() {
   const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"visible" | "hidden">("visible");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
   const [intelligenceAvailable, setIntelligenceAvailable] = useState(true);
@@ -78,6 +79,9 @@ export function StoryStudio() {
   const [revealPublic, setRevealPublic] = useState(false);
   const [revealAccessAvailable, setRevealAccessAvailable] = useState(true);
   const [revealAccessWorking, setRevealAccessWorking] = useState(false);
+  const [newSubmissionIds, setNewSubmissionIds] = useState<Set<string>>(new Set());
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const knownSubmissionIds = useRef<Set<string> | null>(null);
 
   async function load() {
     setError("");
@@ -93,7 +97,28 @@ export function StoryStudio() {
       setSessionReady(true);
       return;
     }
-    setSubmissions(body.submissions);
+    const nextSubmissions = body.submissions as Submission[];
+    const nextIds = new Set(nextSubmissions.map(item => item.id));
+    if (knownSubmissionIds.current === null) {
+      const lastSeen = window.localStorage.getItem("sandi-studio-last-seen-at");
+      if (lastSeen) {
+        const threshold = new Date(lastSeen).getTime();
+        setNewSubmissionIds(new Set(nextSubmissions
+          .filter(item => new Date(item.created_at).getTime() > threshold)
+          .map(item => item.id)));
+      }
+    } else {
+      const arrivals = nextSubmissions
+        .filter(item => !knownSubmissionIds.current?.has(item.id))
+        .map(item => item.id);
+      if (arrivals.length) {
+        setNewSubmissionIds(current => new Set([...current, ...arrivals]));
+      }
+    }
+    knownSubmissionIds.current = nextIds;
+    setSubmissions(nextSubmissions);
+    setLastRefreshed(new Date());
+    window.localStorage.setItem("sandi-studio-last-seen-at", new Date().toISOString());
     setIntelligenceAvailable(body.intelligenceAvailable !== false);
     const revealResponse = await fetch("/api/studio/reveal-access", { cache: "no-store" });
     if (revealResponse.ok) {
@@ -112,6 +137,19 @@ export function StoryStudio() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!signedIn) return;
+    const poll = window.setInterval(() => { void load(); }, 20_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [signedIn]);
+
   if (!sessionReady) {
     return <section className="studioGate"><p>Opening the private editing room…</p></section>;
   }
@@ -120,6 +158,7 @@ export function StoryStudio() {
     return <StudioLogin onSignedIn={load} error={error} />;
   }
 
+  const regularSubmissions = submissions.filter(submission => submission.status !== "family_qa");
   const normalizedQuery = query.trim().toLowerCase();
   const mediaMatchesFacets = (item: MediaItem) => {
     if (era && item.analysis_era !== era) return false;
@@ -131,9 +170,7 @@ export function StoryStudio() {
     return true;
   };
 
-  const visible = submissions.filter(submission => {
-    const hidden = submission.review_status === "excluded";
-    if (filter === "visible" ? hidden : !hidden) return false;
+  const visible = regularSubmissions.filter(submission => {
     if (person && !submission.people.some(value => value === person)) return false;
     if (place && submission.location !== place) return false;
     if ((era || chapterFacet || setting || tagState !== "all") && !submission.media.some(mediaMatchesFacets)) return false;
@@ -161,23 +198,23 @@ export function StoryStudio() {
     return searchable.includes(normalizedQuery);
   });
 
-  const allMedia = submissions.flatMap(submission => submission.media);
+  const allMedia = regularSubmissions.flatMap(submission => submission.media);
   const photoMedia = allMedia.filter(item => item.mime_type.startsWith("image/"));
   const analyzedPhotos = photoMedia.filter(item => item.analysis_status === "completed" || item.analysis_status === "review_required");
   const lowConfidencePhotos = photoMedia.filter(item => item.analysis_status === "review_required" || item.analysis_status === "failed");
   const untaggedPhotos = photoMedia.filter(item => !item.analysis_status || ["unprocessed", "queued", "processing"].includes(item.analysis_status));
   const eras = Array.from(new Set(photoMedia.map(item => item.analysis_era).filter((value): value is string => Boolean(value)))).sort();
   const settings = Array.from(new Set(photoMedia.map(item => item.analysis_setting).filter((value): value is string => Boolean(value)))).sort();
-  const people = Array.from(new Set(submissions.flatMap(item => item.people).filter(Boolean))).sort();
-  const places = Array.from(new Set(submissions.map(item => item.location).filter(Boolean))).sort();
+  const people = Array.from(new Set(regularSubmissions.flatMap(item => item.people).filter(Boolean))).sort();
+  const places = Array.from(new Set(regularSubmissions.map(item => item.location).filter(Boolean))).sort();
 
-  const storyCounts = submissions.reduce((totals, submission) => {
+  const storyCounts = regularSubmissions.reduce((totals, submission) => {
     if (submission.review_status === "excluded") totals.hidden += 1;
     else totals.visible += 1;
     return totals;
   }, { visible: 0, hidden: 0 });
 
-  const counts = submissions.reduce((totals, submission) => {
+  const counts = regularSubmissions.reduce((totals, submission) => {
     for (const item of submission.media) {
       totals.total += 1;
       if (item.review_status === "excluded") totals.hidden += 1;
@@ -267,7 +304,7 @@ export function StoryStudio() {
         <div>
           <span className="eyebrow">PRIVATE STORY STUDIO</span>
           <h1>The memories that have arrived.</h1>
-          <p>{submissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
+          <p>{regularSubmissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
         </div>
         <div className="studioToolbarActions">
           <button
@@ -286,6 +323,15 @@ export function StoryStudio() {
         </div>
       </header>
 
+      <StudioLiveFeed
+        submissions={regularSubmissions}
+        newIds={newSubmissionIds}
+        lastRefreshed={lastRefreshed}
+        onVisibilityChange={reviewSubmission}
+      />
+
+      <details className="studioTools">
+        <summary>Organize, search, and edit contributions</summary>
       <section className="studioIntelligence" aria-labelledby="photo-intelligence-title">
         <header>
           <div>
@@ -357,11 +403,6 @@ export function StoryStudio() {
         {pilotNotice && <p className="studioNotice" role="status">{pilotNotice}</p>}
       </section>
 
-      <nav className="studioFilters" aria-label="Contribution visibility">
-        <button type="button" aria-pressed={filter === "visible"} onClick={() => setFilter("visible")}>Visible · {storyCounts.visible}</button>
-        <button type="button" aria-pressed={filter === "hidden"} onClick={() => setFilter("hidden")}>Hidden · {storyCounts.hidden}</button>
-      </nav>
-
       {error && <p className="studioError" role="alert">{error}</p>}
       {backupNotice && <p className="studioNotice" role="status">{backupNotice}</p>}
       {!visible.length && <div className="studioEmpty">Nothing is in this view.</div>}
@@ -404,6 +445,16 @@ export function StoryStudio() {
           </article>
         ))}
       </div>
+      </details>
+
+      <FamilyQaStudio
+        media={regularSubmissions.flatMap(submission => submission.media.map(item => ({
+          id: item.id,
+          originalName: item.original_name,
+          mimeType: item.mime_type,
+          contributorName: submission.name
+        })))}
+      />
 
       <StoryWorkshop />
     </div>
@@ -431,7 +482,10 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     const response = await fetch("/api/studio/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken: data.session.access_token })
+      body: JSON.stringify({
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token
+      })
     });
     const body = await response.json();
     if (!response.ok) {

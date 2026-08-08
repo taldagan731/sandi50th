@@ -1,0 +1,171 @@
+.familyQaStudio {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  border: 1px solid rgba(215, 177, 108, .28);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, .022);
+}
+.familyQaStudio > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: flex-end;
+}
+.familyQaStudio h2 {
+  margin: .4rem 0 .55rem;
+  font: 400 clamp(2rem, 4vw, 3.5rem)/1 var(--serif);
+}
+.familyQaStudio header p {
+  max-width: 50rem;
+  margin: 0;
+  color: rgba(247, 239, 229, .72);
+  line-height: 1.65;
+}
+.familyQaStudio header dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(5.5rem, 1fr));
+  gap: .6rem;
+  margin: 0;
+}
+.familyQaStudio header dl div {
+  padding-left: .8rem;
+  border-left: 1px solid rgba(215, 177, 108, .3);
+}
+.familyQaStudio header dt {
+  color: rgba(247, 239, 229, .55);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.familyQaStudio header dd {
+  margin: .25rem 0 0;
+  color: var(--champagne);
+  font: 500 1.7rem var(--serif);
+}
+.familyQaSeed,
+.familyQaPending {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(215, 177, 108, .22);
+  border-radius: .8rem;
+  background: rgba(215, 177, 108, .05);
+}
+.familyQaSeed p,
+.familyQaPending p { margin: .3rem 0 0; color: var(--muted); line-height: 1.5; }
+.familyQaPending { display: block; }
+.familyQaPending > strong { color: var(--champagne); }
+.familyQaBulk {
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  padding: 1rem 0;
+}
+.familyQaBulk summary {
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--champagne);
+  font-weight: 700;
+}
+.familyQaBulk form { display: grid; gap: .8rem; }
+.familyQaBulk form > p { margin: 0; color: var(--muted); line-height: 1.55; }
+.familyQaBulk textarea,
+.familyQaFields input,
+.familyQaFields textarea,
+.familyQaFields select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(215, 177, 108, .24);
+  border-radius: .65rem;
+  background: #120c14;
+  color: var(--text);
+  padding: .72rem .8rem;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.familyQaBulk form > div { display: flex; gap: .7rem; flex-wrap: wrap; }
+.familyQaAnswers { display: grid; gap: 1rem; }
+.familyQaEditor {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-left: 2px solid var(--champagne);
+  background: rgba(255, 255, 255, .025);
+}
+.familyQaEditor.isHidden { opacity: .62; border-left-color: rgba(255, 255, 255, .2); }
+.familyQaEditor > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.familyQaEditor > header div { display: grid; gap: .2rem; }
+.familyQaEditor > header span {
+  color: rgba(215, 177, 108, .78);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.familyQaEditor > header strong { font: 500 1.55rem var(--serif); }
+.familyQaFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+}
+.familyQaFields label {
+  display: grid;
+  align-content: start;
+  gap: .35rem;
+  color: var(--champagne);
+  font-size: .69rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.familyQaFields .familyQaWide { grid-column: 1 / -1; }
+.familyQaFields select[multiple] { min-height: 8rem; }
+.familyQaChoruses {
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  padding: .8rem;
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+.familyQaChoruses legend {
+  padding: 0 .35rem;
+  color: var(--champagne);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.familyQaChoruses label,
+.familyQaVisibility label {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  min-height: 44px;
+  color: rgba(247, 239, 229, .82);
+}
+.familyQaChoruses input,
+.familyQaVisibility input { width: 1.15rem; height: 1.15rem; }
+.familyQaVisibility { display: flex; gap: 1.3rem; flex-wrap: wrap; }
+.familyQaRefs,
+.familyQaEditorial {
+  margin: 0;
+  padding: .75rem .85rem;
+  color: #f2d7a7;
+  background: rgba(215, 177, 108, .07);
+  line-height: 1.5;
+}
+.familyQaEditorial strong { display: block; margin-bottom: .25rem; }
+
+@media (max-width: 760px) {
+  .familyQaStudio > header { grid-template-columns: 1fr; }
+  .familyQaStudio header dl { grid-template-columns: repeat(3, 1fr); }
+  .familyQaSeed { align-items: stretch; flex-direction: column; }
+  .familyQaFields { grid-template-columns: 1fr; }
+  .familyQaFields .familyQaWide { grid-column: 1; }
+  .familyQaVisibility { display: grid; gap: .2rem; }
+}

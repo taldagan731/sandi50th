@@ -51,6 +51,7 @@ jobs:
           curl -fsSI http://127.0.0.1:3000/ | tr -d '\r' | grep -qi "x-robots-tag: noindex, nofollow, noarchive, nosnippet"
           curl -fsS http://127.0.0.1:3000/robots.txt | grep -q "Disallow: /"
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/studio/contributions)" = "401"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/studio/family-qa)" = "401"
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/studio/media/00000000-0000-0000-0000-000000000000)" = "401"
 
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/reveal/media/00000000-0000-0000-0000-000000000000)" = "404"
