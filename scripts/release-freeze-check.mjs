@@ -120,6 +120,7 @@ requireText("lib/photo-intelligence/index.ts", "applyChapterFallbacks", "the no-
 requireText("lib/photo-intelligence/index.ts", "Temporary archive placement", "replaceable low-confidence archive placement");
 requireText("app/api/studio/photo-intelligence/archive/route.ts", "requireStudioOwner", "owner-only archive assignment");
 requireText("components/StoryStudio.tsx", "Auto-assign the entire archive", "the archive assignment control");
+requireText("components/StoryStudio.tsx", "https://sandi50th.com/studio/reset-password", "the production password-reset fallback");
 forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
 requireText("app/api/submissions/complete/route.ts", "sendContributionArrivalEmail", "arrival email scheduling");
 requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL", "explicit arrival-email recipient configuration");

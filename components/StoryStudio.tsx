@@ -537,7 +537,7 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     setResetWorking(true);
     const supabase = createBrowserSupabaseClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: process.env.NEXT_PUBLIC_STUDIO_RESET_URL || "https://sandi50th-kk7k2j1vf-tal-9080s-projects.vercel.app/studio/reset-password"
+      redirectTo: process.env.NEXT_PUBLIC_STUDIO_RESET_URL || "https://sandi50th.com/studio/reset-password"
     });
     if (resetError) setError(/rate limit/i.test(resetError.message) ? "Supabase has temporarily limited password emails. Please wait before trying once more; repeated clicks extend the problem." : resetError.message);
     else setResetSent(true);
