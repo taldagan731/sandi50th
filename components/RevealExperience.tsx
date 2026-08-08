@@ -149,7 +149,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   return (
     <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
       <header className="revealMasthead">
-        <span className="eyebrow">A PRIVATE FILM AND LIVING ARCHIVE</span>
+        <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
         <h1>Still Becoming</h1>
         <p>Fifty years, told by the people who love Sandi.</p>
         <RevealSoundtrack ducked={activeRecordingId !== null} />
@@ -255,8 +255,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
           <span className="eyebrow">STILL BECOMING</span>
           <div className="chapterNineNumber">CHAPTER 09</div>
           <h2 id="chapter-nine-title">The rest is yours to write.</h2>
-          <p>This story arrives at fifty without closing. It holds what the people who love you can see, and leaves room for everything only you can choose next.</p>
-          <p>Whenever you are ready, this chapter belongs to you.</p>
+          <p>Fifty is a beginning hiding in plain sight. This room is yours—for what you want next, what surprises you, and every chapter still waiting to become real.</p>
+          <p>Whenever you are ready, start anywhere.</p>
           <div className="chapterNineRule" aria-hidden="true" />
         </div>
       </section>
@@ -269,7 +269,7 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
     <section className="chapterFamilyVoices" aria-label="Family voices in this chapter">
       <header>
         <span className="eyebrow">IN THEIR WORDS</span>
-        <p>Memories and observations from the people who know this part of Sandi’s story.</p>
+        <p>Stories and observations from the people who know this side of Sandi.</p>
       </header>
       <div>
         {answers.map(answer => (
@@ -317,7 +317,7 @@ function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
       <header>
         <span className="eyebrow">A CHORUS</span>
         <h2 id="family-chorus-title">The same question. A different way of seeing her.</h2>
-        <p>One voice at a time, from the family who has known Sandi in different seasons of her life.</p>
+        <p>One voice at a time, from family members who each see something wonderfully different in Sandi.</p>
       </header>
 
       <nav aria-label="Chorus questions">
@@ -354,8 +354,8 @@ function VoiceWall({ items, activeId, onActiveChange }: RecordingCollectionProps
     <section className="voiceWall" aria-labelledby="voice-wall-title">
       <header className="recordingCollectionHeader">
         <span className="eyebrow">THE VOICE WALL</span>
-        <h2 id="voice-wall-title">A story sounds different in the voices that lived it.</h2>
-        <p>These memories were spoken for Sandi by the people who know the pauses, the laughter, and the details that never fit neatly on a page.</p>
+        <h2 id="voice-wall-title">A story sounds better in the voices that know her.</h2>
+        <p>These stories come from people who know her laugh, her timing, and the details that never fit neatly on a page.</p>
       </header>
       <div className="voiceWallGrid">
         {items.map((item, index) => (
