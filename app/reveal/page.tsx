@@ -3,6 +3,7 @@ import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
 import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
+import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import "./reveal-recordings.css";
@@ -123,8 +124,9 @@ export default async function RevealPage() {
     const metadata = decodeFamilyQaMetadata(item.reviewer_notes);
     if (!metadata) return [];
     const chapterMatch = item.life_chapter?.match(/\b([1-8])\b/);
-    return [{
+    return [applyFamilyQaSourceCorrections({
       id: item.id,
+      sourceId: metadata.sourceId,
       contributorName: item.name,
       relationship: item.relationship || "Family",
       question: item.prompt || "",
@@ -134,8 +136,9 @@ export default async function RevealPage() {
       place: item.location || "",
       chorusKeys: metadata.chorusKeys,
       photoAssetIds: metadata.photoAssetIds,
-      showInChapter: metadata.showInChapter
-    }];
+      showInChapter: metadata.showInChapter,
+      editorialNote: metadata.editorialNote
+    })];
   });
   const familyAnswers = storedFamilyAnswers.length
     ? storedFamilyAnswers
