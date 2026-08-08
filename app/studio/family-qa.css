@@ -11,7 +11,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2rem;
-  align-items: end;
+  align-items: flex-end;
 }
 .familyQaStudio h2 {
   margin: .4rem 0 .55rem;
