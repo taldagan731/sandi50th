@@ -15,7 +15,10 @@ async function request(path, init) {
 }
 
 const release = await request("/api/release");
-if (release.release !== "private-story-studio-v1") throw new Error("Production release marker is not current.");
+if (release.release !== "august-11-reveal") throw new Error("Production release marker is not current.");
+if (process.env.GITHUB_SHA && release.commit !== process.env.GITHUB_SHA) {
+  throw new Error(`Production serves ${release.commit}, not expected commit ${process.env.GITHUB_SHA}.`);
+}
 
 const prepared = await request("/api/submissions", {
   method: "POST",
