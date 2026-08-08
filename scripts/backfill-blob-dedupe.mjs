@@ -11,7 +11,7 @@ async function markerExists(pathname) {
     return true;
   } catch (error) {
     const status = Number(error?.status || 0);
-    if (status === 404 || /not.?found/i.test(String(error?.name || "")) || /not.?found/i.test(String(error?.message || ""))) return false;
+    if (status === 404 || /not.?found/i.test(String(error?.constructor?.name || "")) || /not.?found|does not exist/i.test(String(error?.message || ""))) return false;
     throw error;
   }
 }
