@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { defaultReviewStatus } from "@/lib/chapters";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       .single();
     if (projectError || !project) throw projectError ?? new Error("Project not found.");
 
+    const reviewStatus = defaultReviewStatus(body.name);
     const { data: submission, error: submissionError } = await supabase
       .from("submissions")
       .insert({
@@ -79,7 +81,8 @@ export async function POST(request: Request) {
         life_chapter: body.lifeChapter,
         prompt: body.prompt,
         consent: body.consent,
-        status: "received"
+        review_status: reviewStatus,
+        status: reviewStatus === "excluded" ? "excluded" : "received"
       })
       .select("id")
       .single();

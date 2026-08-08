@@ -1,6 +1,7 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { chapterNumberFromContributor, defaultReviewStatus } from "@/lib/chapters";
 
 export const runtime = "nodejs";
 
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
         const supabase = createAdminClient();
         const { data: submission, error } = await supabase
           .from("submissions")
-          .select("id")
+          .select("id,name,life_chapter")
           .eq("id", payload.submissionId)
           .single();
         if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -74,12 +75,21 @@ export async function POST(request: Request) {
         if (!tokenPayload) return;
         const payload = JSON.parse(tokenPayload) as TokenPayload;
         const supabase = createAdminClient();
+        const { data: submission, error: submissionError } = await supabase
+          .from("submissions")
+          .select("name,life_chapter")
+          .eq("id", payload.submissionId)
+          .single();
+        if (submissionError || !submission) throw submissionError ?? new Error("Submission not found.");
+
         const { error } = await supabase.from("media_assets").upsert({
           submission_id: payload.submissionId,
           storage_path: blob.pathname,
           original_name: payload.originalName,
           mime_type: blob.contentType || payload.contentType,
-          bytes: payload.bytes
+          bytes: payload.bytes,
+          review_status: defaultReviewStatus(submission.name),
+          chapter_number: chapterNumberFromContributor(submission.life_chapter)
         }, { onConflict: "storage_path" });
         if (error) throw error;
       }

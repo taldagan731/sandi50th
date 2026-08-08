@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireStudioOwner } from "@/lib/studio/auth";
+import { isTestContributor } from "@/lib/chapters";
 
 const baseMediaColumns = "id,submission_id,storage_path,original_name,mime_type,bytes,review_status,chapter_number,caption,reviewer_notes,poster_path,display_order,reviewed_at,created_at";
 const intelligenceColumns = [
@@ -36,12 +37,15 @@ export async function GET() {
     .from("submissions")
     .select("id,name,contact,relationship,first_memory,story,approximate_year,location,people,life_chapter,prompt,consent,status,review_status,reviewer_notes,created_at,upload_completed_at")
     .eq("project_id", owner.project.id)
+    .not("name", "ilike", "%MOBILE TEST%")
+    .not("name", "ilike", "%CODEX%")
     .order("created_at", { ascending: false });
   if (submissionError) {
     return NextResponse.json({ error: submissionError.message }, { status: 500 });
   }
 
-  const ids = submissions?.map(item => item.id) ?? [];
+  const visibleSubmissions = (submissions ?? []).filter(item => !isTestContributor(item.name));
+  const ids = visibleSubmissions.map(item => item.id);
   let intelligenceAvailable = true;
   let media: Array<Record<string, unknown>> = [];
 
@@ -84,7 +88,7 @@ export async function GET() {
 
   return NextResponse.json({
     intelligenceAvailable,
-    submissions: (submissions ?? []).map(item => ({
+    submissions: visibleSubmissions.map(item => ({
       ...item,
       media: mediaBySubmission.get(item.id) ?? []
     }))

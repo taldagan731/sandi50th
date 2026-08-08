@@ -14,28 +14,30 @@ export async function GET() {
     .select("id")
     .eq("slug", "sandi50th")
     .single();
-  if (!project) return new NextResponse("No approved photograph is available.", { status: 404 });
+  if (!project) return new NextResponse("No homepage photograph is available.", { status: 404 });
 
   const { data: submissions } = await supabase
     .from("submissions")
-    .select("id,name")
-    .eq("project_id", project.id);
+    .select("id,name,review_status")
+    .eq("project_id", project.id)
+    .neq("review_status", "excluded");
   const eligibleIds = (submissions ?? [])
     .filter(item => !TEST_CONTRIBUTOR.test(item.name ?? ""))
     .map(item => item.id);
-  if (!eligibleIds.length) return new NextResponse("No approved photograph is available.", { status: 404 });
+  if (!eligibleIds.length) return new NextResponse("No homepage photograph is available.", { status: 404 });
 
   const { data: media } = await supabase
     .from("media_assets")
     .select("storage_path,mime_type")
     .in("submission_id", eligibleIds)
     .eq("review_status", "included")
+    .not("reviewed_at", "is", null)
     .like("mime_type", "image/%")
     .order("display_order", { ascending: true })
     .order("reviewed_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!media) return new NextResponse("No approved photograph is available.", { status: 404 });
+  if (!media) return new NextResponse("No homepage photograph is available.", { status: 404 });
 
   let response: Response;
   if (media.storage_path.startsWith("incoming/")) {

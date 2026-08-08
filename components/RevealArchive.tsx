@@ -66,7 +66,7 @@ export function RevealTimeline({ items, chapters }: { items: ArchiveMedia[]; cha
       <section className="lifeTimeline timelineEmpty" aria-labelledby="timeline-title">
         <span className="eyebrow">A LIFE IN TIME</span>
         <h2 id="timeline-title">The years will gather here.</h2>
-        <p>Approved photographs appear on this timeline as soon as a contributor date or a reviewed approximate range is available.</p>
+        <p>Photographs appear on this timeline as soon as a contributor date or an approximate range is available.</p>
       </section>
     );
   }
@@ -104,10 +104,10 @@ export function RevealTimeline({ items, chapters }: { items: ArchiveMedia[]; cha
         ))}
       </nav>
 
-      {!direct.length && <p className="timelineNearest">No approved item is dated to {year} exactly. Showing the nearest dated memories.</p>}
+      {!direct.length && <p className="timelineNearest">No item is dated to {year} exactly. Showing the nearest dated memories.</p>}
       <div className="timelineMemories" key={year}>
         {visible.map(item => {
-          const url = `/api/studio/media/${item.id}`;
+          const url = `/api/reveal/media/${item.id}`;
           return (
             <article key={item.id}>
               <div className="timelineImage">
@@ -135,7 +135,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   if (!items.length) return null;
   const current = items[index];
-  const currentUrl = `/api/studio/media/${current.id}`;
+  const currentUrl = `/api/reveal/media/${current.id}`;
 
   function select(next: number) {
     videoRef.current?.pause();
@@ -147,7 +147,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
       <header>
         <span className="eyebrow">THE FILM ARCHIVE</span>
         <h2 id="archive-films-title">Moments that still move.</h2>
-        <p>Approved home movies and shared clips gather here as one growing collection. Bring a film forward, then play it in place.</p>
+        <p>Home movies and shared clips gather here as one growing collection. Bring a film forward, then play it in place.</p>
       </header>
 
       <div className="filmStackStage">
@@ -157,7 +157,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
             const stackItem = items[actualIndex];
             const style = { "--stack-index": itemIndex } as CSSProperties;
             return stackItem.poster
-              ? <img key={`${stackItem.id}-${itemIndex}`} src={`/api/studio/media/${stackItem.id}?poster=1`} alt="" style={style} />
+              ? <img key={`${stackItem.id}-${itemIndex}`} src={`/api/reveal/media/${stackItem.id}?poster=1`} alt="" style={style} />
               : <span key={`${stackItem.id}-${itemIndex}`} style={style} />;
           })}
         </div>

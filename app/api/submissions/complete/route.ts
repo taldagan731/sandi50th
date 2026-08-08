@@ -2,6 +2,7 @@ import { copy, head, put } from "@vercel/blob";
 import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { chapterNumberFromContributor, defaultReviewStatus } from "@/lib/chapters";
 import { enqueueSubmissionPhotos, processPhotoAnalysisJobs } from "@/lib/photo-intelligence";
 
 export const runtime = "nodejs";
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Submission not found." }, { status: 404 });
     }
 
+    const reviewStatus = defaultReviewStatus(submission.name);
+    const chapterNumber = chapterNumberFromContributor(submission.life_chapter);
+
     for (const file of body.files) {
       if (!file.pathname.startsWith(expectedPrefix)) {
         return NextResponse.json({ error: "An uploaded file did not belong to this contribution." }, { status: 400 });
@@ -77,7 +81,9 @@ export async function POST(request: Request) {
         storage_path: file.pathname,
         original_name: file.originalName,
         mime_type: file.contentType,
-        bytes: file.bytes
+        bytes: file.bytes,
+        review_status: reviewStatus,
+        chapter_number: chapterNumber
       }, { onConflict: "storage_path" });
       if (mediaError) throw mediaError;
       return { file, etag: stored.etag };
@@ -86,7 +92,11 @@ export async function POST(request: Request) {
     const completedAt = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("submissions")
-      .update({ status: "uploaded", upload_completed_at: completedAt })
+      .update({
+        status: reviewStatus === "excluded" ? "excluded" : "uploaded",
+        review_status: reviewStatus,
+        upload_completed_at: completedAt
+      })
       .eq("id", body.submissionId);
     if (updateError) throw updateError;
 

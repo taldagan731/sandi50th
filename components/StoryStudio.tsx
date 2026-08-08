@@ -62,7 +62,7 @@ export function StoryStudio() {
   const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending" | "included">("all");
+  const [filter, setFilter] = useState<"visible" | "hidden">("visible");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
   const [intelligenceAvailable, setIntelligenceAvailable] = useState(true);
@@ -75,6 +75,9 @@ export function StoryStudio() {
   const [tagState, setTagState] = useState<"all" | "untagged" | "low" | "ready">("all");
   const [pilotRunning, setPilotRunning] = useState(false);
   const [pilotNotice, setPilotNotice] = useState("");
+  const [revealPublic, setRevealPublic] = useState(false);
+  const [revealAccessAvailable, setRevealAccessAvailable] = useState(true);
+  const [revealAccessWorking, setRevealAccessWorking] = useState(false);
 
   async function load() {
     setError("");
@@ -92,6 +95,14 @@ export function StoryStudio() {
     }
     setSubmissions(body.submissions);
     setIntelligenceAvailable(body.intelligenceAvailable !== false);
+    const revealResponse = await fetch("/api/studio/reveal-access", { cache: "no-store" });
+    if (revealResponse.ok) {
+      const revealBody = await revealResponse.json();
+      setRevealPublic(Boolean(revealBody.revealPublic));
+      setRevealAccessAvailable(true);
+    } else {
+      setRevealAccessAvailable(false);
+    }
     setSignedIn(true);
     setSessionReady(true);
   }
@@ -121,10 +132,8 @@ export function StoryStudio() {
   };
 
   const visible = submissions.filter(submission => {
-    const reviewMatches = filter === "all"
-      || (filter === "pending" && (submission.review_status === "pending" || submission.media.some(item => item.review_status === "pending")))
-      || (filter === "included" && (submission.review_status === "included" || submission.media.some(item => item.review_status === "included")));
-    if (!reviewMatches) return false;
+    const hidden = submission.review_status === "excluded";
+    if (filter === "visible" ? hidden : !hidden) return false;
     if (person && !submission.people.some(value => value === person)) return false;
     if (place && submission.location !== place) return false;
     if ((era || chapterFacet || setting || tagState !== "all") && !submission.media.some(mediaMatchesFacets)) return false;
@@ -163,20 +172,21 @@ export function StoryStudio() {
   const places = Array.from(new Set(submissions.map(item => item.location).filter(Boolean))).sort();
 
   const storyCounts = submissions.reduce((totals, submission) => {
-    totals[submission.review_status] += 1;
+    if (submission.review_status === "excluded") totals.hidden += 1;
+    else totals.visible += 1;
     return totals;
-  }, { pending: 0, included: 0, excluded: 0 });
+  }, { visible: 0, hidden: 0 });
 
   const counts = submissions.reduce((totals, submission) => {
     for (const item of submission.media) {
       totals.total += 1;
-      if (item.review_status === "pending") totals.pending += 1;
-      if (item.review_status === "included") totals.included += 1;
+      if (item.review_status === "excluded") totals.hidden += 1;
+      else totals.visible += 1;
     }
     return totals;
-  }, { total: 0, pending: 0, included: 0 });
+  }, { total: 0, visible: 0, hidden: 0 });
 
-  async function reviewSubmission(submissionId: string, reviewStatus: "pending" | "included" | "excluded") {
+  async function reviewSubmission(submissionId: string, reviewStatus: "included" | "excluded") {
     setError("");
     const response = await fetch("/api/studio/submission-review", {
       method: "POST",
@@ -185,10 +195,27 @@ export function StoryStudio() {
     });
     const body = await response.json();
     if (!response.ok) {
-      setError(body.error || "The contribution decision could not be saved.");
+      setError(body.error || "The contribution visibility could not be saved.");
       return;
     }
     await load();
+  }
+
+  async function toggleRevealAccess() {
+    setRevealAccessWorking(true);
+    setError("");
+    const response = await fetch("/api/studio/reveal-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revealPublic: !revealPublic })
+    });
+    const body = await response.json();
+    if (!response.ok) setError(body.error || "Reveal access could not be changed.");
+    else {
+      setRevealPublic(Boolean(body.revealPublic));
+      setRevealAccessAvailable(true);
+    }
+    setRevealAccessWorking(false);
   }
 
   async function runPhotoPilot() {
@@ -202,7 +229,7 @@ export function StoryStudio() {
     } else {
       const processed = Array.isArray(body.processed) ? body.processed.length : 0;
       setPilotNotice(processed
-        ? `The pilot processed ${processed} photograph${processed === 1 ? "" : "s"}. Review every low-confidence flag before relying on an assignment.`
+        ? `The pilot processed ${processed} photograph${processed === 1 ? "" : "s"}. Check every low-confidence flag before relying on an assignment.`
         : "No queued photographs are waiting for the pilot.");
       await load();
     }
@@ -240,9 +267,18 @@ export function StoryStudio() {
         <div>
           <span className="eyebrow">PRIVATE STORY STUDIO</span>
           <h1>The memories that have arrived.</h1>
-          <p>{submissions.length} contributions · {counts.total} files · {storyCounts.pending} stories and {counts.pending} files awaiting a decision</p>
+          <p>{submissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
         </div>
         <div className="studioToolbarActions">
+          <button
+            className={revealPublic ? "secondary revealAccess isPublic" : "secondary revealAccess"}
+            type="button"
+            aria-pressed={revealPublic}
+            disabled={revealAccessWorking || !revealAccessAvailable}
+            onClick={toggleRevealAccess}
+          >
+            {revealAccessWorking ? "Changing access…" : revealPublic ? "Reveal is open — close it" : "Open reveal publicly"}
+          </button>
           <button className="secondary" type="button" disabled={backingUp} onClick={verifyBackups}>{backingUp ? "Verifying backups…" : "Verify all backups"}</button>
           <a className="secondary" href="/api/studio/export">Download archive index</a>
           <a className="secondary" href="/reveal">Open private reveal</a>
@@ -255,7 +291,7 @@ export function StoryStudio() {
           <div>
             <span className="eyebrow">PHOTO INTELLIGENCE</span>
             <h2 id="photo-intelligence-title">Find the thread without losing the source.</h2>
-            <p>Contributor details remain authoritative. Visual analysis fills only blank fields, and uncertain assignments stay visible for review.</p>
+            <p>Contributor details remain authoritative. Visual analysis fills only blank fields; uncertain assignments remain visible so you can correct them.</p>
           </div>
           <dl>
             <div><dt>Photographs</dt><dd>{photoMedia.length}</dd></div>
@@ -321,15 +357,14 @@ export function StoryStudio() {
         {pilotNotice && <p className="studioNotice" role="status">{pilotNotice}</p>}
       </section>
 
-      <nav className="studioFilters" aria-label="Contribution filters">
-        <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>All</button>
-        <button type="button" aria-pressed={filter === "pending"} onClick={() => setFilter("pending")}>Needs review · {counts.pending}</button>
-        <button type="button" aria-pressed={filter === "included"} onClick={() => setFilter("included")}>Included · {counts.included}</button>
+      <nav className="studioFilters" aria-label="Contribution visibility">
+        <button type="button" aria-pressed={filter === "visible"} onClick={() => setFilter("visible")}>Visible · {storyCounts.visible}</button>
+        <button type="button" aria-pressed={filter === "hidden"} onClick={() => setFilter("hidden")}>Hidden · {storyCounts.hidden}</button>
       </nav>
 
       {error && <p className="studioError" role="alert">{error}</p>}
       {backupNotice && <p className="studioNotice" role="status">{backupNotice}</p>}
-      {!visible.length && <div className="studioEmpty">Nothing is waiting in this view.</div>}
+      {!visible.length && <div className="studioEmpty">Nothing is in this view.</div>}
 
       <div className="studioSubmissions">
         {visible.map(submission => (
@@ -341,11 +376,11 @@ export function StoryStudio() {
               </div>
               <time>{new Date(submission.created_at).toLocaleString()}</time>
             </header>
-            <div className="studioSubmissionDecision" aria-label={`Story decision for ${submission.name}`}>
-              <span>Story: <strong>{submission.review_status}</strong></span>
-              <button type="button" className={submission.review_status === "included" ? "include" : ""} onClick={() => reviewSubmission(submission.id, "included")}>Include story</button>
-              <button type="button" className={submission.review_status === "excluded" ? "exclude" : ""} onClick={() => reviewSubmission(submission.id, "excluded")}>Exclude story</button>
-              <button type="button" onClick={() => reviewSubmission(submission.id, "pending")}>Return to pending</button>
+            <div className="studioSubmissionDecision" aria-label={`Visibility for ${submission.name}`}>
+              <span>Contribution: <strong>{submission.review_status === "excluded" ? "hidden" : "visible"}</strong></span>
+              {submission.review_status === "excluded"
+                ? <button type="button" className="include" onClick={() => reviewSubmission(submission.id, "included")}>Restore contribution</button>
+                : <button type="button" className="exclude" onClick={() => reviewSubmission(submission.id, "excluded")}>Hide contribution</button>}
             </div>
             <div className="studioMemory">
               <blockquote>{submission.first_memory}</blockquote>
@@ -413,7 +448,7 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
       <form onSubmit={signIn}>
         <span className="eyebrow">PRIVATE STORY STUDIO</span>
         <h1>Enter the editing room.</h1>
-        <p>Only the project owner can review memories or retrieve files.</p>
+        <p>Only the project owner can organize memories or retrieve files.</p>
         <label>Email<input name="email" type="email" autoComplete="username" required /></label>
         <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
         {error && <p className="studioError" role="alert">{error}</p>}
@@ -424,7 +459,7 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
 }
 
 function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Promise<void> }) {
-  const [status, setStatus] = useState(item.review_status);
+  const [status, setStatus] = useState<"included" | "excluded">(item.review_status === "excluded" ? "excluded" : "included");
   const [chapter, setChapter] = useState(item.chapter_number ? String(item.chapter_number) : "");
   const [caption, setCaption] = useState(item.caption ?? "");
   const [notes, setNotes] = useState(item.reviewer_notes ?? "");
@@ -434,7 +469,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
   const [error, setError] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  async function save(nextStatus = status) {
+  async function save(nextStatus: "included" | "excluded" = status) {
     setSaving(true);
     setError("");
     const response = await fetch("/api/studio/review", {
@@ -450,7 +485,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
       })
     });
     const body = await response.json();
-    if (!response.ok) setError(body.error || "Decision could not be saved.");
+    if (!response.ok) setError(body.error || "Visibility could not be saved.");
     else {
       setStatus(nextStatus);
       await onSaved();
@@ -544,9 +579,10 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           </button>
         )}
         <div className="reviewActions">
-          <button type="button" className="include" disabled={saving} onClick={() => save("included")}>Include</button>
-          <button type="button" className="exclude" disabled={saving} onClick={() => save("excluded")}>Exclude</button>
-          <button type="button" className="secondary compact" disabled={saving} onClick={() => save(status)}>Save notes</button>
+          {status === "excluded"
+            ? <button type="button" className="include" disabled={saving} onClick={() => save("included")}>Restore to reveal</button>
+            : <button type="button" className="exclude" disabled={saving} onClick={() => save("excluded")}>Hide from reveal</button>}
+          <button type="button" className="secondary compact" disabled={saving} onClick={() => save(status)}>Save details</button>
         </div>
         {error && <p className="studioError" role="alert">{error}</p>}
       </div>

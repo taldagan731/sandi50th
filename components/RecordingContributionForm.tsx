@@ -318,7 +318,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       <button className="primary submitMemory" type="submit" disabled={!recordingFile || phase === "uploading" || phase === "recording"}>
         {phase === "uploading" ? "Please keep this page open…" : birthday ? "Send my birthday message" : "Send my voice memory"}
       </button>
-      <p className="secureNote">The recording goes directly to private storage. It does not appear publicly and cannot join the film until it is approved.</p>
+      <p className="secureNote">The recording goes directly to private storage and joins Sandi’s growing story. The reveal itself stays locked until August 11.</p>
     </form>
   );
 }
