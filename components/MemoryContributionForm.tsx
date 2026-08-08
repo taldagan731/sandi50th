@@ -66,7 +66,13 @@ type LegacyEntry = {
   };
 };
 
-export function MemoryContributionForm({ mode = "contributor" }: { mode?: "contributor" | "ownerArchive" }) {
+export function MemoryContributionForm({
+  mode = "contributor",
+  initialChapter
+}: {
+  mode?: "contributor" | "ownerArchive";
+  initialChapter?: string;
+}) {
   const ownerArchive = mode === "ownerArchive";
   const [firstMemory, setFirstMemory] = useState(ownerArchive ? "Owner archive batch" : "");
   const [opened, setOpened] = useState(ownerArchive);
@@ -408,7 +414,7 @@ export function MemoryContributionForm({ mode = "contributor" }: { mode?: "contr
             </div>
 
             <label>Where does this belong in her story?
-              <select name="chapter" defaultValue="Not sure">
+              <select name="chapter" defaultValue={ownerArchive ? "Not sure" : initialChapter ?? "Not sure"}>
                 {chapters.map(chapter => <option key={chapter}>{chapter}</option>)}
               </select>
             </label>
