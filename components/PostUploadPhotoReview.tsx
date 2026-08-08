@@ -33,6 +33,38 @@ function dimensions(item: PhotoMatch["mine"]) {
   return item.width && item.height ? `${item.width} × ${item.height}` : "Dimensions unavailable";
 }
 
+function ReviewPhoto({ src, alt, reviewToken }: { src: string; alt: string; reviewToken: string | null }) {
+  const [objectUrl, setObjectUrl] = useState(src.startsWith("data:") ? src : "");
+
+  useEffect(() => {
+    if (src.startsWith("data:") || !reviewToken) return;
+    let cancelled = false;
+    let createdUrl = "";
+    void fetch(src, {
+      headers: { "x-duplicate-review-token": reviewToken },
+      cache: "no-store"
+    })
+      .then(response => {
+        if (!response.ok) throw new Error("Image unavailable");
+        return response.blob();
+      })
+      .then(blob => {
+        if (cancelled) return;
+        createdUrl = URL.createObjectURL(blob);
+        setObjectUrl(createdUrl);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [reviewToken, src]);
+
+  return objectUrl
+    ? <img src={objectUrl} alt={alt} />
+    : <div className="photoMatchLoading" role="img" aria-label={alt}>Preparing preview…</div>;
+}
+
 export function PostUploadPhotoReview({
   submissionId,
   reviewToken,
@@ -130,14 +162,14 @@ export function PostUploadPhotoReview({
             <article className="photoMatch" key={match.id}>
               <div className="photoMatchPair">
                 <figure>
-                  <img src={match.mine.src} alt={`Your photograph, ${match.mine.name}`} />
+                  <ReviewPhoto src={match.mine.src} alt={`Your photograph, ${match.mine.name}`} reviewToken={reviewToken} />
                   <figcaption>
                     <strong>Your photograph</strong>
                     <span>{dimensions(match.mine)} · {formatBytes(match.mine.bytes)}</span>
                   </figcaption>
                 </figure>
                 <figure>
-                  <img src={match.collection.src} alt={`Photograph already held in the collection, ${match.collection.name}`} />
+                  <ReviewPhoto src={match.collection.src} alt={`Photograph already held in the collection, ${match.collection.name}`} reviewToken={reviewToken} />
                   <figcaption>
                     <strong>In the collection</strong>
                     <span>{dimensions(match.collection)} · {formatBytes(match.collection.bytes)}</span>
