@@ -7,8 +7,8 @@ import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 
 type Path = "memory" | "voice" | "birthday" | "name";
 
-export function ContributionHub({ initialChapter }: { initialChapter?: string }) {
-  const [path, setPath] = useState<Path>("memory");
+export function ContributionHub({ initialChapter, initialPath = "memory" }: { initialChapter?: string; initialPath?: Path }) {
+  const [path, setPath] = useState<Path>(initialPath);
   const contributionPath = useRef<HTMLDivElement>(null);
 
   function choosePath(nextPath: Path) {

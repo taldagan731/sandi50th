@@ -37,7 +37,7 @@ export default function Home() {
             <p>
               Open the albums, scroll the camera roll, and ask the family group chat. Send the photographs and stories that make you laugh, make you call someone, or could only belong to Sandi.
             </p>
-            <Link className="primary" href="/contribute">Add to the celebration</Link>
+            <div className="actions leftActions"><Link className="primary" href="/contribute?mode=birthday#active-contribution-form">Record a birthday message</Link><Link className="secondary" href="/contribute">Share photos or a memory</Link></div>
           </div>
           <div className="memoryRequestCard">
             <span className="requestLabel">We are looking for</span>
@@ -88,7 +88,7 @@ export default function Home() {
           <span className="eyebrow">ONE MEMORY IS ENOUGH</span>
           <h2>Come celebrate her with us.</h2>
           <p>Nothing needs to be polished. Send the photograph that makes you grin, tell the story only you know, or speak to her as if she were right in front of you.</p>
-          <Link className="primary" href="/contribute">Add your piece</Link>
+          <div className="actions"><Link className="primary" href="/contribute?mode=birthday#active-contribution-form">Record a birthday message</Link><Link className="secondary" href="/contribute">Share something else</Link></div>
         </div>
       </section>
 

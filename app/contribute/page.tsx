@@ -19,10 +19,11 @@ const chapterDefaults: Record<string, string> = {
 export default async function ContributePage({
   searchParams
 }: {
-  searchParams: Promise<{ chapter?: string }>;
+  searchParams: Promise<{ chapter?: string; mode?: string }>;
 }) {
-  const { chapter } = await searchParams;
+  const { chapter, mode } = await searchParams;
   const initialChapter = chapter ? chapterDefaults[chapter] : undefined;
+  const initialPath = mode === "birthday" ? "birthday" : mode === "voice" ? "voice" : mode === "name" ? "name" : "memory";
   const revealPublic = await isRevealPublic();
 
   return (
@@ -44,7 +45,7 @@ export default async function ContributePage({
       </section>
 
       <section className="contributionSection">
-        <div className="shell"><ContributionHub initialChapter={initialChapter} /></div>
+        <div className="shell"><ContributionHub initialChapter={initialChapter} initialPath={initialPath} /></div>
       </section>
 
       <section className="contributionFooter">

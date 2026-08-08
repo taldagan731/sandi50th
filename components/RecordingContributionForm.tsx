@@ -257,7 +257,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
 
       {phase !== "uploading" && (
         <fieldset className="recordingMethods">
-          <legend>Choose one option</legend>
+          <legend>1. Choose how to record</legend>
           {birthday && <button className="primary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("video")}>Record video now</button>}
           <button className="secondary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("audio")}>Record voice now</button>
           {birthday && <label className="filePicker secondary nativeCapture">Use phone camera<input type="file" accept="video/*" capture="user" disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback} /></label>}
@@ -298,16 +298,35 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         </div>
       )}
 
-      <div className="grid2 recorderIdentity">
-        <label>Your name<input name="name" required placeholder="Your name" /></label>
-        <label>Email or phone<input name="contact" required placeholder="Only if we need help with the file" /></label>
-        <label>Your relationship to Sandi
-          <select name="relationship" defaultValue="Friend">
-            <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
-          </select>
-        </label>
-        <label>Optional note<input name="note" placeholder="A date, place, or detail we should know" /></label>
-      </div>
+      <section className="recorderIdentity">
+        <span className="eyebrow">2. Add your name</span>
+        <div className="grid2 recorderRequiredDetails">
+          <label>Your name<input name="name" required placeholder="Your name" /></label>
+          <label>Email or phone<input name="contact" required placeholder="Only if we need help with the file" /></label>
+        </div>
+        {birthday ? (
+          <details className="recorderOptional">
+            <summary>Optional details</summary>
+            <div className="grid2">
+              <label>Your relationship to Sandi
+                <select name="relationship" defaultValue="Friend">
+                  <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
+                </select>
+              </label>
+              <label>Optional note<input name="note" placeholder="A date, place, or detail we should know" /></label>
+            </div>
+          </details>
+        ) : (
+          <div className="grid2 recorderOptionalOpen">
+            <label>Your relationship to Sandi
+              <select name="relationship" defaultValue="Friend">
+                <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
+              </select>
+            </label>
+            <label>Optional note<input name="note" placeholder="A date, place, or detail we should know" /></label>
+          </div>
+        )}
+      </section>
 
       <label className="consent contributionConsent">
         <input name="consent" type="checkbox" required />
@@ -328,7 +347,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         </div>
       )}
       <button className="primary submitMemory" type="submit" disabled={!recordingFile || phase === "uploading" || phase === "recording"}>
-        {phase === "uploading" ? "Please keep this page open…" : birthday ? "Send my birthday message" : "Send my voice memory"}
+        {phase === "uploading" ? "Please keep this page open…" : birthday ? "3. Send my birthday message" : "Send my voice memory"}
       </button>
       <p className="secureNote">The recording goes directly to private storage and joins Sandi’s growing story. The reveal itself stays locked until August 11.</p>
     </form>
