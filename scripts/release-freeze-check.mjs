@@ -36,7 +36,7 @@ requireText("app/layout.tsx", "isRevealPublic", "the database-driven indexing sw
 requireText("app/robots.txt/route.ts", "isRevealPublic", "the database-driven robots switch");
 requireText("app/robots.txt/route.ts", "Disallow: /studio", "Studio remains excluded after release");
 requireText("app/robots.txt/route.ts", "Disallow: /api/", "API routes remain excluded after release");
-requireText("app/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
+requireText("app/page.tsx", "Contributions welcomed before and after August 11", "continued homepage contributions");
 requireText("app/contribute/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("components/OpeningExperience.tsx", "The way we see you.", "the present-tense hero line");
 requireText("components/MemoryContributionForm.tsx", "Drop an entire album", "bulk album invitation");
@@ -116,6 +116,8 @@ requireText("app/celebration-pass.css", "scatteredPhotoArrival", "staggered prin
 requireText("app/celebration-pass.css", "margin-inline: -.7rem", "the deliberately overlapping timeline layout");
 requireText("app/api/studio/backups/route.ts", "byteCountVerified", "per-file backup byte verification");
 requireText("app/api/release/route.ts", "VERCEL_GIT_COMMIT_SHA", "commit-specific release marker");
+requireText("app/api/release/route.ts", 'contributionIntake: "always-open"', "always-open contribution intake marker");
+requireText("app/contribute/page.tsx", "including after the reveal is live", "continued post-launch contributions");
 requireText(".github/workflows/post-deploy-smoke.yml", "${GITHUB_SHA}", "exact-commit production wait");
 requireText("lib/photo-intelligence/index.ts", "requestAnthropic(derivative", "derivative-only photo analysis");
 requireText("lib/photo-intelligence/index.ts", ".jpeg({ quality", "metadata-free derivative re-encoding");

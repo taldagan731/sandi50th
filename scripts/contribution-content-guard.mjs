@@ -5,7 +5,9 @@ const intakeSources = [
   "lib/chapters.ts",
   "app/api/submissions/route.ts",
   "app/api/submissions/complete/route.ts",
-  "app/api/uploads/route.ts"
+  "app/api/uploads/route.ts",
+  "app/api/name-chorus/start/route.ts",
+  "app/api/name-chorus/complete/route.ts"
 ];
 
 const prohibitedContentFilters = [
@@ -14,10 +16,15 @@ const prohibitedContentFilters = [
   [/moderateText|toxicityScore|contentModerationResult/i, "a text-moderation gate"]
 ];
 
+const revealAvailabilityCoupling = /reveal_public|revealPublic|isRevealPublic|submission_deadline/i;
+
 for (const path of intakeSources) {
   const source = readFileSync(path, "utf8");
   for (const [pattern, label] of prohibitedContentFilters) {
     if (pattern.test(source)) failures.push(`${path} introduces ${label} into contribution intake.`);
+  }
+  if (revealAvailabilityCoupling.test(source)) {
+    failures.push(`${path} couples contribution intake to reveal publication or a deadline.`);
   }
 }
 

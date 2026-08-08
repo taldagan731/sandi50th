@@ -4,6 +4,7 @@ export function GET() {
   return NextResponse.json({
     release: "august-11-reveal",
     commit: process.env.VERCEL_GIT_COMMIT_SHA || "local-development",
+    contributionIntake: "always-open",
     contributionStorage: "supabase-records-private-vercel-blob-media"
   }, {
     headers: { "Cache-Control": "no-store" }

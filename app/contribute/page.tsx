@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { ContributionHub } from "@/components/ContributionHub";
+import { isRevealPublic } from "@/lib/reveal-visibility";
 import "./contribution-release.css";
 import "./name-chorus.css";
 
@@ -22,6 +23,7 @@ export default async function ContributePage({
 }) {
   const { chapter } = await searchParams;
   const initialChapter = chapter ? chapterDefaults[chapter] : undefined;
+  const revealPublic = await isRevealPublic();
 
   return (
     <main>
@@ -30,12 +32,14 @@ export default async function ContributePage({
         <div className="contributeGlow contributeGlowOne" />
         <div className="contributeGlow contributeGlowTwo" />
         <div className="shell contributeIntro">
-          <span className="eyebrow">A PRIVATE INVITATION</span>
-          <h1>Help us preserve a memory that deserves to live forever.</h1>
+          <span className="eyebrow">{revealPublic ? "THE STORY KEEPS GROWING" : "A PRIVATE INVITATION"}</span>
+          <h1>{revealPublic ? "The celebration is live. Your memory can still join it." : "Help us preserve a memory that deserves to live forever."}</h1>
           <p>
-            Send a story, drop an entire album, or record your voice or birthday message. Everything will be woven into a private film for August 11.
+            {revealPublic
+              ? "Send a story, add photographs or video, or record your voice or birthday message. New contributions remain welcome after the reveal opens."
+              : "Send a story, drop an entire album, or record your voice or birthday message. Everything will be woven into the birthday story—and contributions stay open after August 11."}
           </p>
-          <div className="submissionDeadline"><span>✦</span><div><strong>Please contribute by August 10, 2026</strong><small>You may return and submit more than once.</small></div></div>
+          <div className="submissionDeadline"><span>✦</span><div><strong>{revealPublic ? "Contributions remain open" : "Please contribute by August 10, 2026"}</strong><small>You may return and submit more than once, including after the reveal is live.</small></div></div>
         </div>
       </section>
 

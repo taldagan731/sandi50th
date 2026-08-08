@@ -92,7 +92,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>Contributions due August 10, 2026 · uploads@sandi50th.com</span></div></footer>
+      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>Contributions welcomed before and after August 11 · uploads@sandi50th.com</span></div></footer>
     </main>
   );
 }
