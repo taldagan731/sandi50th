@@ -2,6 +2,7 @@
 
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
+import { fireContributionConfetti } from "@/lib/confetti";
 import {
   ChangeEvent,
   DragEvent,
@@ -81,6 +82,13 @@ export function MemoryContributionForm() {
   const folderInput = useRef<HTMLInputElement>(null);
   const completed = useRef<Record<string, CompletedFile>>({});
   const extracted = useRef<Record<string, CompletedFile>>({});
+  const celebrated = useRef(false);
+
+  useEffect(() => {
+    if (!submitted || celebrated.current) return;
+    celebrated.current = true;
+    fireContributionConfetti();
+  }, [submitted]);
 
   useEffect(() => {
     const input = folderInput.current;
