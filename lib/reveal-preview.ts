@@ -53,6 +53,7 @@ export function revealPreviewCookieOptions(maxAge = REVEAL_PREVIEW_DAYS * 86400)
 export async function hasRevealPreviewAccess() {
   const value = (await cookies()).get(REVEAL_PREVIEW_COOKIE)?.value;
   if (!value) return false;
+  if (value.startsWith("invite.")) return verifyOwnerInvitation(value.slice("invite.".length));
   const separator = value.indexOf(".");
   if (separator < 1) return false;
   return verifyRevealPreviewToken(value.slice(0, separator), value.slice(separator + 1));
