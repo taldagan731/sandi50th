@@ -5,6 +5,7 @@ import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, use
 import { ArchiveVideoStack, RevealTimeline, UnassignedArchive } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
 import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
+import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 
@@ -178,6 +179,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
       {reviewIncludesTests && <aside className="testReviewBanner"><strong>Owner review mode</strong><span>Automated and test uploads are included and clearly marked. They remain excluded from real counts and the public reveal.</span></aside>}
       <header className="revealMasthead">
+        <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />
         <Image
           className="revealMastheadPhoto"
           src="/images/sandi-hero.jpeg"

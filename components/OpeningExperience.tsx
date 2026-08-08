@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
+import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 
 const moments = [
   "New Hyde Park · where the story began",
@@ -15,6 +16,7 @@ const moments = [
 export function OpeningExperience() {
   return (
     <section className="opening celebrationHero" aria-labelledby="birthday-hero-title">
+      <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />
       <Image
         className="celebrationHeroImage"
         src="/images/sandi-hero.jpeg"

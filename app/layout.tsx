@@ -7,6 +7,7 @@ import "./high-energy-celebration.css";
 import "./review-mode.css";
 import "./rehearsal-runtime.css";
 import "./hero-asset.css";
+import "./approved-pink-champagne.css";
 
 export const dynamic = "force-dynamic";
 

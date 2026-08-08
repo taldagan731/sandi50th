@@ -1,0 +1,30 @@
+/* Approved Pink Champagne shader: shared by the homepage and private reveal. */
+.approvedPinkChampagneShader {
+  position: absolute;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 28% 18%, #ff9b86, transparent 34%),
+    radial-gradient(circle at 74% 34%, #ff3f87, transparent 42%),
+    linear-gradient(145deg, #8a174f, #d52c71 48%, #ff806f);
+}
+
+.approvedPinkChampagneShader canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: .94;
+}
+
+.revealMasthead .approvedPinkChampagneShader { z-index: -4; }
+
+body .celebrationHeroImage,
+body .revealMastheadPhoto {
+  opacity: .76;
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approvedPinkChampagneShader canvas { display: none; }
+}

@@ -12,7 +12,7 @@ const choices: Array<{ id: CloudPalette; title: string; description: string }> =
 ];
 
 export function ShaderPalettePreview() {
-  const [selected, setSelected] = useState<CloudPalette>("coral");
+  const [selected, setSelected] = useState<CloudPalette>("champagne");
   const active = choices.find(choice => choice.id === selected)!;
   return (
     <section className="shaderComparison" aria-labelledby="shader-preview-title">
@@ -36,7 +36,7 @@ export function ShaderPalettePreview() {
         ))}
       </div>
       <ShaderPerformanceMeter sampleKey={selected} />
-      <p className="shaderSelection"><strong>Selected:</strong> {active.title}. This page is comparison-only; none is wired into the live hero or reveal yet.</p>
+      <p className="shaderSelection"><strong>Selected:</strong> {active.title}. Approved and now used behind the homepage hero and private reveal.</p>
     </section>
   );
 }

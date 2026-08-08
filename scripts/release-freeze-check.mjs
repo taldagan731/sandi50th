@@ -176,6 +176,9 @@ requireText("components/FlowingCloudShader.tsx", "visibilitychange", "hidden-tab
 requireText("components/FlowingCloudShader.tsx", "Math.min(window.devicePixelRatio || 1, 2) * .5", "one-times maximum shader density");
 forbidText("components/FlowingCloudShader.tsx", "pointermove", "passive shader pointer tracking");
 requireText("app/shader-preview/page.tsx", "hasRevealPreviewAccess", "owner-only shader color review");
+requireText("components/OpeningExperience.tsx", 'palette="champagne"', "approved homepage Pink Champagne shader");
+requireText("components/RevealExperience.tsx", 'palette="champagne"', "approved reveal Pink Champagne shader");
+requireText("app/approved-pink-champagne.css", "mix-blend-mode: screen", "approved luminous beach-photo blend");
 
 const confettiSource = [...sourceFiles("app"), ...sourceFiles("components"), ...sourceFiles("lib")]
   .filter(path => /\.(ts|tsx)$/.test(path));
