@@ -75,6 +75,13 @@ export async function POST(request: Request) {
         if (!tokenPayload) return;
         const payload = JSON.parse(tokenPayload) as TokenPayload;
         const supabase = createAdminClient();
+        const { data: submission, error: submissionError } = await supabase
+          .from("submissions")
+          .select("name,life_chapter")
+          .eq("id", payload.submissionId)
+          .single();
+        if (submissionError || !submission) throw submissionError ?? new Error("Submission not found.");
+
         const { error } = await supabase.from("media_assets").upsert({
           submission_id: payload.submissionId,
           storage_path: blob.pathname,
