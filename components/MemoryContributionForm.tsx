@@ -2,7 +2,10 @@
 
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
+import { PostUploadPhotoReview } from "@/components/PostUploadPhotoReview";
 import { fireContributionConfetti } from "@/lib/confetti";
+import { fireContributionBalloons } from "@/lib/balloons";
+import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 import {
   ChangeEvent,
   DragEvent,
@@ -55,8 +58,8 @@ type SelectedFile = {
   error: string;
 };
 type PreparedUpload = { pathname: string; name: string; type: string; size: number };
-type PreparedBatch = { submissionId: string; targets: Record<string, PreparedUpload> };
-type CompletedFile = PutBlobResult & { originalName: string; bytes: number; sha256?: string };
+type PreparedBatch = { submissionId: string; duplicateReviewToken: string | null; targets: Record<string, PreparedUpload> };
+type CompletedFile = PutBlobResult & { originalName: string; bytes: number };
 type LegacyEntry = {
   isFile: boolean;
   isDirectory: boolean;
@@ -80,6 +83,7 @@ export function MemoryContributionForm({
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
+  const [contributorName, setContributorName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [activeFile, setActiveFile] = useState("");
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -95,6 +99,7 @@ export function MemoryContributionForm({
     if (!submitted || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
+    fireContributionBalloons();
   }, [submitted]);
 
   useEffect(() => {
@@ -238,6 +243,7 @@ export function MemoryContributionForm({
           size: item.file.size
         }))
       };
+      setContributorName(payload.name);
 
       const prepareResponse = await fetch("/api/submissions", {
         method: "POST",
@@ -249,6 +255,7 @@ export function MemoryContributionForm({
 
       const nextBatch: PreparedBatch = {
         submissionId: String(prepared.submissionId),
+        duplicateReviewToken: typeof prepared.duplicateReviewToken === "string" ? prepared.duplicateReviewToken : null,
         targets: Object.fromEntries(files.map((item, index) => [item.id, prepared.uploads[index] as PreparedUpload]))
       };
       setBatch(nextBatch);
@@ -283,9 +290,6 @@ export function MemoryContributionForm({
         updateFile(selected.id, { status: "uploading", error: "" });
         setActiveFile("Uploading " + selected.file.name);
         try {
-          const sha256 = selected.file.type.startsWith("image/")
-            ? await calculateFileSha256(selected.file)
-            : undefined;
           const blob = await uploadWithRetry(currentBatch.submissionId, target, selected, percentage => {
             setProgress(current => ({ ...current, [selected.id]: percentage }));
           });
@@ -293,8 +297,7 @@ export function MemoryContributionForm({
             ...blob,
             originalName: selected.relativePath,
             bytes: selected.file.size,
-            contentType: normalizedFileType(selected.file),
-            sha256
+            contentType: normalizedFileType(selected.file)
           };
           completed.current[selected.id] = saved;
           setProgress(current => ({ ...current, [selected.id]: 100 }));
@@ -373,6 +376,8 @@ export function MemoryContributionForm({
           Your written memory and {files.length ? files.length + " file" + (files.length === 1 ? " has" : "s have") : "details have"} been received, verified, and backed up in private storage.
         </p>
         <p className="confirmationCode">Confirmation: {confirmationId.slice(0, 8).toUpperCase()}</p>
+        {!ownerArchive && <NameChorusRecorder submissionId={confirmationId} contributorName={contributorName} />}
+        <PostUploadPhotoReview submissionId={confirmationId} reviewToken={batch?.duplicateReviewToken ?? null} />
         <button className="secondary" type="button" onClick={() => window.location.reload()}>
           Share another memory
         </button>
@@ -532,10 +537,6 @@ export function MemoryContributionForm({
   );
 }
 
-async function calculateFileSha256(file: File) {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-}
 
 async function uploadWithRetry(
   submissionId: string,

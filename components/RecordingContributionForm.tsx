@@ -3,6 +3,8 @@
 import type { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { fireContributionConfetti } from "@/lib/confetti";
+import { fireContributionBalloons } from "@/lib/balloons";
+import { NameChorusRecorder } from "@/components/NameChorusRecorder";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const EMAIL_FALLBACK = "mailto:uploads@sandi50th.com?subject=Sandi%2050th%20recording";
@@ -23,6 +25,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [contributorName, setContributorName] = useState("");
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<BlobPart[]>([]);
@@ -37,6 +40,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
     if (phase !== "success" || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
+    fireContributionBalloons();
   }, [phase]);
 
   useEffect(() => {
@@ -174,6 +178,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         consent: Boolean(form.get("consent")),
         files: [{ name: recordingFile.name, type: contentType, size: recordingFile.size }]
       };
+      setContributorName(payload.name);
 
       const prepareResponse = await fetch("/api/submissions", {
         method: "POST",
@@ -234,6 +239,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         <h2>Her story now carries your voice.</h2>
         <p>The recording is verified and backed up in private storage.</p>
         <p className="confirmationCode">Confirmation: {confirmation.slice(0, 8).toUpperCase()}</p>
+        <NameChorusRecorder submissionId={confirmation} contributorName={contributorName} />
         <button type="button" className="secondary" onClick={() => window.location.reload()}>Record another</button>
       </section>
     );

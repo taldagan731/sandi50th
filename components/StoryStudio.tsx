@@ -6,6 +6,10 @@ import { StoryWorkshop } from "@/components/StoryWorkshop";
 import { FamilyQaStudio } from "@/components/FamilyQaStudio";
 import { StudioLiveFeed } from "@/components/StudioLiveFeed";
 import { MemoryContributionForm } from "@/components/MemoryContributionForm";
+import { NameChorusStudio } from "@/components/NameChorusStudio";
+import { ContributionReadinessReport } from "@/components/ContributionReadinessReport";
+import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
+import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
   id: string;
@@ -64,6 +68,7 @@ export function StoryStudio() {
   const [sessionReady, setSessionReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [report, setReport] = useState<ContributionReport | null>(null);
   const [error, setError] = useState("");
   const [backupNotice, setBackupNotice] = useState("");
   const [backingUp, setBackingUp] = useState(false);
@@ -118,6 +123,7 @@ export function StoryStudio() {
     }
     knownSubmissionIds.current = nextIds;
     setSubmissions(nextSubmissions);
+    setReport(body.report as ContributionReport);
     setLastRefreshed(new Date());
     window.localStorage.setItem("sandi-studio-last-seen-at", new Date().toISOString());
     setIntelligenceAvailable(body.intelligenceAvailable !== false);
@@ -260,15 +266,21 @@ export function StoryStudio() {
     setPilotRunning(true);
     setError("");
     setPilotNotice("");
-    const response = await fetch("/api/studio/photo-intelligence/pilot", { method: "POST" });
+    const response = await fetch("/api/studio/photo-intelligence/archive", { method: "POST" });
     const body = await response.json();
     if (!response.ok) {
-      setError(body.error || body.detail || "The ten-photo pilot could not run.");
+      setError(body.error || body.detail || "The archive could not be auto-assigned.");
     } else {
       const processed = Array.isArray(body.processed) ? body.processed.length : 0;
-      setPilotNotice(processed
-        ? `The pilot processed ${processed} photograph${processed === 1 ? "" : "s"}. Check every low-confidence flag before relying on an assignment.`
-        : "No queued photographs are waiting for the pilot.");
+      const assigned = Number(body.fallback?.assigned ?? 0);
+      const remaining = Number(body.archive?.remaining ?? 0);
+      setPilotNotice(
+        `${assigned} previously unassigned item${assigned === 1 ? "" : "s"} received a chapter. `
+        + `${processed} photograph${processed === 1 ? "" : "s"} received deeper AI analysis in this pass. `
+        + (remaining > 0
+          ? `${remaining} photograph${remaining === 1 ? "" : "s"} remain queued for background refinement.`
+          : "The photographic archive has completed AI refinement.")
+      );
       await load();
     }
     setPilotRunning(false);
@@ -297,6 +309,7 @@ export function StoryStudio() {
     await fetch("/api/studio/session", { method: "DELETE" });
     setSignedIn(false);
     setSubmissions([]);
+    setReport(null);
   }
 
   return (
@@ -320,6 +333,7 @@ export function StoryStudio() {
           <button className="secondary" type="button" disabled={backingUp} onClick={verifyBackups}>{backingUp ? "Verifying backups…" : "Verify all backups"}</button>
           <a className="secondary" href="/api/studio/export">Download archive index</a>
           <a className="secondary" href="/reveal">Open private reveal</a>
+          <a className="secondary" href="/reveal?review=all">Open every upload for review</a>
           <button className="secondary" type="button" onClick={signOut}>Sign out</button>
         </div>
       </header>
@@ -329,12 +343,17 @@ export function StoryStudio() {
         <MemoryContributionForm mode="ownerArchive" />
       </details>
 
+      {report && <ContributionReadinessReport report={report} />}
+
       <StudioLiveFeed
         submissions={regularSubmissions}
         newIds={newSubmissionIds}
         lastRefreshed={lastRefreshed}
         onVisibilityChange={reviewSubmission}
       />
+      <NameChorusStudio submissions={regularSubmissions} onSaved={load} />
+      <DuplicateReviewStudio />
+
 
       <details className="studioTools">
         <summary>Organize, search, and edit contributions</summary>
@@ -399,7 +418,7 @@ export function StoryStudio() {
           </label>
           <div className="studioSearchActions">
             <button className="secondary" type="button" disabled={pilotRunning || !intelligenceAvailable} onClick={runPhotoPilot}>
-              {pilotRunning ? "Analyzing ten photographs…" : "Run ten-photo pilot"}
+              {pilotRunning ? "Assigning the archive…" : "Auto-assign the entire archive"}
             </button>
             <button className="secondary" type="button" onClick={() => {
               setQuery(""); setEra(""); setChapterFacet(""); setPerson(""); setPlace(""); setSetting(""); setTagState("all");
@@ -468,15 +487,17 @@ export function StoryStudio() {
 }
 
 function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Promise<void>; error: string }) {
+  const [email, setEmail] = useState("");
   const [error, setError] = useState(initialError);
   const [working, setWorking] = useState(false);
+  const [resetWorking, setResetWorking] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setWorking(true);
     setError("");
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
     const supabase = createBrowserSupabaseClient();
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
@@ -495,7 +516,10 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     });
     const body = await response.json();
     if (!response.ok) {
-      setError(body.error || "This account is not authorized.");
+      await supabase.auth.signOut();
+      setError(response.status === 403
+        ? "Your email and password were accepted, but this Supabase user is not linked to the sandi50th project as owner. Add or repair the owner row in project_members."
+        : body.error || "This account is not authorized.");
       setWorking(false);
       return;
     }
@@ -503,16 +527,35 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
     setWorking(false);
   }
 
+  async function requestPasswordReset() {
+    setError("");
+    setResetSent(false);
+    if (!email.trim()) {
+      setError("Enter the owner email first.");
+      return;
+    }
+    setResetWorking(true);
+    const supabase = createBrowserSupabaseClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: process.env.NEXT_PUBLIC_STUDIO_RESET_URL || "https://www.sandi50th.com/studio/reset-password"
+    });
+    if (resetError) setError(/rate limit/i.test(resetError.message) ? "Supabase has temporarily limited password emails. Wait for the limit to clear before requesting one fresh message. The recovery destination is https://www.sandi50th.com/studio/reset-password." : resetError.message);
+    else setResetSent(true);
+    setResetWorking(false);
+  }
+
   return (
     <section className="studioGate">
       <form onSubmit={signIn}>
         <span className="eyebrow">PRIVATE STORY STUDIO</span>
         <h1>Enter the editing room.</h1>
-        <p>Only the project owner can organize memories or retrieve files.</p>
-        <label>Email<input name="email" type="email" autoComplete="username" required /></label>
+        <p>Use the email and password for the Supabase Auth user linked to this project as owner.</p>
+        <label>Email<input name="email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></label>
         <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
         {error && <p className="studioError" role="alert">{error}</p>}
-        <button className="primary" type="submit" disabled={working}>{working ? "Signing in…" : "Sign in"}</button>
+        {resetSent && <p className="studioNotice" role="status">If that Supabase user exists, a secure password link is on its way. Open it on this device and choose a new password.</p>}
+        <button className="primary" type="submit" disabled={working}>{working ? "Signing in..." : "Sign in"}</button>
+        <button className="secondary studioResetButton" type="button" disabled={resetWorking || resetSent} onClick={requestPasswordReset}>{resetWorking ? "Sending..." : "Set or reset password"}</button>
       </form>
     </section>
   );

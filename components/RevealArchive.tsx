@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 export type ArchiveMedia = {
   id: string;
@@ -14,6 +14,7 @@ export type ArchiveMedia = {
   yearStart: number | null;
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
+  testRecord: boolean;
 };
 
 type Chapter = { number: number; title: string; text: string };
@@ -124,14 +125,13 @@ export function RevealTimeline({
         {visible.map(item => {
           const url = `/api/reveal/media/${item.id}`;
           return (
-            <article key={item.id}>
+            <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
+              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
               <div className="timelineImage">
                 {item.mimeType.startsWith("video/") ? (
-                  item.poster
-                    ? <img src={`${url}?poster=1`} alt={`Poster frame for ${item.caption || item.originalName}`} />
-                    : <div className="timelinePlaceholder">Video memory</div>
+                  <InViewVideoPreview item={item} url={url} />
                 ) : (
-                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" />
+                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
                 )}
                 {item.mimeType.startsWith("video/") && <span>FILM</span>}
               </div>
@@ -145,9 +145,93 @@ export function RevealTimeline({
   );
 }
 
+export function UnassignedArchive({ items }: { items: ArchiveMedia[] }) {
+  return (
+    <section className="unassignedArchive" aria-labelledby="unassigned-archive-title">
+      <header>
+        <span className="eyebrow">THE WHOLE ARCHIVE</span>
+        <h2 id="unassigned-archive-title">Every memory has a place here.</h2>
+        <p>These items have not been assigned to a chapter yet. They remain visible in owner review so nothing disappears while the story is being assembled.</p>
+      </header>
+      <div className="unassignedArchiveGrid">
+        {items.map(item => {
+          const url = `/api/reveal/media/${item.id}`;
+          return (
+            <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
+              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
+              {item.mimeType.startsWith("image/") ? (
+                <img src={url} alt={item.caption || item.originalName} loading="lazy" data-reveal-photo="true" />
+              ) : item.mimeType.startsWith("video/") ? (
+                <InViewVideoPreview item={item} url={url} />
+              ) : (
+                <a href={`${url}?download=1`}>Open {item.originalName}</a>
+              )}
+              <p>{item.caption || item.originalName}</p>
+              <small>{item.contributorName}</small>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+function InViewVideoPreview({ item, url }: { item: ArchiveMedia; url: string }) {
+  const previewRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = previewRef.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const followPage = () => {
+      if (document.visibilityState === "visible") void video.play().catch(() => undefined);
+      else video.pause();
+    };
+    video.muted = true;
+    video.loop = true;
+    followPage();
+    document.addEventListener("visibilitychange", followPage);
+    return () => {
+      document.removeEventListener("visibilitychange", followPage);
+      video.pause();
+    };
+  }, []);
+
+  return (
+    <video
+      ref={previewRef}
+      className="timelineVideoPreview"
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload="metadata"
+      poster={item.poster ? `${url}?poster=1` : undefined}
+      aria-label={`Silent preview of ${item.caption || item.originalName}`}
+    >
+      <source src={url} type={item.mimeType} />
+    </video>
+  );
+}
+
 export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
   const [index, setIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const followPage = () => {
+      if (document.visibilityState === "visible") void video.play().catch(() => undefined);
+      else video.pause();
+    };
+    video.muted = true;
+    video.loop = true;
+    followPage();
+    document.addEventListener("visibilitychange", followPage);
+    return () => {
+      document.removeEventListener("visibilitychange", followPage);
+      video.pause();
+    };
+  }, [index]);
   if (!items.length) return null;
   const current = items[index];
   const currentUrl = `/api/reveal/media/${current.id}`;
@@ -161,8 +245,8 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
     <section className="archiveFilmStack" id="archive-films" aria-labelledby="archive-films-title">
       <header>
         <span className="eyebrow">THE FILM ARCHIVE</span>
-        <h2 id="archive-films-title">Moments that still move.</h2>
-        <p>Home movies and shared clips gather here as one growing collection. Bring a film forward, then play it in place.</p>
+        <h2 id="archive-films-title">Press play on the good parts.</h2>
+        <p>Home movies and shared clips bring the room to life. Choose one, turn up the sound, and let it play.</p>
       </header>
 
       <div className="filmStackStage">
@@ -178,7 +262,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
         </div>
 
         <article className="filmPlayer" key={current.id}>
-          <video ref={videoRef} controls preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
+          <video ref={videoRef} controls muted loop autoPlay preload="metadata" playsInline poster={current.poster ? `${currentUrl}?poster=1` : undefined}>
             <source src={currentUrl} type={current.mimeType} />
           </video>
           <div>

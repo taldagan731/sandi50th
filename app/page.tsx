@@ -32,12 +32,12 @@ export default function Home() {
       <section id="invitation" className="section invitationSection">
         <div className="shell invitationGrid">
           <div className="sectionTitle">
-            <span className="eyebrow">HELP US RECOVER THE DETAILS</span>
-            <h2>Bring a piece of her story into the light.</h2>
+            <span className="eyebrow">BRING THE ALBUMS OUT</span>
+            <h2>Bring your favorite Sandi moment.</h2>
             <p>
-              Search old albums, phones, family group chats, cloud libraries, tapes, and boxes of keepsakes. One forgotten photograph can unlock an entire story.
+              Open the albums, scroll the camera roll, and ask the family group chat. Send the photographs and stories that make you laugh, make you call someone, or could only belong to Sandi.
             </p>
-            <Link className="primary" href="/contribute">Add your chapter</Link>
+            <Link className="primary" href="/contribute">Add to the celebration</Link>
           </div>
           <div className="memoryRequestCard">
             <span className="requestLabel">We are looking for</span>
@@ -50,11 +50,11 @@ export default function Home() {
       <section className="section literarySection">
         <div className="shell">
           <div className="literaryCard">
-            <span className="eyebrow">THE LITERARY HEART</span>
+            <span className="eyebrow">WHAT EVERYONE KNOWS</span>
             <blockquote>
               “You make a room warmer, a story better, and the people around you more fully themselves.”
             </blockquote>
-            <cite>Original text written for Sandi</cite>
+            <cite>For Sandi, on her fiftieth</cite>
           </div>
         </div>
       </section>
@@ -62,9 +62,9 @@ export default function Home() {
       <section id="chapters" className="section chapterSection">
         <div className="shell">
           <div className="sectionTitle wideTitle">
-            <span className="eyebrow">THE FILM WE ARE BUILDING</span>
+            <span className="eyebrow">THE BIRTHDAY STORY</span>
             <h2>Eight rooms. One unfolding story.</h2>
-            <p>The public site gathers the pieces. On August 11, those pieces become a private documentary and living archive created only for Sandi.</p>
+            <p>Every room holds a different side of Sandi. On August 11, photographs, voices, and stories come together in one birthday film made by the people who know her.</p>
           </div>
           <div className="chapters">
             {chapters.map(([number, title, copy]) => (
@@ -86,9 +86,9 @@ export default function Home() {
       <section className="section closingInvitation">
         <div className="shell closingInner">
           <span className="eyebrow">ONE MEMORY IS ENOUGH</span>
-          <h2>Help us make sure her story includes you.</h2>
-          <p>Nothing needs to be polished. Speak honestly, send what you have, and tell us why the moment matters.</p>
-          <Link className="primary" href="/contribute">Share a memory for Sandi</Link>
+          <h2>Come celebrate her with us.</h2>
+          <p>Nothing needs to be polished. Send the photograph that makes you grin, tell the story only you know, or speak to her as if she were right in front of you.</p>
+          <Link className="primary" href="/contribute">Add your piece</Link>
         </div>
       </section>
 

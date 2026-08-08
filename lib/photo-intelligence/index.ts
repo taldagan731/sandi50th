@@ -111,7 +111,7 @@ async function completeJob(job: Job) {
   const supabase = createAdminClient();
   const { data: media, error: mediaError } = await supabase
     .from("media_assets")
-    .select("id,submission_id,storage_path,original_name,mime_type,chapter_number")
+    .select("id,submission_id,storage_path,original_name,mime_type,chapter_number,assignment_confidence,assignment_rationale")
     .eq("id", job.media_asset_id)
     .single();
   if (mediaError || !media) throw new Error("Queued media no longer exists.");
@@ -233,7 +233,9 @@ async function completeJob(job: Job) {
     date_inference_source: exifYear ? "exif" : analysis.decadeGuess.value ? "visual-decade" : null,
     assignment_confidence: chapterConfidence,
     assignment_rationale: assignmentRationale,
-    ...(media.chapter_number ? {} : { chapter_number: chapterNumber })
+    ...(!media.chapter_number || /^Temporary archive placement/.test(media.assignment_rationale ?? "")
+      ? { chapter_number: chapterNumber }
+      : {})
   }).eq("id", media.id);
   if (updateError) throw updateError;
 
@@ -297,6 +299,161 @@ export async function enqueueSubmissionPhotos(submissionId: string) {
   return { queued: jobs.length, available: true };
 }
 
+function yearFromText(value: string | null | undefined) {
+  const match = value?.match(/\b((?:19|20)\d{2})\b/);
+  return match ? Number(match[1]) : null;
+}
+
+function chapterFromYear(year: number | null) {
+  if (!year) return null;
+  if (year <= 1984) return 1;
+  if (year <= 1993) return 2;
+  if (year <= 1999) return 3;
+  if (year <= 2011) return 4;
+  if (year <= 2017) return 5;
+  if (year <= 2023) return 7;
+  return 8;
+}
+
+export async function prepareGlobalPhotoArchive() {
+  const supabase = createAdminClient();
+  const { data: project, error: projectError } = await supabase
+    .from("projects").select("id").eq("slug", "sandi50th").single();
+  if (projectError || !project) return { available: false, projectId: null, queued: 0, error: projectError?.message || "Project not found." };
+
+  const { data: submissions, error: submissionError } = await supabase
+    .from("submissions").select("id,name").eq("project_id", project.id);
+  if (submissionError) return { available: false, projectId: project.id, queued: 0, error: submissionError.message };
+  const genuineIds = (submissions ?? []).filter(item => !isTestContributor(item.name)).map(item => item.id);
+  if (!genuineIds.length) return { available: true, projectId: project.id, queued: 0 };
+
+  const { data: images, error: imageError } = await supabase
+    .from("media_assets")
+    .select("id,analysis_status")
+    .in("submission_id", genuineIds)
+    .like("mime_type", "image/%")
+    .neq("review_status", "excluded")
+    .limit(1000);
+  if (imageError) return { available: false, projectId: project.id, queued: 0, error: imageError.message };
+
+  const jobs = (images ?? []).map(image => ({
+    project_id: project.id,
+    media_asset_id: image.id,
+    status: "queued",
+    next_attempt_at: new Date().toISOString()
+  }));
+  if (jobs.length) {
+    const { error } = await supabase.from("photo_analysis_jobs").upsert(jobs, { onConflict: "media_asset_id", ignoreDuplicates: true });
+    if (error) return { available: false, projectId: project.id, queued: 0, error: error.message };
+    await supabase.from("media_assets").update({ analysis_status: "queued" })
+      .in("id", (images ?? []).map(item => item.id)).eq("analysis_status", "unprocessed");
+  }
+  return { available: true, projectId: project.id, queued: jobs.length };
+}
+
+export async function globalPhotoArchiveStatus(projectId: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("photo_analysis_jobs").select("status").eq("project_id", projectId);
+  if (error) return { available: false, total: 0, finished: 0, remaining: 0, error: error.message };
+  const rows = data ?? [];
+  const finished = rows.filter(item => ["completed", "review_required", "skipped"].includes(item.status)).length;
+  return { available: true, total: rows.length, finished, remaining: Math.max(0, rows.length - finished) };
+}
+
+export async function applyChapterFallbacks(projectId: string) {
+  const supabase = createAdminClient();
+  const { data: submissions, error: submissionError } = await supabase
+    .from("submissions")
+    .select("id,name,life_chapter,approximate_year,prompt")
+    .eq("project_id", projectId)
+    .neq("review_status", "excluded");
+  if (submissionError) return { available: false, assigned: 0, error: submissionError.message };
+  const genuine = (submissions ?? []).filter(item => !isTestContributor(item.name));
+  const submissionById = new Map(genuine.map(item => [item.id, item]));
+  const ids = genuine.map(item => item.id);
+  if (!ids.length) return { available: true, assigned: 0 };
+
+  const { data: media, error: mediaError } = await supabase
+    .from("media_assets")
+    .select("id,submission_id,original_name,chapter_number,inferred_year_start,exif_captured_at,analysis_era,analysis_setting,analysis_composition,assignment_confidence,created_at")
+    .in("submission_id", ids)
+    .neq("review_status", "excluded")
+    .order("created_at").order("original_name");
+  if (mediaError) return { available: false, assigned: 0, error: mediaError.message };
+
+  const chapterCounts = Array.from({ length: 8 }, (_, index) => ({ chapter: index + 1, count: 0 }));
+  for (const item of media ?? []) if (item.chapter_number) chapterCounts[item.chapter_number - 1].count += 1;
+  const decisions: Array<{ id: string; submissionId: string; chapter: number; confidence: number; rationale: string }> = [];
+
+  for (const item of media ?? []) {
+    if (item.chapter_number) continue;
+    const submission = submissionById.get(item.submission_id);
+    if (!submission) continue;
+    let chapter = chapterNumberFromContributor(submission.life_chapter);
+    let confidence = chapter ? 1 : 0;
+    let rationale = chapter ? "Contributor-supplied chapter metadata takes precedence." : "";
+    const setting = item.analysis_setting ?? "";
+    const era = item.analysis_era ?? "";
+    const prompt = (submission.prompt ?? "").toUpperCase();
+    const year = item.inferred_year_start
+      ?? yearFromText(item.exif_captured_at)
+      ?? yearFromText(submission.approximate_year)
+      ?? yearFromText(item.original_name);
+
+    if (!chapter && prompt === "BIRTHDAY_MESSAGE") { chapter = 8; confidence = .95; rationale = "Birthday messages belong to the present-day finale."; }
+    if (!chapter && prompt === "VOICE_WALL") { chapter = 7; confidence = .8; rationale = "Voice memories belong with the people who love her."; }
+    if (!chapter && ["travel", "beach", "holiday"].includes(setting)) { chapter = 6; confidence = .74; rationale = `Visual setting (${setting}) supports the travel chapter.`; }
+    if (!chapter && setting === "workplace") { chapter = 4; confidence = .78; rationale = "Visual workplace evidence supports the career chapter."; }
+    if (!chapter && year) { chapter = chapterFromYear(year); confidence = item.exif_captured_at ? .92 : .7; rationale = `The best available date (${year}) places this item in the nearest life period.`; }
+    if (!chapter && era === "infant") { chapter = 1; confidence = .68; rationale = "AI era estimation indicates infancy."; }
+    if (!chapter && ["child", "adolescent"].includes(era)) { chapter = 2; confidence = .66; rationale = `AI era estimation indicates ${era}.`; }
+    if (!chapter && era === "young adult") { chapter = 3; confidence = .66; rationale = "AI era estimation indicates young adulthood."; }
+    if (!chapter && era === "recent") { chapter = 8; confidence = .66; rationale = "AI era estimation indicates the present-day chapter."; }
+    if (!chapter && item.analysis_composition === "group") { chapter = 7; confidence = .52; rationale = "A group photograph is provisionally placed with the people who love her."; }
+    if (!chapter && setting === "home") { chapter = 5; confidence = .5; rationale = "A home setting is provisionally placed with family and love."; }
+    if (!chapter) {
+      const leastFilled = [...chapterCounts].sort((a, b) => a.count - b.count || a.chapter - b.chapter)[0];
+      chapter = leastFilled.chapter;
+      confidence = .2;
+      rationale = "Temporary archive placement: no reliable date or metadata was available, so archive order and chapter balance supplied the nearest editorial position. AI may replace it.";
+    }
+    chapterCounts[chapter - 1].count += 1;
+    decisions.push({ id: item.id, submissionId: item.submission_id, chapter, confidence, rationale });
+  }
+
+  const groups = new Map<string, typeof decisions>();
+  for (const decision of decisions) {
+    const key = `${decision.chapter}|${decision.confidence}|${decision.rationale}`;
+    const group = groups.get(key) ?? [];
+    group.push(decision);
+    groups.set(key, group);
+  }
+  for (const group of groups.values()) {
+    const first = group[0];
+    await supabase.from("media_assets").update({
+      chapter_number: first.chapter,
+      assignment_confidence: first.confidence,
+      assignment_rationale: first.rationale
+    }).in("id", group.map(item => item.id));
+  }
+  for (let index = 0; index < decisions.length; index += 100) {
+    const batch = decisions.slice(index, index + 100);
+    const batchIds = batch.map(item => item.id);
+    await supabase.from("story_assignments").delete().in("media_asset_id", batchIds).eq("status", "suggested");
+    const { error } = await supabase.from("story_assignments").insert(batch.map(item => ({
+      project_id: projectId,
+      submission_id: item.submissionId,
+      media_asset_id: item.id,
+      chapter_number: item.chapter,
+      rationale: item.rationale,
+      confidence: item.confidence,
+      status: "suggested"
+    })));
+    if (error) return { available: false, assigned: index, error: error.message };
+  }
+  return { available: true, assigned: decisions.length, chapters: chapterCounts };
+}
 export async function prepareGlobalPhotoPilot(limit = 10) {
   const supabase = createAdminClient();
   const { data: projects, error: projectError } = await supabase.from("projects").select("id").limit(1);

@@ -1,0 +1,68 @@
+/* The signature is dormant until the first successful soundtrack gesture. */
+.sandiSignaturePrelude {
+  opacity: 0;
+  visibility: hidden;
+  animation-name: none;
+}
+
+.sandiSignaturePrelude .sandiStroke,
+.sandiSignaturePrelude .sandiColourFlow {
+  animation-name: none;
+}
+
+.sandiSignaturePrelude.is-playing {
+  opacity: 1;
+  visibility: visible;
+  animation-name: sandi-prelude;
+}
+
+.sandiSignaturePrelude.is-playing .sandiStroke {
+  animation-name: sandi-write;
+}
+
+.sandiSignaturePrelude.is-playing .sandiColourFlow {
+  animation-name: sandi-colour-flow;
+}
+
+@keyframes sandi-static-cut {
+  0%, 99% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sandiSignaturePrelude,
+  .sandiSignaturePrelude:not(.is-playing) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .sandiSignaturePrelude.is-playing {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    width: auto;
+    height: auto;
+    aspect-ratio: auto;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 50% 48%, #6d286d 0, #42174f 48%, #2c0f3d 100%);
+    opacity: 1;
+    visibility: visible;
+    animation: sandi-static-cut 1.6s step-end forwards;
+  }
+
+  .sandiSignaturePrelude.is-playing svg {
+    width: min(88vw, 930px);
+    transform: none;
+  }
+
+  .sandiSignaturePrelude.is-playing .sandiStroke {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .sandiSignaturePrelude.is-playing .sandiColourFlow {
+    transform: none;
+    animation: none;
+  }
+}

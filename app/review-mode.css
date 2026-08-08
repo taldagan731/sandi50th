@@ -1,0 +1,69 @@
+.testReviewBanner {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  display: flex;
+  justify-content: center;
+  gap: .75rem;
+  padding: .8rem 1rem;
+  color: #2b1234;
+  background: #ffe09c;
+  border-bottom: 2px solid rgba(90, 36, 75, .22);
+  box-shadow: 0 8px 30px rgba(54, 15, 59, .22);
+}
+.testReviewBanner strong { text-transform: uppercase; letter-spacing: .05em; }
+.is-test-record { outline: 4px solid #ffe09c !important; outline-offset: -4px; }
+.testRecordBadge {
+  position: absolute;
+  inset: .7rem auto auto .7rem;
+  z-index: 8;
+  padding: .42rem .62rem;
+  color: #2b1234;
+  background: #ffe09c;
+  border-radius: 999px;
+  font: 800 .72rem/1 system-ui, sans-serif;
+  letter-spacing: .05em;
+  box-shadow: 0 5px 20px rgba(45, 12, 49, .25);
+}
+
+.unassignedArchive {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(4rem, 9vw, 9rem) clamp(1rem, 4vw, 4rem);
+  color: #fff7ed;
+  background: linear-gradient(135deg, #5c2575, #9f376c 52%, #df6e6a);
+}
+.unassignedArchive > header { max-width: 74rem; margin: 0 auto 3rem; }
+.unassignedArchive h2 { margin: .5rem 0 1rem; font-size: clamp(3rem, 8vw, 7rem); line-height: .9; letter-spacing: -.055em; }
+.unassignedArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: clamp(.8rem, 2vw, 1.6rem);
+  max-width: 100rem;
+  margin: 0 auto;
+}
+.unassignedArchiveGrid article {
+  position: relative;
+  min-width: 0;
+  padding: .65rem .65rem 1rem;
+  color: #351335;
+  background: #fff5e8;
+  border-radius: 1rem;
+  box-shadow: 0 22px 50px rgba(49, 10, 49, .28);
+  transform: rotate(-1.3deg);
+}
+.unassignedArchiveGrid article:nth-child(even) { transform: rotate(1.5deg) translateY(1rem); }
+.unassignedArchiveGrid article:nth-child(3n) { transform: rotate(-2deg) translateY(-.4rem); }
+.unassignedArchiveGrid img,
+.unassignedArchiveGrid video { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .7rem; }
+.unassignedArchiveGrid p { margin: .75rem .35rem .25rem; overflow-wrap: anywhere; }
+.unassignedArchiveGrid small { margin: 0 .35rem; color: #773d65; }
+
+@media (max-width: 700px) {
+  .testReviewBanner { position: relative; flex-direction: column; }
+  .unassignedArchiveGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unassignedArchiveGrid article { transform: none !important; }
+}

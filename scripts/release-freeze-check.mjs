@@ -32,8 +32,10 @@ function sourceFiles(directory) {
   });
 }
 
-requireText("app/layout.tsx", "robots: { index: false, follow: false }", "the sitewide noindex directive");
-requireText("app/robots.ts", "disallow: \"/\"", "robots exclusion");
+requireText("app/layout.tsx", "isRevealPublic", "the database-driven indexing switch");
+requireText("app/robots.txt/route.ts", "isRevealPublic", "the database-driven robots switch");
+requireText("app/robots.txt/route.ts", "Disallow: /studio", "Studio remains excluded after release");
+requireText("app/robots.txt/route.ts", "Disallow: /api/", "API routes remain excluded after release");
 requireText("app/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("app/contribute/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
 requireText("components/OpeningExperience.tsx", "The way we see you.", "the present-tense hero line");
@@ -42,6 +44,51 @@ requireText("components/RecordingContributionForm.tsx", "VOICE_WALL", "voice con
 requireText("components/RecordingContributionForm.tsx", "BIRTHDAY_MESSAGE", "birthday message path");
 requireText("components/RecordingContributionForm.tsx", "playsInline", "inline mobile recording playback");
 requireText("components/RevealExperience.tsx", "The rest is yours to write.", "Chapter Nine invitation");
+requireText("components/RevealExperience.tsx", "RevealSoundtrack", "the reveal soundtrack");
+requireText("components/RevealExperience.tsx", "ducked={activeRecordingId !== null}", "automatic soundtrack ducking");
+requireText("components/RevealExperience.tsx", "data-reveal-photo=\"true\"", "tap-to-expand reveal photographs");
+requireText("components/RevealSoundtrackV2.tsx", "NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL", "the configurable reveal soundtrack");
+requireText("components/RevealExperience.tsx", "<SandiSignaturePrelude started={openingStarted}", "the one-time reveal signature opening");
+requireText("components/RevealExperience.tsx", "revealMastheadPhoto", "the photograph revealed beneath the signature");
+requireText("components/RevealExperience.tsx", "priority", "concurrent priority loading for the reveal photograph");
+requireText("components/SandiSignaturePrelude.tsx", 'pathLength="100"', "measured hand-drawn SVG strokes");
+requireText("components/SandiSignaturePrelude.tsx", "sandi-flow", "the coral, mint, and periwinkle stroke gradient");
+requireText("app/reveal/sandi-signature.css", "stroke-dasharray:100", "the SVG write-on animation");
+requireText("app/reveal/sandi-signature.css", "sandi-colour-flow", "colour movement through the signature");
+requireText("app/reveal/sandi-signature.css", "@media(prefers-reduced-motion:reduce)", "a static reduced-motion signature");
+requireText("app/reveal/sandi-signature.css", "stroke-dashoffset:0;animation:none", "the fully drawn reduced-motion state");
+forbidText("components/SandiSignaturePrelude.tsx", "framer-motion", "a signature animation dependency");
+forbidText("components/SandiSignaturePrelude.tsx", "gsap", "a signature animation dependency");
+requireText("components/RevealExperience.tsx", "onStart={startReveal}", "the music-triggered opening handoff");
+requireText("components/RevealExperience.tsx", "setOpeningStarted(true);", "the signature start state");
+requireText("components/RevealExperience.tsx", "fireRevealOpeningBalloons();", "the opening balloon trigger");
+requireText("components/RevealExperience.tsx", "sandi-rehearsal-runtime-ms", "the measured press-play-to-finale rehearsal runtime");
+requireText("components/RevealSoundtrackV2.tsx", "onStart();", "the successful-play signature trigger");
+requireText("app/reveal/sandi-signature-trigger.css", ".sandiSignaturePrelude.is-playing", "the dormant-until-play signature state");
+requireText("app/reveal/sandi-signature-trigger.css", "animation-name: none", "no page-load signature animation");
+requireText("app/reveal/sandi-signature-trigger.css", "sandi-static-cut", "the static reduced-motion hold and instant exit");
+forbidText("components/OpeningExperience.tsx", "SandiSignaturePrelude", "the reveal-only signature on the homepage");
+forbidText("components/ContributionHub.tsx", "SandiSignaturePrelude", "the reveal-only signature on the contribution page");
+forbidText("components/SandiSignaturePrelude.tsx", "setInterval", "a looping signature controller");
+requireText("components/MemoryContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after memory success");
+requireText("components/RecordingContributionForm.tsx", "<NameChorusRecorder", "the optional name recorder after recorded contributions");
+requireText("components/ContributionHub.tsx", "<NameChorusRecorder standalone", "the return-visitor name-only path");
+requireText("components/NameChorusRecorder.tsx", "Recording stops at five seconds.", "the short name-recording limit");
+requireText("components/NameChorusRecorder.tsx", "trimNameRecording", "best-effort silence trimming");
+requireText("app/api/name-chorus/complete/route.ts", "/name-chorus/", "the separate chorus backup namespace");
+requireText("app/reveal/page.tsx", 'prompt === "NAME_CHORUS"', "name recordings kept out of archive media");
+requireText("components/RevealSoundtrackV2.tsx", "Math.random()", "a freshly shuffled chorus");
+requireText("components/RevealSoundtrackV2.tsx", "decoded.duration - overlap", "gently overlapping names");
+requireText("components/RevealSoundtrackV2.tsx", "fetch(`/api/reveal/media/", "lazy streamed name recordings");
+requireText("components/RevealSoundtrackV2.tsx", "masterMuted || ducked ? 0", "full silence during spoken messages");
+requireText("components/RevealSoundtrackV2.tsx", "Voices off", "independent chorus control");
+requireText("components/RevealSoundtrackV2.tsx", "Mute all", "the master audio mute");
+requireText("components/NameChorusStudio.tsx", "Not recorded yet", "the missing-name roster");
+requireText("components/NameChorusStudio.tsx", "9999", "the optional last-voice pin");
+forbidText("components/RevealSoundtrackV2.tsx", "autoPlay", "soundtrack autoplay");
+if (!existsSync(join(root, "public/audio/tavalodet-mobarak.mp3"))) failures.push("The supplied birthday song is missing from public/audio/tavalodet-mobarak.mp3.");
+if (existsSync(join(root, "public/audio/tavalodet-mobarak.mp3")) && statSync(join(root, "public/audio/tavalodet-mobarak.mp3")).size < 1024) failures.push("The supplied birthday song is unexpectedly empty.");
+forbidText("components/OpeningExperience.tsx", "framer-motion", "the removed homepage animation dependency");
 requireText("components/StoryStudio.tsx", "Open reveal publicly", "the no-deploy reveal access control");
 requireText("components/StoryStudio.tsx", "Hide contribution", "the exception-only exclusion control");
 requireText("components/StoryStudio.tsx", "20_000", "the twenty-second Studio live polling interval");
@@ -51,13 +98,22 @@ requireText("lib/studio/auth.ts", "refreshSession", "the refreshable owner sessi
 requireText("lib/studio/auth.ts", ".sandi50th.com", "the apex/www production owner cookie");
 requireText("app/api/studio/session/route.ts", "refreshToken", "the refresh token handoff");
 requireText("app/reveal/page.tsx", '.neq("review_status", "excluded")', "default-visible reveal selection");
-requireText("app/api/reveal/media/[id]/route.ts", "reveal_public", "the private/public reveal media gate");
+requireText("app/api/reveal/media/[id]/route.ts", "getRevealProject", "the private/public reveal media gate");
+requireText("lib/reveal-preview.ts", "timingSafeEqual", "constant-time signed preview verification");
+requireText("app/api/reveal/owner-preview/route.ts", "response.cookies.set", "owner preview cookie exchange");
+requireText("lib/reveal-preview.ts", "httpOnly: true", "HTTP-only owner preview cookie");
+requireText("app/reveal/page.tsx", "hasRevealPreviewAccess", "private reveal page bypass");
+requireText("app/api/reveal/media/[id]/route.ts", "hasRevealPreviewAccess", "private reveal media bypass");
 requireText("app/api/studio/contributions/route.ts", "%MOBILE TEST%", "automatic test-record exclusion");
 requireText("app/api/public/hero-photo/route.ts", '.not("reviewed_at", "is", null)', "public-homepage upload containment");
 requireText("supabase/default-visible-reveal-migration.sql", "reveal_public boolean not null default false", "the reveal access switch migration");
 forbidText("components/RecordingContributionForm.tsx", "until it is approved", "recording approval language");
 requireText("components/RevealArchive.tsx", "Move through the years.", "time scrubber");
 requireText("components/RevealArchive.tsx", "playsInline", "inline archive film playback");
+requireText("components/RevealArchive.tsx", "InViewVideoPreview", "silent in-view archive video previews");
+requireText("components/RevealArchive.tsx", 'window.matchMedia("(prefers-reduced-motion: reduce)")', "reduced-motion suppression for video previews");
+requireText("app/celebration-pass.css", "scatteredPhotoArrival", "staggered print-like photo arrivals");
+requireText("app/celebration-pass.css", "margin-inline: -.7rem", "the deliberately overlapping timeline layout");
 requireText("app/api/studio/backups/route.ts", "byteCountVerified", "per-file backup byte verification");
 requireText("app/api/release/route.ts", "VERCEL_GIT_COMMIT_SHA", "commit-specific release marker");
 requireText(".github/workflows/post-deploy-smoke.yml", "${GITHUB_SHA}", "exact-commit production wait");
@@ -66,9 +122,17 @@ requireText("lib/photo-intelligence/index.ts", ".jpeg({ quality", "metadata-free
 requireText("lib/photo-intelligence/index.ts", "exifUpdateError", "EXIF persistence before AI analysis");
 requireText("lib/photo-intelligence/index.ts", "prepareGlobalPhotoPilot", "the global ten-photo pilot");
 requireText("app/api/internal/photo-intelligence/route.ts", "before.remaining === 0", "the pilot stop gate");
+requireText("lib/photo-intelligence/index.ts", "prepareGlobalPhotoArchive", "the complete photo archive queue");
+requireText("lib/photo-intelligence/index.ts", "applyChapterFallbacks", "the no-empty-chapter fallback assignment");
+requireText("lib/photo-intelligence/index.ts", "Temporary archive placement", "replaceable low-confidence archive placement");
+requireText("app/api/studio/photo-intelligence/archive/route.ts", "requireStudioOwner", "owner-only archive assignment");
+requireText("components/StoryStudio.tsx", "Auto-assign the entire archive", "the archive assignment control");
+requireText("components/StoryStudio.tsx", "https://www.sandi50th.com/studio/reset-password", "the production password-reset fallback");
 forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
 requireText("app/api/submissions/complete/route.ts", "sendContributionArrivalEmail", "arrival email scheduling");
 requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL", "explicit arrival-email recipient configuration");
+requireText("app/api/studio/notifications/test/route.ts", "requireStudioOwner", "owner authentication for arrival-email testing");
+requireText("app/api/studio/notifications/test/route.ts", "sendContributionArrivalEmail", "the owner-triggered Resend delivery test");
 
 requireText("lib/family-qa.ts", "FAMILY_QA_SEED", "the structured family Q&A seed");
 requireText("lib/family-qa.ts", "FAMILY_QA_PENDING", "the unanswered-family follow-up list");
@@ -94,6 +158,27 @@ forbidText("lib/confetti.ts", "setInterval", "a repeating confetti timer");
 requireText("components/MemoryContributionForm.tsx", "fireContributionConfetti();", "memory and photo contribution celebration");
 requireText("components/RecordingContributionForm.tsx", "fireContributionConfetti();", "voice and birthday-message celebration");
 requireText("components/RevealExperience.tsx", "fireRevealFinaleConfetti();", "the completed birthday-message reel celebration");
+
+requireText("package.json", '"balloons-js": "^0.0.3"', "the only approved balloon dependency");
+requireText("lib/balloons.ts", 'import("balloons-js")', "event-only dynamic balloon loading");
+requireText("lib/balloons.ts", 'prefers-reduced-motion: reduce', "reduced-motion balloon suppression");
+requireText("lib/balloons.ts", 'max-width: 640px', "lower mobile balloon count");
+requireText("lib/balloons.ts", 'text: "50"', "the reveal-opening 50 balloons");
+forbidText("lib/balloons.ts", "setInterval", "a repeating balloon timer");
+requireText("components/MemoryContributionForm.tsx", "fireContributionBalloons();", "memory contribution balloons");
+requireText("components/RecordingContributionForm.tsx", "fireContributionBalloons();", "recorded contribution balloons");
+requireText("components/RevealExperience.tsx", "fireRevealOpeningBalloons();", "opening 50 balloons");
+requireText("components/RevealExperience.tsx", "fireRevealFinaleBalloons();", "finale balloons");
+requireText("components/FlowingCloudShader.tsx", 'matchMedia("(prefers-reduced-motion: reduce)")', "shader reduced-motion short circuit");
+requireText("components/FlowingCloudShader.tsx", 'getContext("webgl2"', "WebGL2 with silent CSS fallback");
+requireText("components/FlowingCloudShader.tsx", "IntersectionObserver", "off-screen shader pause");
+requireText("components/FlowingCloudShader.tsx", "visibilitychange", "hidden-tab shader pause");
+requireText("components/FlowingCloudShader.tsx", "Math.min(window.devicePixelRatio || 1, 2) * .5", "one-times maximum shader density");
+forbidText("components/FlowingCloudShader.tsx", "pointermove", "passive shader pointer tracking");
+requireText("app/shader-preview/page.tsx", "hasRevealPreviewAccess", "owner-only shader color review");
+requireText("components/OpeningExperience.tsx", 'palette="champagne"', "approved homepage Pink Champagne shader");
+requireText("components/RevealExperience.tsx", 'palette="champagne"', "approved reveal Pink Champagne shader");
+requireText("app/approved-pink-champagne.css", "mix-blend-mode: screen", "approved luminous beach-photo blend");
 
 const confettiSource = [...sourceFiles("app"), ...sourceFiles("components"), ...sourceFiles("lib")]
   .filter(path => /\.(ts|tsx)$/.test(path));
@@ -129,9 +214,29 @@ for (const path of publicSource) {
   if (/The way we remember you\.?/i.test(content)) failures.push(`${relative(root, path)} still frames Sandi in the past tense.`);
 }
 
+
+const contributionForm = read("components/MemoryContributionForm.tsx");
+forbidText("components/MemoryContributionForm.tsx", "calculateFileSha256", "no contributor-path hashing");
+forbidText("components/MemoryContributionForm.tsx", "crypto.subtle", "no browser hashing");
+forbidText("app/api/submissions/complete/route.ts", "duplicateMarkerExists", "no confirmation-path dedupe");
+forbidText("app/api/submissions/complete/route.ts", "del(", "no post-upload deletion");
+requireText("app/api/submissions/complete/route.ts", "enqueueSubmissionHashing", "background duplicate hash queue");
+requireText("lib/duplicate-detection/index.ts", "differenceHash", "direct dependency-free dHash");
+requireText("lib/duplicate-detection/index.ts", "dhash_band_0", "indexed perceptual hash bands");
+requireText("supabase/duplicate-detection-migration.sql", "canonical_media_id", "reversible canonical photo link");
+requireText("components/PostUploadPhotoReview.tsx", "If you do nothing, we’ll keep yours.", "default-keep contributor wording");
+requireText("components/PostUploadPhotoReview.tsx", "Your original remains safely stored", "non-destructive contributor decision");
+requireText("components/DuplicateReviewStudio.tsx", "originals remain stored", "non-destructive Studio merge");
+const successIndex = contributionForm.indexOf("confirmationCode");
+const comparisonIndex = contributionForm.indexOf("<PostUploadPhotoReview");
+if (successIndex < 0 || comparisonIndex < successIndex) {
+  failures.push("post-upload comparison must render only after the success confirmation");
+}
+
+
 if (failures.length) {
   console.error("\nReveal freeze check failed:\n- " + failures.join("\n- "));
   process.exit(1);
 }
 
-console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
+console.log("Reveal freeze check passed: privacy, deadline, default visibility, reveal gating, contribution paths, media safety, post-storage duplicate handling, backup proof, and exact-deployment smoke are intact.");

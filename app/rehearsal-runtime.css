@@ -1,0 +1,12 @@
+.rehearsalRuntime {
+  display: grid;
+  place-items: center;
+  gap: .65rem;
+  padding: clamp(3rem, 8vw, 7rem) 1rem;
+  color: #fff8ec;
+  text-align: center;
+  background: linear-gradient(125deg, #4f2f84, #a43d72 52%, #ed8066);
+}
+.rehearsalRuntime span { font-weight: 850; letter-spacing: .08em; }
+.rehearsalRuntime strong { font-size: clamp(4rem, 14vw, 10rem); line-height: .8; letter-spacing: -.06em; }
+.rehearsalRuntime p { max-width: 42rem; font-size: 1.05rem; }

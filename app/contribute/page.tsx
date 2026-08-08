@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { ContributionHub } from "@/components/ContributionHub";
 import "./contribution-release.css";
+import "./name-chorus.css";
 
 const chapterDefaults: Record<string, string> = {
   "1": "Baby and early childhood",

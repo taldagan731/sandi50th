@@ -1,8 +1,13 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
+import Image from "next/image";
+import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ArchiveVideoStack, RevealTimeline, UnassignedArchive } from "@/components/RevealArchive";
+import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
+import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
+import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
+import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 
 type RevealMedia = {
   id: string;
@@ -13,11 +18,15 @@ type RevealMedia = {
   poster: boolean;
   contributorName: string;
   relationship: string;
-  collection: "archive" | "voice" | "birthday";
+  collection: "archive" | "voice" | "birthday" | "name";
   yearStart: number | null;
   yearEnd: number | null;
   yearSource: "contributor" | "exif" | "visual-decade" | null;
+  displayOrder: number;
+  testRecord: boolean;
 };
+
+type ExpandedPhoto = { src: string; alt: string };
 
 type RevealChapter = {
   number: number;
@@ -61,16 +70,26 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   const [chapterIndex, setChapterIndex] = useState(0);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
+  const [expandedPhoto, setExpandedPhoto] = useState<ExpandedPhoto | null>(null);
+  const [finaleSignal, setFinaleSignal] = useState(0);
+  const [openingStarted, setOpeningStarted] = useState(false);
+  const [rehearsalRuntime, setRehearsalRuntime] = useState<number | null>(null);
+  const rehearsalStartedAt = useRef<number | null>(null);
   const chapter = chapters[chapterIndex];
   const archiveMedia = useMemo(() => media.filter(item => item.collection === "archive"), [media]);
   const voiceMemories = useMemo(
     () => media.filter(item => item.collection === "voice" && item.mimeType.startsWith("audio/")),
     [media]
   );
+  const nameRecordings = useMemo(
+    () => media.filter(item => item.collection === "name" && item.mimeType.startsWith("audio/")),
+    [media]
+  );
   const birthdayMessages = useMemo(
     () => media.filter(item => item.collection === "birthday" && (item.mimeType.startsWith("audio/") || item.mimeType.startsWith("video/"))),
     [media]
   );
+  const reviewIncludesTests = media.some(item => item.testRecord);
   const archiveVideos = useMemo(
     () => archiveMedia.filter(item => item.mimeType.startsWith("video/")),
     [archiveMedia]
@@ -91,6 +110,46 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     [familyAnswers]
   );
 
+  useEffect(() => {
+    if (!expandedPhoto) return;
+    function closeOnEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setExpandedPhoto(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [expandedPhoto]);
+
+  function photoFromTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLImageElement) || target.dataset.revealPhoto !== "true") return null;
+    return { src: target.currentSrc || target.src, alt: target.alt };
+  }
+
+  function handlePhotoClick(event: MouseEvent<HTMLDivElement>) {
+    const photo = photoFromTarget(event.target);
+    if (photo) setExpandedPhoto(photo);
+  }
+
+  function handlePhotoKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const photo = photoFromTarget(event.target);
+    if (!photo) return;
+    event.preventDefault();
+    setExpandedPhoto(photo);
+  }
+
+  function startReveal() {
+    setOpeningStarted(true);
+    if (rehearsalStartedAt.current === null) rehearsalStartedAt.current = Date.now();
+    fireRevealOpeningBalloons();
+  }
+
+  function completeRevealFinale() {
+    setFinaleSignal(value => value + 1);
+    if (rehearsalStartedAt.current === null) return;
+    const elapsed = Date.now() - rehearsalStartedAt.current;
+    setRehearsalRuntime(elapsed);
+    window.localStorage.setItem("sandi-rehearsal-runtime-ms", String(elapsed));
+  }
   function chooseChapter(index: number, scroll = false) {
     setChapterIndex(index);
     setActiveMediaId(null);
@@ -106,7 +165,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     }
   }
 
-  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length) {
+  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length && !nameRecordings.length) {
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
@@ -117,11 +176,26 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
   }
 
   return (
-    <div className="revealExperience">
+    <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
+      {reviewIncludesTests && <aside className="testReviewBanner"><strong>Owner review mode</strong><span>Automated and test uploads are included and clearly marked. They remain excluded from real counts and the public reveal.</span></aside>}
       <header className="revealMasthead">
-        <span className="eyebrow">A PRIVATE FILM AND LIVING ARCHIVE</span>
-        <h1>Still Becoming</h1>
-        <p>Fifty years, told by the people who love Sandi.</p>
+        <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />
+        <Image
+          className="revealMastheadPhoto"
+          src="/images/sandi-hero.jpeg"
+          alt="Sandi Yadegari, surrounded by the warmth and colour of her fiftieth-birthday story"
+          fill
+          priority
+          sizes="100vw"
+        />
+        <div className="revealMastheadPhotoScrim" aria-hidden="true" />
+        <SandiSignaturePrelude started={openingStarted} />
+        <div className="revealMastheadContent">
+          <span className="eyebrow">A BIRTHDAY FILM MADE BY HER PEOPLE</span>
+          <h1>Still Becoming</h1>
+          <p>Fifty years, told by the people who love Sandi.</p>
+          <RevealSoundtrack ducked={activeRecordingId !== null} names={nameRecordings} finaleSignal={finaleSignal} onStart={startReveal} />
+        </div>
       </header>
 
       {chapter && (
@@ -140,7 +214,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
             ))}
           </nav>
 
-          <article className="revealChapter" id="reveal-story-room" key={chapter.number}>
+          <article className="revealChapter" data-chapter={chapter.number} id="reveal-story-room" key={chapter.number}>
             <header>
               <span>CHAPTER {String(chapter.number).padStart(2, "0")}</span>
               <h2>{chapter.title}</h2>
@@ -162,7 +236,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
                     const expanded = activeMediaId === item.id || (!activeMediaId && index === 0);
                     const url = `/api/reveal/media/${item.id}`;
                     return (
-                      <article className={expanded ? "memoryPlate is-active" : "memoryPlate"} key={item.id}>
+                      <article className={`${expanded ? "memoryPlate is-active" : "memoryPlate"}${item.testRecord ? " is-test-record" : ""}`} key={item.id}>
+                        {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
                         <button className="memorySelect" type="button" aria-pressed={expanded} onClick={() => setActiveMediaId(item.id)}>
                           {expanded ? "Selected" : "Bring forward"}
                         </button>
@@ -205,6 +280,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         />
       )}
 
+      {archiveMedia.some(item => !item.chapterNumber) && <UnassignedArchive items={archiveMedia.filter(item => !item.chapterNumber)} />}
+
       {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
 
       {chorusGroups.length > 0 && <FamilyChorus groups={chorusGroups} />}
@@ -214,16 +291,26 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
       )}
 
       {birthdayMessages.length > 0 && (
-        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
+        <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={completeRevealFinale} />
       )}
+
+
+      {rehearsalRuntime !== null && (
+        <aside className="rehearsalRuntime" role="status">
+          <span>FULL REHEARSAL RUNTIME</span>
+          <strong>{Math.floor(rehearsalRuntime / 60000)}:{String(Math.floor((rehearsalRuntime % 60000) / 1000)).padStart(2, "0")}</strong>
+          <p>Measured from the first press of Play to the final balloons and confetti on this device.</p>
+        </aside>
+      )}
+      {expandedPhoto && <PhotoFocus photo={expandedPhoto} onClose={() => setExpandedPhoto(null)} />}
 
       <section className="chapterNineInvitation" aria-labelledby="chapter-nine-title">
         <div className="chapterNineInner">
           <span className="eyebrow">STILL BECOMING</span>
           <div className="chapterNineNumber">CHAPTER 09</div>
           <h2 id="chapter-nine-title">The rest is yours to write.</h2>
-          <p>This story arrives at fifty without closing. It holds what the people who love you can see, and leaves room for everything only you can choose next.</p>
-          <p>Whenever you are ready, this chapter belongs to you.</p>
+          <p>Fifty is a beginning hiding in plain sight. This room is yours—for what you want next, what surprises you, and every chapter still waiting to become real.</p>
+          <p>Whenever you are ready, start anywhere.</p>
           <div className="chapterNineRule" aria-hidden="true" />
         </div>
       </section>
@@ -236,7 +323,7 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
     <section className="chapterFamilyVoices" aria-label="Family voices in this chapter">
       <header>
         <span className="eyebrow">IN THEIR WORDS</span>
-        <p>Memories and observations from the people who know this part of Sandi’s story.</p>
+        <p>Stories and observations from the people who know this side of Sandi.</p>
       </header>
       <div>
         {answers.map(answer => (
@@ -244,7 +331,7 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
             {answer.photoAssetIds.length > 0 && (
               <div className="familyVoicePhotos">
                 {answer.photoAssetIds.map(photoId => (
-                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" />
+                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
                 ))}
               </div>
             )}
@@ -284,7 +371,7 @@ function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
       <header>
         <span className="eyebrow">A CHORUS</span>
         <h2 id="family-chorus-title">The same question. A different way of seeing her.</h2>
-        <p>One voice at a time, from the family who has known Sandi in different seasons of her life.</p>
+        <p>One voice at a time, from family members who each see something wonderfully different in Sandi.</p>
       </header>
 
       <nav aria-label="Chorus questions">
@@ -299,7 +386,7 @@ function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
         <p className="chorusQuestion">{group.question}</p>
         <figure key={answer.id}>
           {answer.photoAssetIds.length > 0 && (
-            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" />
+            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
           )}
           <div>
             <blockquote>{answer.answer}</blockquote>
@@ -321,8 +408,8 @@ function VoiceWall({ items, activeId, onActiveChange }: RecordingCollectionProps
     <section className="voiceWall" aria-labelledby="voice-wall-title">
       <header className="recordingCollectionHeader">
         <span className="eyebrow">THE VOICE WALL</span>
-        <h2 id="voice-wall-title">A story sounds different in the voices that lived it.</h2>
-        <p>These memories were spoken for Sandi by the people who know the pauses, the laughter, and the details that never fit neatly on a page.</p>
+        <h2 id="voice-wall-title">A story sounds better in the voices that know her.</h2>
+        <p>These stories come from people who know her laugh, her timing, and the details that never fit neatly on a page.</p>
       </header>
       <div className="voiceWallGrid">
         {items.map((item, index) => (
@@ -364,7 +451,8 @@ function VoiceCard({ item, number, activeId, onActiveChange }: {
   }
 
   return (
-    <article className={playing ? "voiceCard is-playing" : "voiceCard"}>
+    <article className={`${playing ? "voiceCard is-playing" : "voiceCard"}${item.testRecord ? " is-test-record" : ""}`}>
+      {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
       <div className="voiceCardTopline"><span>{String(number).padStart(2, "0")}</span><span>{item.relationship || "Someone who loves Sandi"}</span></div>
       <Waveform />
       <h3>{item.contributorName}</h3>
@@ -377,7 +465,7 @@ function VoiceCard({ item, number, activeId, onActiveChange }: {
   );
 }
 
-function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingCollectionProps) {
+function BirthdayMessageReel({ items, activeId, onActiveChange, onFinale }: RecordingCollectionProps & { onFinale: () => void }) {
   const [index, setIndex] = useState(0);
   const [continuePlaying, setContinuePlaying] = useState(false);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
@@ -437,6 +525,8 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
     if (continuePlaying && sequenceStartedAtFirst.current && !finaleFired.current) {
       finaleFired.current = true;
       fireRevealFinaleConfetti();
+      fireRevealFinaleBalloons();
+      onFinale();
     }
     setContinuePlaying(false);
     onActiveChange(null);
@@ -453,7 +543,8 @@ function BirthdayMessageReel({ items, activeId, onActiveChange }: RecordingColle
       </header>
 
       <div className="birthdayStage" aria-live="polite">
-        <div className={mediaClass}>
+        <div className={`${mediaClass}${current.testRecord ? " is-test-record" : ""}`}>
+          {current.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
           {current.mimeType.startsWith("video/") ? (
             <video
               ref={node => { mediaRef.current = node; }}
@@ -514,6 +605,15 @@ function Waveform({ large = false }: { large?: boolean }) {
 }
 
 
+function PhotoFocus({ photo, onClose }: { photo: ExpandedPhoto; onClose: () => void }) {
+  return (
+    <div className="photoFocus" role="dialog" aria-modal="true" aria-label="Expanded photograph" onClick={onClose}>
+      <button type="button" onClick={onClose} aria-label="Close expanded photograph">Close</button>
+      <img src={photo.src} alt={photo.alt} onClick={event => event.stopPropagation()} />
+    </div>
+  );
+}
+
 function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eager: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
@@ -530,6 +630,10 @@ function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eag
       alt={item.caption || `A submitted memory: ${item.originalName}`}
       loading={eager ? "eager" : "lazy"}
       onError={() => setFailed(true)}
+      data-reveal-photo="true"
+      role="button"
+      tabIndex={0}
+      aria-label={`Expand photograph: ${item.caption || item.originalName}`}
     />
   );
 }

@@ -3,19 +3,30 @@ import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
 import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
+import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
+import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
+import { getRevealProject, isRevealPublic } from "@/lib/reveal-visibility";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
+import "./name-chorus.css";
+import "./sandi-signature.css";
+import "./sandi-signature-trigger.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Still Becoming — Private Reveal",
-  robots: { index: false, follow: false, noarchive: true, nosnippet: true }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const publicReveal = await isRevealPublic();
+  return {
+    title: publicReveal ? "Still Becoming \u2014 The Story of Sandi" : "Still Becoming \u2014 Private Reveal",
+    robots: publicReveal
+      ? { index: true, follow: true }
+      : { index: false, follow: false, noarchive: true, nosnippet: true }
+  };
+}
 
 type MediaRow = {
   id: string;
@@ -29,6 +40,7 @@ type MediaRow = {
   inferred_year_start?: number | null;
   inferred_year_end?: number | null;
   date_inference_source?: string | null;
+  canonical_media_id?: string | null;
 };
 
 function contributorYearRange(value: string | null | undefined) {
@@ -61,18 +73,17 @@ function LockedReveal() {
   );
 }
 
-export default async function RevealPage() {
+export default async function RevealPage({ searchParams }: { searchParams?: Promise<{ review?: string }> }) {
+  const params = await searchParams;
   const owner = await requireStudioOwner();
+  const ownerPreview = !owner && await hasRevealPreviewAccess();
+  const includeTests = Boolean(owner && params?.review === "all");
   const supabase = owner?.supabase ?? createAdminClient();
   let projectId = owner?.project.id ?? null;
 
   if (!owner) {
-    const { data: publicProject, error: projectError } = await supabase
-      .from("projects")
-      .select("id,reveal_public")
-      .eq("slug", "sandi50th")
-      .single();
-    if (projectError || !publicProject?.reveal_public) return <LockedReveal />;
+    const publicProject = await getRevealProject();
+    if (!publicProject || (!ownerPreview && !publicProject.revealPublic)) return <LockedReveal />;
     projectId = publicProject.id;
   }
   if (!projectId) return <LockedReveal />;
@@ -85,46 +96,62 @@ export default async function RevealPage() {
     .order("chapter_number");
   const approvedByNumber = new Map((chapterRows ?? []).map(item => [item.chapter_number, item]));
 
-  const { data: rawSubmissions } = await supabase
+  let submissionQuery = supabase
     .from("submissions")
     .select("id,name,relationship,prompt,first_memory,approximate_year,location,life_chapter,status,review_status,reviewer_notes")
-    .eq("project_id", projectId)
-    .neq("review_status", "excluded")
-    .not("name", "ilike", "%MOBILE TEST%")
-    .not("name", "ilike", "%CODEX%");
-  const submissionRows = (rawSubmissions ?? []).filter(item => !isTestContributor(item.name));
+    .eq("project_id", projectId);
+  if (!includeTests) {
+    submissionQuery = submissionQuery
+      .neq("review_status", "excluded")
+      .not("name", "ilike", "%MOBILE TEST%")
+      .not("name", "ilike", "%CODEX%");
+  }
+  const { data: rawSubmissions } = await submissionQuery;
+  const submissionRows = includeTests
+    ? (rawSubmissions ?? [])
+    : (rawSubmissions ?? []).filter(item => !isTestContributor(item.name));
   const submissionIds = submissionRows.map(item => item.id);
   const submissionsById = new Map(submissionRows.map(item => [item.id, item]));
 
-  const baseColumns = "id,submission_id,original_name,mime_type,caption,chapter_number,poster_path,display_order";
+  const legacyBaseColumns = "id,submission_id,original_name,mime_type,caption,chapter_number,poster_path,display_order";
+  const baseColumns = `${legacyBaseColumns},canonical_media_id`;
   let mediaRows: MediaRow[] = [];
   if (submissionIds.length) {
-    const enriched = await supabase
+    let enrichedQuery = supabase
       .from("media_assets")
       .select(`${baseColumns},inferred_year_start,inferred_year_end,date_inference_source`)
-      .in("submission_id", submissionIds)
-      .neq("review_status", "excluded")
-      .order("display_order");
-    if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference/i.test(enriched.error.message))) {
-      const fallback = await supabase
+      .in("submission_id", submissionIds);
+    if (!includeTests) enrichedQuery = enrichedQuery.neq("review_status", "excluded");
+    const enriched = await enrichedQuery.order("display_order");
+    if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference|canonical_media_id/i.test(enriched.error.message))) {
+      let fallbackQuery = supabase
         .from("media_assets")
-        .select(baseColumns)
-        .in("submission_id", submissionIds)
-        .neq("review_status", "excluded")
-        .order("display_order");
+        .select(legacyBaseColumns)
+        .in("submission_id", submissionIds);
+      if (!includeTests) fallbackQuery = fallbackQuery.neq("review_status", "excluded");
+      const fallback = await fallbackQuery.order("display_order");
       mediaRows = (fallback.data ?? []) as unknown as MediaRow[];
     } else {
       mediaRows = (enriched.data ?? []) as unknown as MediaRow[];
     }
   }
 
+  const presentationByCanonical = new Map<string, MediaRow>();
+  for (const item of mediaRows) {
+    const key = item.canonical_media_id ?? item.id;
+    const current = presentationByCanonical.get(key);
+    if (!current || item.id === key) presentationByCanonical.set(key, item);
+  }
+  const presentationMediaRows = [...presentationByCanonical.values()];
+
   const storedFamilyAnswers = submissionRows.flatMap(item => {
     if (item.status !== "family_qa") return [];
     const metadata = decodeFamilyQaMetadata(item.reviewer_notes);
     if (!metadata) return [];
     const chapterMatch = item.life_chapter?.match(/\b([1-8])\b/);
-    return [{
+    return [applyFamilyQaSourceCorrections({
       id: item.id,
+      sourceId: metadata.sourceId,
       contributorName: item.name,
       relationship: item.relationship || "Family",
       question: item.prompt || "",
@@ -134,8 +161,9 @@ export default async function RevealPage() {
       place: item.location || "",
       chorusKeys: metadata.chorusKeys,
       photoAssetIds: metadata.photoAssetIds,
-      showInChapter: metadata.showInChapter
-    }];
+      showInChapter: metadata.showInChapter,
+      editorialNote: metadata.editorialNote
+    })];
   });
   const familyAnswers = storedFamilyAnswers.length
     ? storedFamilyAnswers
@@ -165,7 +193,7 @@ export default async function RevealPage() {
           };
         })}
         familyAnswers={familyAnswers}
-        media={mediaRows.map(item => {
+        media={presentationMediaRows.map(item => {
           const submission = submissionsById.get(item.submission_id);
           const prompt = submission?.prompt?.toUpperCase();
           const suppliedRange = contributorYearRange(submission?.approximate_year);
@@ -187,14 +215,18 @@ export default async function RevealPage() {
             poster: Boolean(item.poster_path),
             contributorName: submission?.name ?? "Someone who loves Sandi",
             relationship: submission?.relationship ?? "",
-            collection: prompt === "VOICE_WALL"
-              ? "voice" as const
-              : prompt === "BIRTHDAY_MESSAGE"
-                ? "birthday" as const
-                : "archive" as const,
+            collection: prompt === "NAME_CHORUS" || item.original_name.startsWith("name-chorus-")
+              ? "name" as const
+              : prompt === "VOICE_WALL"
+                ? "voice" as const
+                : prompt === "BIRTHDAY_MESSAGE"
+                  ? "birthday" as const
+                  : "archive" as const,
             yearStart: suppliedRange?.start ?? inferredStart,
             yearEnd: suppliedRange?.end ?? inferredEnd,
-            yearSource
+            yearSource,
+            displayOrder: item.display_order,
+            testRecord: isTestContributor(submission?.name)
           };
         })}
       />
