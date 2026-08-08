@@ -48,6 +48,17 @@ type FamilyAnswer = {
   showInChapter: boolean;
 };
 
+type WrittenMemory = {
+  id: string;
+  chapterNumber: number;
+  contributorName: string;
+  relationship: string;
+  firstMemory: string;
+  story: string;
+  when: string;
+  place: string;
+};
+
 type ChorusGroup = {
   key: string;
   question: string;
@@ -66,7 +77,7 @@ type RecordingCollectionProps = {
   onActiveChange: (id: string | null) => void;
 };
 
-export function RevealExperience({ chapters, media, familyAnswers }: { chapters: RevealChapter[]; media: RevealMedia[]; familyAnswers: FamilyAnswer[] }) {
+export function RevealExperience({ chapters, media, familyAnswers, writtenMemories }: { chapters: RevealChapter[]; media: RevealMedia[]; familyAnswers: FamilyAnswer[]; writtenMemories: WrittenMemory[] }) {
   const [chapterIndex, setChapterIndex] = useState(0);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
@@ -95,8 +106,12 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     [archiveMedia]
   );
   const chapterMedia = useMemo(
-    () => archiveMedia.filter(item => item.chapterNumber === chapter?.number && !item.mimeType.startsWith("video/")),
-    [archiveMedia, chapter]
+    () => media.filter(item => item.collection !== "name" && item.chapterNumber === chapter?.number),
+    [media, chapter]
+  );
+  const chapterWrittenMemories = useMemo(
+    () => writtenMemories.filter(item => item.chapterNumber === chapter?.number),
+    [writtenMemories, chapter]
   );
   const chapterAnswers = useMemo(
     () => familyAnswers.filter(item => item.showInChapter && item.chapterNumber === chapter?.number),
@@ -109,6 +124,8 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     })).filter(group => group.answers.length > 1),
     [familyAnswers]
   );
+  const contributedMedia = useMemo(() => media.filter(item => item.collection !== "name"), [media]);
+  const contributedTotal = contributedMedia.length + writtenMemories.length;
 
   useEffect(() => {
     if (!expandedPhoto) return;
@@ -165,7 +182,7 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
     }
   }
 
-  if (!chapters.length && !familyAnswers.length && !voiceMemories.length && !birthdayMessages.length && !nameRecordings.length) {
+  if (!chapters.length && !familyAnswers.length && !writtenMemories.length && !voiceMemories.length && !birthdayMessages.length && !nameRecordings.length) {
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
@@ -198,6 +215,16 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
         </div>
       </header>
 
+      <aside className="revealInventory" aria-label="Complete reveal inventory">
+        <strong>{contributedTotal} contributions</strong>
+        <span>{contributedMedia.filter(item => item.collection === "archive" && item.mimeType.startsWith("image/")).length} photographs</span>
+        <span>{contributedMedia.filter(item => item.collection === "archive" && item.mimeType.startsWith("video/")).length} videos</span>
+        <span>{voiceMemories.length} voice recording</span>
+        <span>{birthdayMessages.length} birthday messages</span>
+        <span>{writtenMemories.length} written memories</span>
+        <span>{familyAnswers.length} family interview answers</span>
+      </aside>
+
       {chapter && (
         <>
           <nav className="revealChapterNav" aria-label="Story chapters">
@@ -218,18 +245,21 @@ export function RevealExperience({ chapters, media, familyAnswers }: { chapters:
             <header>
               <span>CHAPTER {String(chapter.number).padStart(2, "0")}</span>
               <h2>{chapter.title}</h2>
+              <p className="chapterInventory">{chapterMedia.length + chapterWrittenMemories.length} contributed items · {chapterAnswers.length} family answers</p>
             </header>
             <div className="revealProse">
               {chapter.text.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             </div>
+
+            {chapterWrittenMemories.length > 0 && <WrittenMemoryCollection items={chapterWrittenMemories} />}
 
             {chapterAnswers.length > 0 && <ChapterFamilyVoices answers={chapterAnswers} />}
 
             {chapterMedia.length > 0 && (
               <section className="memoryCarousel" aria-label={`Memories for ${chapter.title}`}>
                 <header>
-                  <span className="eyebrow">VOICES AND PHOTOGRAPHS</span>
-                  <p>Select a memory to bring it forward.</p>
+                  <span className="eyebrow">THE COMPLETE CHAPTER ARCHIVE</span>
+                  <p>All {chapterMedia.length} contributed media items. Scroll to see every one.</p>
                 </header>
                 <div className="memoryRail">
                   {chapterMedia.map((item, index) => {
@@ -344,6 +374,27 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
                 {(answer.when || answer.place) && <small>{[answer.when, answer.place].filter(Boolean).join(" · ")}</small>}
               </figcaption>
             </div>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WrittenMemoryCollection({ items }: { items: WrittenMemory[] }) {
+  return (
+    <section className="writtenMemoryCollection" aria-label="Written memories in this chapter">
+      <header><span className="eyebrow">WRITTEN BY HER PEOPLE</span><p>Every submitted written memory assigned to this chapter.</p></header>
+      <div>
+        {items.map(item => (
+          <figure key={item.id} className="writtenMemoryCard">
+            {item.firstMemory && <><small>FIRST MEMORY</small><blockquote>{item.firstMemory}</blockquote></>}
+            {item.story && <p>{item.story}</p>}
+            <figcaption>
+              <strong>{item.contributorName}</strong>
+              {item.relationship && <span>{item.relationship}</span>}
+              {(item.when || item.place) && <small>{[item.when, item.place].filter(Boolean).join(" · ")}</small>}
+            </figcaption>
           </figure>
         ))}
       </div>

@@ -237,6 +237,11 @@ if (successIndex < 0 || comparisonIndex < successIndex) {
 }
 
 
+requireText("app/reveal/page.tsx", "const presentationMediaRows = mediaRows;", "the complete, non-collapsed reveal archive");
+forbidText("app/reveal/page.tsx", "presentationByCanonical", "canonical collapsing in the public reveal");
+requireText("app/reveal/page.tsx", "writtenMemories={writtenMemories}", "all written memories in the reveal");
+requireText("components/RevealExperience.tsx", "THE COMPLETE CHAPTER ARCHIVE", "complete per-chapter media presentation");
+requireText("components/RevealExperience.tsx", "WrittenMemoryCollection", "written-memory chapter cards");
 if (failures.length) {
   console.error("\nReveal freeze check failed:\n- " + failures.join("\n- "));
   process.exit(1);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
-import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
+import { STORY_CHAPTERS, chapterNumberFromContributor, isTestContributor } from "@/lib/chapters";
 import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
 import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-corrections";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -42,6 +42,8 @@ type MediaRow = {
   date_inference_source?: string | null;
   canonical_media_id?: string | null;
 };
+
+const SPECIAL_TEXT_PROMPTS = new Set(["VOICE_WALL", "BIRTHDAY_MESSAGE", "NAME_CHORUS", "OWNER_ARCHIVE"]);
 
 function contributorYearRange(value: string | null | undefined) {
   if (!value) return null;
@@ -98,7 +100,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
 
   let submissionQuery = supabase
     .from("submissions")
-    .select("id,name,relationship,prompt,first_memory,approximate_year,location,life_chapter,status,review_status,reviewer_notes")
+    .select("id,name,relationship,prompt,first_memory,story,approximate_year,location,life_chapter,status,review_status,reviewer_notes")
     .eq("project_id", projectId);
   if (!includeTests) {
     submissionQuery = submissionQuery
@@ -136,13 +138,27 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
     }
   }
 
-  const presentationByCanonical = new Map<string, MediaRow>();
-  for (const item of mediaRows) {
-    const key = item.canonical_media_id ?? item.id;
-    const current = presentationByCanonical.get(key);
-    if (!current || item.id === key) presentationByCanonical.set(key, item);
-  }
-  const presentationMediaRows = [...presentationByCanonical.values()];
+  // Canonical relationships help review, but never remove a contribution from the reveal.
+  const presentationMediaRows = mediaRows;
+
+  const writtenMemories = submissionRows.flatMap(item => {
+    if (item.status === "family_qa" || SPECIAL_TEXT_PROMPTS.has(item.prompt?.toUpperCase() ?? "")) return [];
+    const firstMemory = item.first_memory?.trim() ?? "";
+    const story = item.story?.trim() ?? "";
+    if (!firstMemory && !story) return [];
+    const chapterNumber = chapterNumberFromContributor(item.life_chapter);
+    if (!chapterNumber) return [];
+    return [{
+      id: item.id,
+      chapterNumber,
+      contributorName: item.name || "Someone who loves Sandi",
+      relationship: item.relationship || "",
+      firstMemory,
+      story,
+      when: item.approximate_year || "",
+      place: item.location || ""
+    }];
+  });
 
   const storedFamilyAnswers = submissionRows.flatMap(item => {
     if (item.status !== "family_qa") return [];
@@ -193,6 +209,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
           };
         })}
         familyAnswers={familyAnswers}
+        writtenMemories={writtenMemories}
         media={presentationMediaRows.map(item => {
           const submission = submissionsById.get(item.submission_id);
           const prompt = submission?.prompt?.toUpperCase();
