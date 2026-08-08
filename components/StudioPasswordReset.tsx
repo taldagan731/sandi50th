@@ -61,7 +61,7 @@ export function StudioPasswordReset() {
         <label>New password<input name="password" type="password" autoComplete="new-password" minLength={12} required disabled={!ready} /></label>
         <label>Confirm password<input name="confirmation" type="password" autoComplete="new-password" minLength={12} required disabled={!ready} /></label>
         {error && <p className="studioError" role="alert">{error}</p>}
-        <button className="primary" type="submit" disabled={!ready || working}>{working ? "Saving…" : "Save password"}</button>
+        <button className="primary" type="submit" disabled={!ready || working}>{working ? "Saving..." : "Save password"}</button>
         <Link className="secondary" href="/studio">Back to sign in</Link>
       </form>
     </section>
