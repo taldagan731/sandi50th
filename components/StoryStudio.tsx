@@ -705,9 +705,9 @@ function ReviewImage({ src, downloadUrl, name, alt }: { src: string; downloadUrl
   if (failed) {
     return (
       <div className="unsupportedPreview">
-        <strong>iPhone original preserved</strong>
-        <p>This browser cannot display the HEIC original. Open Studio in Safari or download the file and add a JPEG presentation copy.</p>
-        <a className="downloadFile" href={downloadUrl}>Download {name}</a>
+        <strong>Photograph safely preserved</strong>
+        <p>A presentation copy is being prepared.</p>
+        <a className="downloadFile" href={downloadUrl}>Download original</a>
       </div>
     );
   }

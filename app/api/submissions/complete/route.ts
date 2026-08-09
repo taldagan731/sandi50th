@@ -6,6 +6,7 @@ import { chapterNumberFromContributor, defaultReviewStatus } from "@/lib/chapter
 import { enqueueSubmissionPhotos } from "@/lib/photo-intelligence";
 import { enqueueSubmissionHashing, processHashJobs } from "@/lib/duplicate-detection";
 import { sendContributionArrivalEmail } from "@/lib/notifications/contribution-email";
+import { processSubmissionImageDerivatives } from "@/lib/media-derivatives";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -156,6 +157,26 @@ export async function POST(request: Request) {
     }
 
     after(async () => {
+      try {
+        const derivatives = await processSubmissionImageDerivatives(supabase, body.submissionId);
+        for (const result of derivatives) {
+          if (result.status === "failed") {
+            console.error("image-derivative-background", {
+              submissionId: body.submissionId,
+              mediaId: result.mediaId,
+              originalName: result.originalName,
+              error: result.error
+            });
+          }
+        }
+      } catch (error) {
+        // Presentation-copy creation is downstream and must never block contribution confirmation.
+        console.error("image-derivative-background", {
+          submissionId: body.submissionId,
+          error: error instanceof Error ? error.message : "Unknown derivative error"
+        });
+      }
+
       try {
         const queued = await enqueueSubmissionHashing(body.submissionId);
         if (queued.available && queued.queued) {

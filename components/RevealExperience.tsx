@@ -670,8 +670,8 @@ function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eag
   if (failed) {
     return (
       <div className="unsupportedPreview">
-        <strong>Original iPhone photograph preserved</strong>
-        <p>This browser cannot display the HEIC original. Review it in Safari or add a JPEG presentation copy.</p>
+        <strong>A photograph belongs here</strong>
+        <p>This memory is being prepared for the celebration.</p>
       </div>
     );
   }

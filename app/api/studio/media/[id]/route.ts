@@ -27,9 +27,11 @@ export async function GET(
     .single();
   if (!submission) return new NextResponse("Not found", { status: 404 });
 
-  const requestedPath = new URL(request.url).searchParams.get("poster") === "1" && media.poster_path
-    ? media.poster_path
-    : media.storage_path;
+  const searchParams = new URL(request.url).searchParams;
+  const downloadOriginal = searchParams.get("download") === "1";
+  const presentationImage = media.mime_type.startsWith("image/") && media.poster_path && !downloadOriginal;
+  const requestedVideoPoster = searchParams.get("poster") === "1" && media.poster_path;
+  const requestedPath = presentationImage || requestedVideoPoster ? media.poster_path! : media.storage_path;
 
   if (!requestedPath.startsWith("incoming/") && !requestedPath.startsWith("posters/")) {
     const { data, error: signedError } = await owner.supabase.storage
@@ -60,8 +62,11 @@ export async function GET(
   outgoing.set("Cache-Control", "private, no-store");
   outgoing.set("X-Content-Type-Options", "nosniff");
   const safeFilename = media.original_name.replace(/[^\x20-\x7E]/g, "_").replace(/[\\"]/g, "_").slice(0, 180) || "memory";
-  const disposition = new URL(request.url).searchParams.get("download") === "1" ? "attachment" : "inline";
-  outgoing.set("Content-Disposition", `${disposition}; filename="${safeFilename}"`);
+  const disposition = downloadOriginal ? "attachment" : "inline";
+  const responseFilename = requestedPath === media.poster_path
+    ? `${safeFilename.replace(/\.[^.]+$/, "") || "photograph"}.jpg`
+    : safeFilename;
+  outgoing.set("Content-Disposition", `${disposition}; filename="${responseFilename}"`);
 
   return new NextResponse(response.body, {
     status: response.status,
