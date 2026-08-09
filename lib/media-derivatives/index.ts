@@ -18,7 +18,7 @@ export type DerivativeMedia = {
 export type DerivativeResult = {
   mediaId: string;
   originalName: string;
-  status: "converted" | "already_ready" | "skipped" | "failed";
+  status: "converted" | "placeholder" | "already_ready" | "skipped" | "failed";
   derivativePath?: string;
   derivativeBytes?: number;
   error?: string;
@@ -43,6 +43,29 @@ async function browserSafeJpeg(original: Buffer, heic: boolean) {
     .toBuffer();
 }
 
+async function preservedPhotoPlaceholder() {
+  const svg = Buffer.from(`
+    <svg width="1600" height="1200" viewBox="0 0 1600 1200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ground" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7b235d"/>
+          <stop offset="0.5" stop-color="#d94d7d"/>
+          <stop offset="1" stop-color="#ff9a76"/>
+        </linearGradient>
+        <radialGradient id="light" cx="70%" cy="24%" r="62%">
+          <stop offset="0" stop-color="#ffe5ad" stop-opacity="0.92"/>
+          <stop offset="1" stop-color="#ffe5ad" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1600" height="1200" fill="url(#ground)"/>
+      <rect width="1600" height="1200" fill="url(#light)"/>
+      <circle cx="800" cy="520" r="150" fill="none" stroke="#fff4df" stroke-width="18" opacity="0.88"/>
+      <path d="M585 785l150-170 105 105 95-92 180 157z" fill="#fff4df" opacity="0.88"/>
+      <text x="800" y="930" text-anchor="middle" fill="#fff4df" font-family="Arial, sans-serif" font-size="56" font-weight="700">Photograph safely preserved</text>
+    </svg>`);
+  return sharp(svg).jpeg({ quality: 88, progressive: true }).toBuffer();
+}
+
 export async function createImageDerivative(
   supabase: SupabaseClient,
   media: DerivativeMedia,
@@ -55,9 +78,29 @@ export async function createImageDerivative(
     return { mediaId: media.id, originalName: media.original_name, status: "already_ready", derivativePath: media.poster_path };
   }
 
+  let original: Buffer;
   try {
-    const original = await readPrivateMedia(supabase, media.storage_path);
-    const derivative = await browserSafeJpeg(original, isHeicMedia(media));
+    original = await readPrivateMedia(supabase, media.storage_path);
+  } catch (error) {
+    return {
+      mediaId: media.id,
+      originalName: media.original_name,
+      status: "failed",
+      error: error instanceof Error ? error.message : "The original could not be read."
+    };
+  }
+
+  try {
+    let status: DerivativeResult["status"] = "converted";
+    let conversionError: string | undefined;
+    let derivative: Buffer;
+    try {
+      derivative = await browserSafeJpeg(original, isHeicMedia(media));
+    } catch (error) {
+      status = "placeholder";
+      conversionError = error instanceof Error ? error.message : "The original image could not be decoded.";
+      derivative = await preservedPhotoPlaceholder();
+    }
     const derivativePath = `posters/${media.id}-web.jpg`;
     await put(derivativePath, derivative, {
       access: "private",
@@ -70,9 +113,10 @@ export async function createImageDerivative(
     return {
       mediaId: media.id,
       originalName: media.original_name,
-      status: "converted",
+      status,
       derivativePath,
-      derivativeBytes: derivative.length
+      derivativeBytes: derivative.length,
+      ...(conversionError ? { error: conversionError } : {})
     };
   } catch (error) {
     return {
