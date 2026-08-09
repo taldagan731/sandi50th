@@ -84,7 +84,8 @@ do $$ begin
   insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
   values('sandi-memories','sandi-memories',false,5368709120,array[
     'image/jpeg','image/png','image/webp','image/heic','image/heif','video/mp4','video/quicktime','video/webm',
-    'audio/mpeg','audio/mp4','audio/wav','audio/x-m4a','application/pdf'
+    'audio/mpeg','audio/mp4','audio/wav','audio/x-m4a','audio/webm','audio/ogg','audio/aac',
+    'audio/3gpp','audio/caf','audio/x-caf','audio/quicktime','application/pdf'
   ]) on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
 exception when undefined_column then
   insert into storage.buckets(id,name,public) values('sandi-memories','sandi-memories',false) on conflict(id) do update set public=false;

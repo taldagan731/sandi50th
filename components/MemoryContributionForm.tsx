@@ -141,9 +141,12 @@ export function MemoryContributionForm({
 
   function stopDictation() {
     speechRecognition.current?.stop();
-    if (speechRecorder.current?.state === "recording") speechRecorder.current.stop();
-    speechStream.current?.getTracks().forEach(track => track.stop());
-    speechStream.current = null;
+    if (speechRecorder.current?.state === "recording") {
+      // Safari can deliver its final MP4/AAC chunk asynchronously. Ask for it
+      // before stopping and leave the tracks alive until onstop has run.
+      try { speechRecorder.current.requestData(); } catch { /* optional in older browsers */ }
+      speechRecorder.current.stop();
+    }
     setListening(false);
     setSpeechDraft("");
   }
@@ -168,7 +171,9 @@ export function MemoryContributionForm({
       speechChunks.current = [];
       recorder.ondataavailable = event => { if (event.data.size) speechChunks.current.push(event.data); };
       recorder.onstop = () => {
-        const type = recorder.mimeType || mimeType || "audio/webm";
+        // Safari reports audio/mp4 with a codec parameter. Canonicalize it so
+        // the Blob, File, validator, and upload request all agree.
+        const type = normalizedMimeType(recorder.mimeType || mimeType || "audio/webm");
         const blob = new Blob(speechChunks.current, { type });
         if (blob.size) {
           const extension = type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm";
@@ -179,6 +184,8 @@ export function MemoryContributionForm({
         }
         speechChunks.current = [];
         speechRecorder.current = null;
+        speechStream.current?.getTracks().forEach(track => track.stop());
+        speechStream.current = null;
       };
       recorder.start(500);
 
@@ -748,7 +755,7 @@ async function filesFromEntry(entry: LegacyEntry, parent: string): Promise<File[
 
 function normalizedFileType(file: File) {
   if (file.type) {
-    const type = file.type.toLowerCase().split(";", 1)[0].trim();
+    const type = normalizedMimeType(file.type);
     if (type === "application/x-zip-compressed") return type;
     return type;
   }
@@ -769,6 +776,10 @@ function normalizedFileType(file: File) {
   if (name.endsWith(".zip")) return "application/zip";
   if (name.endsWith(".pdf")) return "application/pdf";
   return "application/octet-stream";
+}
+
+function normalizedMimeType(value: string) {
+  return value.toLowerCase().split(";", 1)[0].trim();
 }
 
 function isAcceptedType(file: File) {
