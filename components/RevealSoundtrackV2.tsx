@@ -241,12 +241,12 @@ export function RevealSoundtrack({
         <aside className="soundtrackDock" aria-label="Reveal audio controls">
           <button type="button" onClick={togglePlayback}>Pause</button>
           <label>
-            <span className="srOnly">Birthday song volume</span>
-            <input type="range" min="0" max="1" step=".05" value={volume} onChange={event => setVolume(Number(event.target.value))} />
+            <span>Music {Math.round(volume * 100)}%</span>
+            <input aria-label="Birthday song volume" type="range" min="0" max="1" step=".05" value={volume} onChange={event => setVolume(Number(event.target.value))} />
           </label>
           <label title="Music level while someone is speaking">
-            <span className="srOnly">Ducked music level</span>
-            <input type="range" min=".03" max=".18" step=".01" value={duckVolume} onChange={event => setDuckVolume(Number(event.target.value))} />
+            <span>Under voices {Math.round(duckVolume * 100)}%</span>
+            <input aria-label="Music level under voices" type="range" min=".03" max=".18" step=".01" value={duckVolume} onChange={event => setDuckVolume(Number(event.target.value))} />
           </label>
           <button type="button" onClick={toggleChorus} aria-pressed={chorusEnabled}>{chorusEnabled ? "Voices on" : "Voices off"}</button>
           <button className="masterMute" type="button" onClick={() => setMasterMuted(value => !value)} aria-pressed={masterMuted}>
