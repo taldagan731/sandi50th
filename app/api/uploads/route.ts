@@ -29,6 +29,9 @@ const ALLOWED_CONTENT_TYPES = [
   "audio/ogg",
   "audio/aac",
   "audio/3gpp",
+  "audio/caf",
+  "audio/x-caf",
+  "audio/quicktime",
   "application/pdf",
   "application/zip",
   "application/x-zip-compressed"
@@ -52,11 +55,12 @@ export async function POST(request: Request) {
         if (!match || !clientPayload) throw new Error("Invalid contribution upload path.");
 
         const payload = JSON.parse(clientPayload) as TokenPayload;
+        const contentType = payload.contentType.toLowerCase().split(";", 1)[0].trim();
         if (
           payload.submissionId !== match[1] ||
           payload.bytes < 1 ||
           payload.bytes > MAX_FILE_BYTES ||
-          !ALLOWED_CONTENT_TYPES.includes(payload.contentType)
+          !ALLOWED_CONTENT_TYPES.includes(contentType)
         ) {
           throw new Error("Invalid contribution upload request.");
         }
@@ -75,7 +79,7 @@ export async function POST(request: Request) {
           addRandomSuffix: false,
           allowOverwrite: true,
           validUntil: Date.now() + 2 * 60 * 60 * 1000,
-          tokenPayload: JSON.stringify(payload)
+          tokenPayload: JSON.stringify({ ...payload, contentType })
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {

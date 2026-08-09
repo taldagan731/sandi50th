@@ -748,7 +748,7 @@ async function filesFromEntry(entry: LegacyEntry, parent: string): Promise<File[
 
 function normalizedFileType(file: File) {
   if (file.type) {
-    const type = file.type.toLowerCase();
+    const type = file.type.toLowerCase().split(";", 1)[0].trim();
     if (type === "application/x-zip-compressed") return type;
     return type;
   }
@@ -762,6 +762,8 @@ function normalizedFileType(file: File) {
   if (name.endsWith(".3gp")) return "video/3gpp";
   if (name.endsWith(".3g2")) return "video/3gpp2";
   if (name.endsWith(".m4a")) return "audio/x-m4a";
+  if (name.endsWith(".caf")) return "audio/x-caf";
+  if (name.endsWith(".aac")) return "audio/aac";
   if (name.endsWith(".mp3")) return "audio/mpeg";
   if (name.endsWith(".wav")) return "audio/wav";
   if (name.endsWith(".zip")) return "application/zip";
