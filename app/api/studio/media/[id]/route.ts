@@ -1,6 +1,6 @@
 import { head } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 
@@ -8,7 +8,7 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;

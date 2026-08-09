@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { createRevealPreviewToken } from "@/lib/reveal-preview";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { expires, signature } = createRevealPreviewToken();

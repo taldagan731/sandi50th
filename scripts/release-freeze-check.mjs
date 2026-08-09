@@ -129,7 +129,7 @@ requireText("app/api/internal/photo-intelligence/route.ts", "before.remaining ==
 requireText("lib/photo-intelligence/index.ts", "prepareGlobalPhotoArchive", "the complete photo archive queue");
 requireText("lib/photo-intelligence/index.ts", "applyChapterFallbacks", "the no-empty-chapter fallback assignment");
 requireText("lib/photo-intelligence/index.ts", "Temporary archive placement", "replaceable low-confidence archive placement");
-requireText("app/api/studio/photo-intelligence/archive/route.ts", "requireStudioOwner", "owner-only archive assignment");
+requireText("app/api/studio/photo-intelligence/archive/route.ts", "requireStudioAccess", "owner-only archive assignment");
 requireText("components/StoryStudio.tsx", "Auto-assign the entire archive", "the archive assignment control");
 requireText("components/StoryStudio.tsx", "https://www.sandi50th.com/studio/reset-password", "the production password-reset fallback");
 forbidText("app/api/submissions/complete/route.ts", "processPhotoAnalysisJobs", "inline full-archive photo processing");
@@ -138,7 +138,7 @@ requireText("lib/notifications/contribution-email.ts", "CONTRIBUTION_ALERT_EMAIL
 requireText("lib/notifications/contribution-email.ts", "accepted.id", "Resend acceptance identifier");
 requireText("app/api/submissions/complete/route.ts", "contribution-email-sent", "arrival-email acceptance logging");
 requireText("lib/photo-intelligence/index.ts", "textAssigned", "written-memory chapter fallback");
-requireText("app/api/studio/notifications/test/route.ts", "requireStudioOwner", "owner authentication for arrival-email testing");
+requireText("app/api/studio/notifications/test/route.ts", "requireStudioAccess", "owner authentication for arrival-email testing");
 requireText("app/api/studio/notifications/test/route.ts", "sendContributionArrivalEmail", "the owner-triggered Resend delivery test");
 
 requireText("lib/family-qa.ts", "FAMILY_QA_SEED", "the structured family Q&A seed");
@@ -146,7 +146,7 @@ requireText("lib/family-qa.ts", "FAMILY_QA_PENDING", "the unanswered-family foll
 forbidText("lib/family-qa.ts", "@yahoo.com", "a private source email address");
 forbidText("lib/family-qa.ts", "@hotmail.com", "a private source email address");
 forbidText("lib/family-qa.ts", "(212) 585-3242", "the unrelated medical signature");
-requireText("app/api/studio/family-qa/route.ts", "requireStudioOwner", "owner authentication for Family Q&A");
+requireText("app/api/studio/family-qa/route.ts", "requireStudioAccess", "owner authentication for Family Q&A");
 requireText("app/api/studio/family-qa/route.ts", '.eq("status", "family_qa")', "Family Q&A record isolation");
 requireText("components/FamilyQaStudio.tsx", "Add the supplied family Q&A", "the idempotent supplied-material import");
 requireText("components/FamilyQaStudio.tsx", "Linked photographs", "photograph linking");

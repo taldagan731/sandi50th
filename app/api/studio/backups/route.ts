@@ -1,7 +1,7 @@
 import { copy, head, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -15,7 +15,7 @@ function safeName(name: string) {
 }
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let requestedSubmissionId: string | undefined;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 import { isTestContributor } from "@/lib/chapters";
 import { buildContributionReport } from "@/lib/studio/contribution-report";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
@@ -34,7 +34,7 @@ const intelligenceColumns = [
 ].join(",");
 
 export async function GET() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   const previewOwner = !owner && await hasRevealPreviewAccess();
   if (!owner && !previewOwner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const previewProject = owner ? null : await getRevealProject();

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 import {
   applyChapterFallbacks,
   globalPhotoArchiveStatus,
@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const prepared = await prepareGlobalPhotoArchive();
   if (!prepared.available || !prepared.projectId) {

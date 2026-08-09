@@ -1,11 +1,11 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const form = await request.formData();

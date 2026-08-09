@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createImageDerivative, isImageMedia, type DerivativeMedia } from "@/lib/media-derivatives";
 import { detectOriginalOrientation, manualRotationFromNotes, notesWithManualRotation } from "@/lib/media-orientation";
 import { readPrivateMedia } from "@/lib/photo-intelligence/media";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -15,7 +15,7 @@ const schema = z.discriminatedUnion("action", [
 
 type PhotoRow = DerivativeMedia & { reviewer_notes: string | null; created_at: string };
 
-async function ownerPhotos(owner: NonNullable<Awaited<ReturnType<typeof requireStudioOwner>>>) {
+async function ownerPhotos(owner: NonNullable<Awaited<ReturnType<typeof requireStudioAccess>>>) {
   const { data: submissions, error: submissionError } = await owner.supabase
     .from("submissions")
     .select("id,name")
@@ -36,7 +36,7 @@ async function ownerPhotos(owner: NonNullable<Awaited<ReturnType<typeof requireS
 }
 
 export async function GET() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const photos = await ownerPhotos(owner);
@@ -57,7 +57,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = schema.parse(await request.json());

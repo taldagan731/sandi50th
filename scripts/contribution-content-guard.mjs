@@ -41,8 +41,8 @@ if (familySource.includes("showInChapter: false")) {
 
 for (const path of ["app/api/studio/review/route.ts", "app/api/studio/submission-review/route.ts"]) {
   const source = readFileSync(path, "utf8");
-  if (!source.includes("requireStudioOwner")) {
-    failures.push(`${path} permits exclusion without the authenticated owner gate.`);
+  if (!source.includes("requireStudioAccess")) {
+    failures.push(`${path} permits exclusion without the private owner gate.`);
   }
 }
 
@@ -51,4 +51,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Contribution content guard passed: wording never controls storage or default visibility; only test records and authenticated owner exclusion can hide content.");
+console.log("Contribution content guard passed: wording never controls storage or default visibility; only test records and private owner exclusion can hide content.");

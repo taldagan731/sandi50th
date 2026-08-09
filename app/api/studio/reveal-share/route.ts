@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hashRevealShareToken } from "@/lib/reveal-share";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 
 const requestSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create"), expiresAt: z.string().datetime() }),
@@ -13,7 +13,7 @@ function migrationMissing(error: { code?: string; message?: string } | null) {
   return Boolean(error && (error.code === "42P01" || /reveal_share_links|reveal_share_visits/i.test(error.message ?? "")));
 }
 
-async function status(owner: NonNullable<Awaited<ReturnType<typeof requireStudioOwner>>>) {
+async function status(owner: NonNullable<Awaited<ReturnType<typeof requireStudioAccess>>>) {
   const { data: link, error } = await owner.supabase
     .from("reveal_share_links")
     .select("id,expires_at,revoked_at,created_at")
@@ -53,7 +53,7 @@ async function status(owner: NonNullable<Awaited<ReturnType<typeof requireStudio
 }
 
 export async function GET() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     return NextResponse.json(await status(owner));
@@ -63,7 +63,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = requestSchema.parse(await request.json());

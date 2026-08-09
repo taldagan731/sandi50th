@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createImageDerivative, isHeicMedia, type DerivativeMedia } from "@/lib/media-derivatives";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 import { getRevealProject } from "@/lib/reveal-visibility";
 
 export const runtime = "nodejs";
@@ -12,7 +12,7 @@ export const maxDuration = 300;
 const postSchema = z.object({ limit: z.number().int().min(1).max(8).default(4) });
 
 async function requireOwnerOrPreview() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (owner) return { supabase: owner.supabase, projectId: owner.project.id };
   if (!await hasRevealPreviewAccess()) return null;
   const project = await getRevealProject();

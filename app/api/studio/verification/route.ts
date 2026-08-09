@@ -3,14 +3,14 @@ import { NextResponse } from "next/server";
 import { isTestContributor } from "@/lib/chapters";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
 import { getRevealProject } from "@/lib/reveal-visibility";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function GET() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   const previewOwner = !owner && await hasRevealPreviewAccess();
   if (!owner && !previewOwner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

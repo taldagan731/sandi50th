@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     : `${expires}.${signature}`;
   const cookieExpires = invited ? OWNER_INVITATION_EXPIRES : Number(expires);
   const requestedNext = url.searchParams.get("next") || "/reveal";
-  const next = requestedNext === "/shader-preview" || requestedNext === "/water-preview" || requestedNext === "/reveal" || requestedNext.startsWith("/reveal?")
+  const next = requestedNext === "/studio" || requestedNext.startsWith("/studio?") || requestedNext === "/shader-preview" || requestedNext === "/water-preview" || requestedNext === "/reveal" || requestedNext.startsWith("/reveal?")
     ? requestedNext
     : "/reveal";
   const maxAge = Math.max(1, cookieExpires - Math.floor(Date.now() / 1000));

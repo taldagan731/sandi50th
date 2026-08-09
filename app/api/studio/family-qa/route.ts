@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireStudioOwner } from "@/lib/studio/auth";
+import { requireStudioAccess } from "@/lib/studio/auth";
 import {
   FAMILY_CHORUSES,
   FAMILY_QA_PENDING,
@@ -148,7 +148,7 @@ function parseBulk(text: string) {
   });
 }
 
-async function currentAnswers(owner: NonNullable<Awaited<ReturnType<typeof requireStudioOwner>>>) {
+async function currentAnswers(owner: NonNullable<Awaited<ReturnType<typeof requireStudioAccess>>>) {
   const result = await owner.supabase
     .from("submissions")
     .select(columns)
@@ -160,7 +160,7 @@ async function currentAnswers(owner: NonNullable<Awaited<ReturnType<typeof requi
 }
 
 export async function GET() {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     return NextResponse.json({
@@ -175,7 +175,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const owner = await requireStudioOwner();
+  const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {

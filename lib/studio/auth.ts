@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
 
 export const STUDIO_COOKIE = "sandi-studio-token";
 export const STUDIO_REFRESH_COOKIE = "sandi-studio-refresh";
@@ -74,4 +75,36 @@ export async function requireStudioOwner() {
 
   await setStudioSession(data.session.access_token, data.session.refresh_token);
   return owner;
+}
+
+/**
+ * Allows the owner's existing signed preview invitation to open Studio without
+ * a Supabase password. Guest reveal-share links do not qualify. The real owner
+ * membership is still resolved so edits retain the correct audit identity.
+ */
+export async function requireStudioAccess() {
+  const signedInOwner = await requireStudioOwner();
+  if (signedInOwner) return signedInOwner;
+  if (!await hasRevealPreviewAccess()) return null;
+
+  const supabase = createAdminClient();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, slug, title")
+    .eq("slug", "sandi50th")
+    .single();
+  if (projectError || !project) return null;
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("project_members")
+    .select("user_id")
+    .eq("project_id", project.id)
+    .eq("role", "owner")
+    .limit(1)
+    .maybeSingle();
+  if (membershipError || !membership) return null;
+
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(membership.user_id);
+  if (userError || !userData.user) return null;
+  return { user: userData.user, project, supabase };
 }
