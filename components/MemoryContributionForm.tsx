@@ -19,8 +19,8 @@ import {
 const MAX_FILES = 500;
 const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 10 * 1024 * 1024 * 1024;
-const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
-const PARALLEL_UPLOADS = 3;
+const MULTIPART_THRESHOLD = 8 * 1024 * 1024;
+const PARALLEL_UPLOADS = 1;
 const EMAIL_FALLBACK = "mailto:uploads@sandi50th.com?subject=Sandi%2050th%20memory%20upload";
 
 const chapters = [
@@ -714,7 +714,7 @@ async function uploadWithRetry(
           contentType: normalizedFileType(selected.file)
         }),
         contentType: normalizedFileType(selected.file),
-        multipart: selected.file.size >= MULTIPART_THRESHOLD,
+        multipart: normalizedFileType(selected.file).startsWith("video/") || selected.file.size >= MULTIPART_THRESHOLD,
         onUploadProgress: event => onProgress(event.percentage)
       });
     } catch (error) {
@@ -758,6 +758,9 @@ function normalizedFileType(file: File) {
   if (name.endsWith(".mov")) return "video/quicktime";
   if (name.endsWith(".mp4")) return "video/mp4";
   if (name.endsWith(".webm")) return "video/webm";
+  if (name.endsWith(".m4v")) return "video/x-m4v";
+  if (name.endsWith(".3gp")) return "video/3gpp";
+  if (name.endsWith(".3g2")) return "video/3gpp2";
   if (name.endsWith(".m4a")) return "audio/x-m4a";
   if (name.endsWith(".mp3")) return "audio/mpeg";
   if (name.endsWith(".wav")) return "audio/wav";
