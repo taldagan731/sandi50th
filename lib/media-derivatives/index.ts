@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { put } from "@vercel/blob";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readPrivateMedia } from "@/lib/photo-intelligence/media";
+import { detectOriginalOrientation, manualRotationFromNotes, type ExifOrientation } from "@/lib/media-orientation";
 
 export type DerivativeMedia = {
   id: string;
@@ -13,6 +14,7 @@ export type DerivativeMedia = {
   bytes: number;
   poster_path: string | null;
   chapter_number?: number | null;
+  reviewer_notes?: string | null;
 };
 
 export type DerivativeResult = {
@@ -22,6 +24,8 @@ export type DerivativeResult = {
   derivativePath?: string;
   derivativeBytes?: number;
   error?: string;
+  originalOrientation?: ExifOrientation;
+  manualRotation?: number;
 };
 
 export function isHeicMedia(media: Pick<DerivativeMedia, "mime_type" | "original_name" | "storage_path">) {
@@ -30,17 +34,48 @@ export function isHeicMedia(media: Pick<DerivativeMedia, "mime_type" | "original
     || /\.(?:heic|heif)(?:$|\?)/i.test(media.storage_path);
 }
 
-async function browserSafeJpeg(original: Buffer, heic: boolean) {
+
+export function isImageMedia(media: Pick<DerivativeMedia, "mime_type" | "original_name" | "storage_path">) {
+  return String(media.mime_type).startsWith("image/") || isHeicMedia(media);
+}
+
+async function explicitlyOrientDecoded(decoded: Buffer, orientation: ExifOrientation) {
+  const angle = orientation === 6 || orientation === 5
+    ? 90
+    : orientation === 3 || orientation === 4
+      ? 180
+      : orientation === 8 || orientation === 7
+        ? 270
+        : 0;
+  const flop = orientation === 2 || orientation === 4 || orientation === 5 || orientation === 7;
+  if (!flop) return sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 }).rotate(angle);
+  if (angle === 0) return sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 }).flop();
+  if (angle === 180) return sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 }).flip();
+  const rotated = await sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 })
+    .rotate(angle)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return sharp(rotated.data, {
+    raw: { width: rotated.info.width, height: rotated.info.height, channels: rotated.info.channels }
+  }).flop();
+}
+async function browserSafeJpeg(original: Buffer, heic: boolean, manualRotation: number) {
+  const originalOrientation = await detectOriginalOrientation(original);
   const decoded = heic
     ? Buffer.from(await convertHeic({ buffer: original, format: "JPEG", quality: 0.94 }))
     : original;
 
-  return sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 })
-    .rotate()
+  const pipeline = heic
+    ? await explicitlyOrientDecoded(decoded, originalOrientation)
+    : sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 }).autoOrient();
+  const derivative = await pipeline
+    .rotate(manualRotation)
     .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
     .flatten({ background: "#f5d9dd" })
+    .withMetadata({ orientation: 1 })
     .jpeg({ quality: 88, progressive: true, chromaSubsampling: "4:4:4" })
     .toBuffer();
+  return { derivative, originalOrientation };
 }
 
 async function preservedPhotoPlaceholder() {
@@ -63,7 +98,7 @@ async function preservedPhotoPlaceholder() {
       <path d="M585 785l150-170 105 105 95-92 180 157z" fill="#fff4df" opacity="0.88"/>
       <text x="800" y="930" text-anchor="middle" fill="#fff4df" font-family="Arial, sans-serif" font-size="56" font-weight="700">Photograph safely preserved</text>
     </svg>`);
-  return sharp(svg).jpeg({ quality: 88, progressive: true }).toBuffer();
+  return sharp(svg).withMetadata({ orientation: 1 }).jpeg({ quality: 88, progressive: true }).toBuffer();
 }
 
 export async function createImageDerivative(
@@ -71,7 +106,7 @@ export async function createImageDerivative(
   media: DerivativeMedia,
   options: { force?: boolean } = {}
 ): Promise<DerivativeResult> {
-  if (!String(media.mime_type).startsWith("image/") && !isHeicMedia(media)) {
+  if (!isImageMedia(media)) {
     return { mediaId: media.id, originalName: media.original_name, status: "skipped" };
   }
   if (media.poster_path && !options.force) {
@@ -94,8 +129,12 @@ export async function createImageDerivative(
     let status: DerivativeResult["status"] = "converted";
     let conversionError: string | undefined;
     let derivative: Buffer;
+    let originalOrientation: ExifOrientation = 1;
+    const manualRotation = manualRotationFromNotes(media.reviewer_notes);
     try {
-      derivative = await browserSafeJpeg(original, isHeicMedia(media));
+      const prepared = await browserSafeJpeg(original, isHeicMedia(media), manualRotation);
+      derivative = prepared.derivative;
+      originalOrientation = prepared.originalOrientation;
     } catch (error) {
       status = "placeholder";
       conversionError = error instanceof Error ? error.message : "The original image could not be decoded.";
@@ -116,7 +155,9 @@ export async function createImageDerivative(
       status,
       derivativePath,
       derivativeBytes: derivative.length,
-      ...(conversionError ? { error: conversionError } : {})
+      ...(conversionError ? { error: conversionError } : {}),
+      originalOrientation,
+      manualRotation,
     };
   } catch (error) {
     return {
@@ -131,10 +172,10 @@ export async function createImageDerivative(
 export async function processSubmissionImageDerivatives(supabase: SupabaseClient, submissionId: string) {
   const { data, error } = await supabase
     .from("media_assets")
-    .select("id,submission_id,storage_path,original_name,mime_type,bytes,poster_path,chapter_number")
+    .select("id,submission_id,storage_path,original_name,mime_type,bytes,poster_path,chapter_number,reviewer_notes")
     .eq("submission_id", submissionId);
   if (error) throw error;
-  const candidates = ((data ?? []) as DerivativeMedia[]).filter(isHeicMedia);
+  const candidates = ((data ?? []) as DerivativeMedia[]).filter(isImageMedia);
   const results: DerivativeResult[] = [];
   for (const media of candidates) results.push(await createImageDerivative(supabase, media));
   return results;

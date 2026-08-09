@@ -10,6 +10,7 @@ import { NameChorusStudio } from "@/components/NameChorusStudio";
 import { ContributionReadinessReport } from "@/components/ContributionReadinessReport";
 import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
 import { RevealShareStudio } from "@/components/RevealShareStudio";
+import { PhotoOrientationStudio } from "@/components/PhotoOrientationStudio";
 import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
@@ -341,6 +342,8 @@ export function StoryStudio() {
 
 
       <RevealShareStudio />
+
+      <PhotoOrientationStudio />
       <details className="studioTools ownerArchiveImporter">
         <summary>Import owner archive photographs</summary>
         <MemoryContributionForm mode="ownerArchive" />
