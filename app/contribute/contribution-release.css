@@ -1,11 +1,16 @@
 .contributionHub{display:grid;gap:clamp(1.5rem,4vw,3rem)}
-.contributionPathNav{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.contributionChoiceIntro{text-align:center}.contributionChoiceIntro h2{margin:.35rem 0;font:500 clamp(2rem,5vw,4rem)/1 var(--font-display,Georgia,serif)}.contributionChoiceIntro p{margin:.5rem 0 0;color:rgba(247,239,229,.68)}.contributionPathNav{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
 .contributionPathNav button{min-height:9rem;display:grid;align-content:start;gap:.45rem;text-align:left;border:1px solid rgba(215,177,108,.24);border-radius:1rem;background:rgba(255,255,255,.025);color:#f7efe5;padding:1.1rem;cursor:pointer;transition:border-color .2s,background .2s,transform .2s}
 .contributionPathNav button:hover,.contributionPathNav button:focus-visible{border-color:rgba(215,177,108,.72);transform:translateY(-2px)}
 .contributionPathNav button[aria-pressed=true]{border-color:#d7b16c;background:rgba(215,177,108,.1)}
 .contributionPathNav span{color:#d7b16c;font-size:.68rem;letter-spacing:.18em}
 .contributionPathNav strong{font-family:var(--font-display,Georgia,serif);font-size:clamp(1.15rem,2vw,1.55rem);font-weight:400;line-height:1.15}
 .contributionPathNav small{color:rgba(247,239,229,.62);line-height:1.45}
+.nameOnlyShortcut{justify-self:center;border:0;background:none;color:rgba(247,239,229,.62);text-decoration:underline;text-underline-offset:.25rem;cursor:pointer}
+.memoryInstruction{display:block;margin-top:.65rem;color:#f4dcae;font:700 .95rem/1.5 var(--sans)}
+.requiredMark{display:inline-block;margin-left:.45rem;padding:.2rem .45rem;border-radius:999px;background:#d7b16c;color:#27151e;font:800 .66rem/1 var(--sans);text-transform:uppercase;letter-spacing:.06em}
+.memoryOpeningActions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.memoryRequirement{margin:.9rem 0 0;padding:.85rem 1rem;border:1px solid rgba(255,148,148,.5);border-radius:.75rem;background:rgba(160,38,54,.2);color:#ffe0e0;font-weight:700}
 .albumDrop{border-style:dashed;transition:border-color .2s,background .2s}
 .albumDrop.isDragging{border-color:#d7b16c;background:rgba(215,177,108,.12)}
 .albumActions{display:flex;justify-content:center;gap:.65rem;flex-wrap:wrap;margin-top:.8rem}
@@ -62,6 +67,7 @@
  .contributionPathNav button{min-height:4.75rem;padding:.7rem}
  .contributionPathNav span,.contributionPathNav small{display:none}
  .contributionPathNav strong{font-size:1rem}
+ .memoryOpeningActions>*{width:100%}
  .contributionPath{scroll-margin-top:15.5rem;outline:none}
  .thumbnailGrid{grid-template-columns:1fr}
  .albumSelection{max-height:34rem}

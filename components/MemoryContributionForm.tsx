@@ -72,14 +72,19 @@ type LegacyEntry = {
 
 export function MemoryContributionForm({
   mode = "contributor",
-  initialChapter
+  initialChapter,
+  startWithUpload = false,
+  onSkipToPhotos
 }: {
   mode?: "contributor" | "ownerArchive";
   initialChapter?: string;
+  startWithUpload?: boolean;
+  onSkipToPhotos?: () => void;
 }) {
   const ownerArchive = mode === "ownerArchive";
   const [firstMemory, setFirstMemory] = useState(ownerArchive ? "Owner archive batch" : "");
-  const [opened, setOpened] = useState(ownerArchive);
+  const [opened, setOpened] = useState(ownerArchive || startWithUpload);
+  const [memoryError, setMemoryError] = useState("");
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
@@ -212,6 +217,10 @@ export function MemoryContributionForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (startWithUpload && !files.length) {
+      setUploadError("Choose at least one photograph or video before sending.");
+      return;
+    }
     if (batch) {
       await runBatch(batch);
       return;
@@ -229,7 +238,7 @@ export function MemoryContributionForm({
         name: ownerArchive ? "Owner archive" : String(form.get("name") ?? ""),
         contact: ownerArchive ? "Private owner import" : String(form.get("contact") ?? ""),
         relationship: ownerArchive ? "Owner archive" : String(form.get("relationship") ?? "Other"),
-        firstMemory: ownerArchive ? "Owner archive batch" : firstMemory,
+        firstMemory: ownerArchive ? "Owner archive batch" : firstMemory.trim() || "Photographs or video shared for Sandi's birthday story.",
         story: String(form.get("story") ?? ""),
         approximateYear: String(form.get("year") ?? ""),
         place: String(form.get("place") ?? ""),
@@ -388,31 +397,44 @@ export function MemoryContributionForm({
   const failedCount = files.filter(item => item.status === "failed").length;
 
   return (
-    <form className={"memoryForm" + (ownerArchive ? " ownerArchiveForm" : "")} onSubmit={submit}>
+    <form className={"memoryForm" + (ownerArchive ? " ownerArchiveForm" : startWithUpload ? " photoOnlyForm" : "")} onSubmit={submit}>
       {ownerArchive && <div className="panel ownerArchiveNotice"><span className="eyebrow">OWNER ARCHIVE</span><h2>Import Sandi’s private archive</h2><p>These photographs are labeled separately from contributions and deduplicated by their file contents.</p></div>}
-      {!ownerArchive && <section className="memoryOpening panel">
-        <span className="eyebrow">BEGIN WITH THE STORY</span>
+      {!ownerArchive && !startWithUpload && <section className="memoryOpening panel">
+        <span className="eyebrow">STEP 1 OF 3 - WRITE A MEMORY</span>
         <label className="openingQuestion">
-          When you think of Sandi, what is the first memory that comes to mind?
+          <span>When you think of Sandi, what is the first memory that comes to mind? <b className="requiredMark">Required to continue</b></span>
+          <small className="memoryInstruction" id="memory-instruction">Write a sentence or two here first - then you will be able to add photos, video, or a voice recording.</small>
           <textarea
             rows={6}
             value={firstMemory}
-            onChange={event => setFirstMemory(event.target.value)}
-            placeholder="Do not worry about writing beautifully. Tell us what happened, where you were, and why you still remember it."
-            required
+            onChange={event => { setFirstMemory(event.target.value); if (memoryError) setMemoryError(""); }}
+            placeholder="Tell us what happened, where you were, or why you remember it."
+            aria-invalid={Boolean(memoryError)}
+            aria-describedby={memoryError ? "memory-instruction memory-error" : "memory-instruction"}
           />
         </label>
         {!opened && (
-          <button type="button" className="primary" disabled={!firstMemory.trim()} onClick={() => setOpened(true)}>
-            Continue the story
-          </button>
+          <>
+            <div className="memoryOpeningActions">
+              <button type="button" className="primary" onClick={() => {
+                if (!firstMemory.trim()) {
+                  setMemoryError("Write a sentence or two before continuing, or use Skip ahead to send photos without writing.");
+                  return;
+                }
+                setMemoryError("");
+                setOpened(true);
+              }}>Continue the story</button>
+              <button type="button" className="secondary" onClick={onSkipToPhotos}>Just want to send photos? Skip ahead.</button>
+            </div>
+            {memoryError && <p className="memoryRequirement" id="memory-error" role="alert">{memoryError}</p>}
+          </>
         )}
       </section>}
 
       {opened && (
         <div className="contributionColumns">
           <section className="panel formDetails">
-            <span className="eyebrow">THE DETAILS BEHIND THE MEMORY</span>
+            <span className="eyebrow">{ownerArchive ? "OWNER ARCHIVE DETAILS" : startWithUpload ? "STEP 1 OF 2 - ADD PHOTOS OR VIDEO" : "STEP 2 OF 3 - DETAILS AND MEDIA"}</span>
             <div className="grid2 contributionGrid">
               <label>Your name<input name="name" required defaultValue={ownerArchive ? "Owner archive" : undefined} placeholder="How Sandi knows you" /></label>
               <label>Email or phone<input name="contact" required defaultValue={ownerArchive ? "Private owner import" : undefined} placeholder="For project updates only" /></label>
@@ -432,13 +454,14 @@ export function MemoryContributionForm({
               </select>
             </label>
 
-            <label>Choose a prompt for your birthday message
-              <select name="prompt">{prompts.map(prompt => <option key={prompt}>{prompt}</option>)}</select>
-            </label>
-
-            <label>The fuller story
-              <textarea name="story" rows={5} placeholder="Add details, an inside joke, what happened before or after, or why the memory matters." />
-            </label>
+            {!startWithUpload && <>
+              <label>Choose a prompt for your birthday message
+                <select name="prompt">{prompts.map(prompt => <option key={prompt}>{prompt}</option>)}</select>
+              </label>
+              <label>The fuller story
+                <textarea name="story" rows={5} placeholder="Add details, an inside joke, what happened before or after, or why the memory matters." />
+              </label>
+            </>}
 
             <div
               className={"uploadBox albumDrop " + (dragging ? "isDragging" : "")}
@@ -507,7 +530,7 @@ export function MemoryContributionForm({
               </div>
             )}
             <button className="primary submitMemory" type="submit" disabled={uploading}>
-              {uploading ? "Please keep this page open…" : failedCount ? "Retry failed files" : "Send my contribution securely"}
+              {uploading ? "Please keep this page open…" : failedCount ? "Retry failed files" : startWithUpload ? "Step 2 of 2 - Send photos securely" : "Step 3 of 3 - Send my contribution securely"}
             </button>
             <p className="secureNote">Files go directly from this device to private storage, three at a time. If one fails, the others remain saved and only that file needs retrying.</p>
             <p className="uploadFallback">If uploading does not work, email the files to <a href={EMAIL_FALLBACK}>uploads@sandi50th.com</a> with your name and a short note. Do not delete the originals from your phone.</p>

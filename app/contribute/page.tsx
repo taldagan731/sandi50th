@@ -23,7 +23,7 @@ export default async function ContributePage({
 }) {
   const { chapter, mode } = await searchParams;
   const initialChapter = chapter ? chapterDefaults[chapter] : undefined;
-  const initialPath = mode === "birthday" ? "birthday" : mode === "voice" ? "voice" : mode === "name" ? "name" : "memory";
+  const initialPath = mode === "birthday" ? "birthday" : mode === "voice" ? "voice" : mode === "photos" ? "photos" : mode === "name" ? "name" : "memory";
   const revealPublic = await isRevealPublic();
 
   return (
