@@ -85,7 +85,12 @@ export async function requireStudioOwner() {
 export async function requireStudioAccess() {
   const signedInOwner = await requireStudioOwner();
   if (signedInOwner) return signedInOwner;
-  if (!await hasRevealPreviewAccess()) return null;
+
+  // Temporary launch-week bypass explicitly approved by the owner. It closes
+  // automatically after Wednesday night unless production sets another time.
+  const bypassUntil = Date.parse(process.env.STUDIO_BYPASS_UNTIL || "2026-08-13T03:59:00.000Z");
+  const temporaryBypassActive = Number.isFinite(bypassUntil) && Date.now() < bypassUntil;
+  if (!temporaryBypassActive && !await hasRevealPreviewAccess()) return null;
 
   const supabase = createAdminClient();
   const { data: project, error: projectError } = await supabase
