@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { isTestContributor } from "@/lib/chapters";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
+import { getRevealShareAccess } from "@/lib/reveal-share";
 import { getRevealProject } from "@/lib/reveal-visibility";
 
 export const runtime = "nodejs";
@@ -14,12 +15,14 @@ export async function GET(
 ) {
   const owner = await requireStudioOwner();
   const ownerPreview = !owner && await hasRevealPreviewAccess();
+  const guestShare = !owner && !ownerPreview ? await getRevealShareAccess() : null;
   const supabase = owner?.supabase ?? createAdminClient();
 
   let projectId = owner?.project.id ?? null;
   if (!projectId) {
     const project = await getRevealProject();
-    if (!project || (!ownerPreview && !project.revealPublic)) return new NextResponse("Not found", { status: 404 });
+    const guestCanView = Boolean(guestShare && project && guestShare.projectId === project.id);
+    if (!project || (!ownerPreview && !guestCanView && !project.revealPublic)) return new NextResponse("Not found", { status: 404 });
     projectId = project.id;
   }
 

@@ -7,6 +7,7 @@ import { applyFamilyQaSourceCorrections } from "@/lib/family-qa-source-correctio
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
+import { getRevealShareAccess } from "@/lib/reveal-share";
 import { getRevealProject, isRevealPublic } from "@/lib/reveal-visibility";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
@@ -79,13 +80,15 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
   const params = await searchParams;
   const owner = await requireStudioOwner();
   const ownerPreview = !owner && await hasRevealPreviewAccess();
+  const guestShare = !owner && !ownerPreview ? await getRevealShareAccess() : null;
   const includeTests = Boolean(owner && params?.review === "all");
   const supabase = owner?.supabase ?? createAdminClient();
   let projectId = owner?.project.id ?? null;
 
   if (!owner) {
     const publicProject = await getRevealProject();
-    if (!publicProject || (!ownerPreview && !publicProject.revealPublic)) return <LockedReveal />;
+    const guestCanView = Boolean(guestShare && publicProject && guestShare.projectId === publicProject.id);
+    if (!publicProject || (!ownerPreview && !guestCanView && !publicProject.revealPublic)) return <LockedReveal />;
     projectId = publicProject.id;
   }
   if (!projectId) return <LockedReveal />;
