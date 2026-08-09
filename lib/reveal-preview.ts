@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export const REVEAL_PREVIEW_COOKIE = "sandi-reveal-preview";
 export const REVEAL_PREVIEW_DAYS = 7;
 export const OWNER_INVITATION_EXPIRES = 1786852800;
-const OWNER_INVITATION_HASH = "1bdea9715a5e60992e903fc15e5898fd1c0fdf62598e20a75a0625790914004d";
+const OWNER_INVITATION_HASH = "b5641ae5182d6d5d9b72189fc402268c48aad9e165dc3689b451d7caf2b01e88";
 
 function signingSecret() {
   return process.env.OWNER_PREVIEW_SECRET || process.env.CRON_SECRET || "";
