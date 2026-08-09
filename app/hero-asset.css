@@ -22,6 +22,7 @@ body .heroBeachMediaVideo {
   object-fit: cover;
   object-position: 42% 48%;
   filter: saturate(1.72) contrast(1.09) brightness(1.19);
+  pointer-events: none;
   opacity: 0;
   transition: opacity .35s ease;
 }
