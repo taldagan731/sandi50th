@@ -100,8 +100,6 @@ export function MemoryContributionForm({
 }) {
   const ownerArchive = mode === "ownerArchive";
   const [firstMemory, setFirstMemory] = useState(ownerArchive ? "Owner archive batch" : "");
-  const [opened, setOpened] = useState(ownerArchive || startWithUpload);
-  const [memoryError, setMemoryError] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
   const [inputMode, setInputMode] = useState<"type" | "speak">("type");
   const [speechNotice, setSpeechNotice] = useState("");
@@ -202,7 +200,6 @@ export function MemoryContributionForm({
           }
           setFirstMemory([startingText, finished.trim()].filter(Boolean).join(" "));
           setSpeechDraft(interim.trim());
-          setMemoryError("");
         };
         recognition.onerror = event => {
           setSpeechNotice(event.error === "not-allowed"
@@ -343,6 +340,12 @@ export function MemoryContributionForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submittedForm = new FormData(event.currentTarget);
+    const fullerStory = String(submittedForm.get("story") ?? "").trim();
+    if (!ownerArchive && !firstMemory.trim() && !fullerStory && !files.length) {
+      setUploadError("Add at least one thing before sending: a memory, photograph, video, or voice recording.");
+      return;
+    }
     if (startWithUpload && !files.length) {
       setUploadError("Choose at least one photograph or video before sending.");
       return;
@@ -358,7 +361,7 @@ export function MemoryContributionForm({
     setProgress({});
 
     try {
-      const form = new FormData(event.currentTarget);
+      const form = submittedForm;
       const payload = {
         sourceType: ownerArchive ? "owner_archive" : "contributor",
         name: ownerArchive ? "Owner archive" : String(form.get("name") ?? ""),
@@ -526,22 +529,20 @@ export function MemoryContributionForm({
     <form className={"memoryForm" + (ownerArchive ? " ownerArchiveForm" : startWithUpload ? " photoOnlyForm" : "")} onSubmit={submit}>
       {ownerArchive && <div className="panel ownerArchiveNotice"><span className="eyebrow">OWNER ARCHIVE</span><h2>Import Sandi’s private archive</h2><p>These photographs are labeled separately from contributions and deduplicated by their file contents.</p></div>}
       {!ownerArchive && !startWithUpload && <section className="memoryOpening panel">
-        <span className="eyebrow">STEP 1 OF 3 - WRITE A MEMORY</span>
+        <span className="eyebrow">WRITE OR SPEAK — OPTIONAL</span>
         <label className="openingQuestion">
-          <span>When you think of Sandi, what is the first memory that comes to mind? <b className="requiredMark">Required to continue</b></span>
-          <small className="memoryInstruction" id="memory-instruction">Write a sentence or two here first - then you will be able to add photos, video, or a voice recording.</small>
+          <span>When you think of Sandi, what is the first memory that comes to mind?</span>
+          <small className="memoryInstruction" id="memory-instruction">Write if you want to. You can leave this blank and send only photos, video, or a voice recording.</small>
           <div className="memoryInputModes" role="group" aria-label="Choose how to add your memory">
             <button type="button" aria-pressed={inputMode === "type"} onClick={() => { if (listening) stopDictation(); setInputMode("type"); }}>Type</button>
             <button type="button" aria-pressed={inputMode === "speak"} onClick={() => setInputMode("speak")}>Speak</button>
           </div>
           <textarea
             rows={6}
-            required
             value={firstMemory}
-            onChange={event => { setFirstMemory(event.target.value); if (memoryError) setMemoryError(""); }}
+            onChange={event => setFirstMemory(event.target.value)}
             placeholder={inputMode === "speak" ? "Your spoken words will appear here. You can correct names before sending." : "Tell us what happened, where you were, or why you remember it."}
-            aria-invalid={Boolean(memoryError)}
-            aria-describedby={memoryError ? "memory-instruction memory-error" : "memory-instruction"}
+            aria-describedby="memory-instruction"
           />
           {inputMode === "speak" && speechSupported && (
             <button type="button" className="memoryMic" aria-pressed={listening} onClick={toggleDictation}>
@@ -554,28 +555,12 @@ export function MemoryContributionForm({
           {speechNotice && <small className="speechNotice" role="status">{speechNotice}</small>}
           {speechError && <small className="speechError" role="alert">{speechError}</small>}
         </label>
-        {!opened && (
-          <>
-            <div className="memoryOpeningActions">
-              <button type="button" className="primary" onClick={() => {
-                if (!firstMemory.trim()) {
-                  setMemoryError("Write a sentence or two before continuing, or use Skip ahead to send photos without writing.");
-                  return;
-                }
-                setMemoryError("");
-                setOpened(true);
-              }}>Continue the story</button>
-              <button type="button" className="secondary" onClick={onSkipToPhotos}>Just want to send photos? Skip ahead.</button>
-            </div>
-            {memoryError && <p className="memoryRequirement" id="memory-error" role="alert">{memoryError}</p>}
-          </>
-        )}
       </section>}
 
-      {opened && (
+      {(
         <div className="contributionColumns">
           <section className="panel formDetails">
-            <span className="eyebrow">{ownerArchive ? "OWNER ARCHIVE DETAILS" : startWithUpload ? "STEP 1 OF 2 - ADD PHOTOS OR VIDEO" : "STEP 2 OF 3 - DETAILS AND MEDIA"}</span>
+            <span className="eyebrow">{ownerArchive ? "OWNER ARCHIVE DETAILS" : "ADD ANYTHING YOU WANT — ALL ON THIS PAGE"}</span>
             <div className="grid2 contributionGrid">
               <label>Your name<input name="name" required defaultValue={ownerArchive ? "Owner archive" : undefined} placeholder="How Sandi knows you" /></label>
               <label>Email or phone<input name="contact" required defaultValue={ownerArchive ? "Private owner import" : undefined} placeholder="For project updates only" /></label>
@@ -618,6 +603,14 @@ export function MemoryContributionForm({
                 <label className="filePicker primary">
                   Choose photos and videos
                   <input type="file" multiple accept="image/*,video/*,audio/*,.heic,.heif,.pdf,.zip,application/zip" onChange={chooseFiles} />
+                </label>
+                <label className="filePicker secondary recordPicker">
+                  Record your voice
+                  <input type="file" accept="audio/*" capture onChange={chooseFiles} />
+                </label>
+                <label className="filePicker secondary recordPicker">
+                  Record a birthday video
+                  <input type="file" accept="video/*" capture="user" onChange={chooseFiles} />
                 </label>
                 <label className="filePicker secondary folderPicker">
                   Choose a folder
@@ -671,7 +664,7 @@ export function MemoryContributionForm({
               </div>
             )}
             <button className="primary submitMemory" type="submit" disabled={uploading}>
-              {uploading ? "Please keep this page open…" : failedCount ? "Retry failed files" : startWithUpload ? "Step 2 of 2 - Send photos securely" : "Step 3 of 3 - Send my contribution securely"}
+              {uploading ? "Please keep this page open…" : failedCount ? "Retry failed files" : "Send everything securely"}
             </button>
             <p className="secureNote">Files go directly from this device to private storage, three at a time. If one fails, the others remain saved and only that file needs retrying.</p>
             <p className="uploadFallback">If uploading does not work, email the files to <a href={EMAIL_FALLBACK}>uploads@sandi50th.com</a> with your name and a short note. Do not delete the originals from your phone.</p>
