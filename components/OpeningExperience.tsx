@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { FlowingCloudShader } from "@/components/FlowingCloudShader";
+import { HeroBeachMedia } from "@/components/HeroBeachMedia";
 
 const moments = [
   "New Hyde Park · where the story began",
@@ -17,14 +17,8 @@ export function OpeningExperience() {
   return (
     <section className="opening celebrationHero" aria-labelledby="birthday-hero-title">
       <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />
-      <Image
-        className="celebrationHeroImage"
-        src="/images/sandi-hero.jpeg"
-        alt="Sandi Yadegari, celebrated by family and friends for her fiftieth birthday"
-        fill
-        priority
-        sizes="100vw"
-      />
+      <HeroBeachMedia priority />
+
       <div className="celebrationHeroScrim" aria-hidden="true" />
       <div className="celebrationGlow celebrationGlowCoral" aria-hidden="true" />
       <div className="celebrationGlow celebrationGlowAmber" aria-hidden="true" />

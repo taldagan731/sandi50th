@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { HeroBeachMedia } from "@/components/HeroBeachMedia";
 import { type CSSProperties, type KeyboardEvent, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArchiveVideoStack, RevealTimeline, UnassignedArchive } from "@/components/RevealArchive";
 import { RevealSoundtrack } from "@/components/RevealSoundtrackV2";
@@ -197,14 +198,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
       {reviewIncludesTests && <aside className="testReviewBanner"><strong>Owner review mode</strong><span>Automated and test uploads are included and clearly marked. They remain excluded from real counts and the public reveal.</span></aside>}
       <header className="revealMasthead">
         <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />
-        <Image
-          className="revealMastheadPhoto"
-          src="/images/sandi-hero.jpeg"
-          alt="Sandi Yadegari, surrounded by the warmth and colour of her fiftieth-birthday story"
-          fill
-          priority
-          sizes="100vw"
-        />
+        <HeroBeachMedia className="revealMastheadMedia" priority />
+
         <div className="revealMastheadPhotoScrim" aria-hidden="true" />
         <SandiSignaturePrelude started={openingStarted} />
         <div className="revealMastheadContent">

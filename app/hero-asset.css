@@ -4,6 +4,30 @@ body .revealMastheadPhoto {
   object-position: 42% 48%;
   filter: saturate(1.72) contrast(1.09) brightness(1.19);
 }
+body .celebrationHero > .heroBeachMedia,
+body .revealMasthead > .heroBeachMedia {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  overflow: hidden;
+  background: #8f3f61;
+}
+
+body .heroBeachMediaVideo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 48%;
+  filter: saturate(1.72) contrast(1.09) brightness(1.19);
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+body .heroBeachMediaVideo[data-playing="true"] { opacity: .76; }
+body .heroBeachMediaStill { z-index: 0 !important; opacity: .76; }
 
 body .celebrationHeroScrim {
   background:
@@ -21,7 +45,8 @@ body .revealMastheadPhotoScrim {
 
 @media (max-width: 700px) {
   body .celebrationHeroImage,
-  body .revealMastheadPhoto { object-position: 41% 48%; }
+  body .revealMastheadPhoto,
+  body .heroBeachMediaVideo { object-position: 41% 48%; }
 }
 
 body .celebrationHeroContent,
