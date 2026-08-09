@@ -80,7 +80,9 @@ requireText("app/reveal/page.tsx", 'prompt === "NAME_CHORUS"', "name recordings 
 requireText("components/RevealSoundtrackV2.tsx", "Math.random()", "a freshly shuffled chorus");
 requireText("components/RevealSoundtrackV2.tsx", "decoded.duration - overlap", "gently overlapping names");
 requireText("components/RevealSoundtrackV2.tsx", "fetch(`/api/reveal/media/", "lazy streamed name recordings");
-requireText("components/RevealSoundtrackV2.tsx", "masterMuted || ducked ? 0", "full silence during spoken messages");
+requireText("components/RevealSoundtrackV2.tsx", "const [duckVolume, setDuckVolume] = useState(.12)", "the adjustable twelve-percent music bed during spoken messages");
+requireText("components/RevealSoundtrackV2.tsx", "shouldDuck ? Math.min(volume, duckVolume) : volume", "music ducking that preserves a soft bed");
+requireText("components/RevealSoundtrackV2.tsx", "shouldDuck || !chorusEnabled ? 0 : .13", "full name-chorus silence during spoken messages");
 requireText("components/RevealSoundtrackV2.tsx", "Voices off", "independent chorus control");
 requireText("components/RevealSoundtrackV2.tsx", "Mute all", "the master audio mute");
 requireText("components/NameChorusStudio.tsx", "Not recorded yet", "the missing-name roster");

@@ -22,20 +22,85 @@ export function RevealSoundtrack({
   const chorusGain = useRef<GainNode | null>(null);
   const chorusSources = useRef<AudioBufferSourceNode[]>([]);
   const chorusRun = useRef(0);
+  const fadeFrame = useRef<number | null>(null);
+  const activeSpokenMedia = useRef<HTMLMediaElement | null>(null);
   const previousMuted = useRef(new WeakMap<HTMLMediaElement, boolean>());
   const startedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [masterMuted, setMasterMuted] = useState(false);
   const [chorusEnabled, setChorusEnabled] = useState(true);
   const [volume, setVolume] = useState(.56);
+  const [duckVolume, setDuckVolume] = useState(.12);
+  const [mediaDucked, setMediaDucked] = useState(false);
   const [error, setError] = useState(false);
   const track = process.env.NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL || DEFAULT_TRACK;
 
+  const shouldDuck = ducked || mediaDucked;
+
   useEffect(() => {
     const song = songRef.current;
-    if (song) song.volume = masterMuted || ducked ? 0 : volume;
-    if (chorusGain.current) chorusGain.current.gain.setTargetAtTime(masterMuted || ducked || !chorusEnabled ? 0 : .13, audioContext.current?.currentTime ?? 0, .04);
-  }, [chorusEnabled, ducked, masterMuted, volume]);
+    if (song) {
+      const target = masterMuted ? 0 : shouldDuck ? Math.min(volume, duckVolume) : volume;
+      const duration = shouldDuck || masterMuted ? 300 : 1400;
+      if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
+      const start = song.volume;
+      const startedAt = performance.now();
+      const fade = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        song.volume = start + (target - start) * progress;
+        fadeFrame.current = progress < 1 ? requestAnimationFrame(fade) : null;
+      };
+      fadeFrame.current = requestAnimationFrame(fade);
+    }
+    if (chorusGain.current) chorusGain.current.gain.setTargetAtTime(masterMuted || shouldDuck || !chorusEnabled ? 0 : .13, audioContext.current?.currentTime ?? 0, .04);
+    return () => {
+      if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
+    };
+  }, [chorusEnabled, duckVolume, masterMuted, shouldDuck, volume]);
+
+  useEffect(() => {
+    const root = document.querySelector(".revealExperience");
+    if (!root) return;
+
+    const release = (element: HTMLMediaElement) => {
+      if (activeSpokenMedia.current !== element) return;
+      activeSpokenMedia.current = null;
+      setMediaDucked(false);
+    };
+    const handlePlay = (event: Event) => {
+      const element = event.target;
+      if (!(element instanceof HTMLMediaElement) || element === songRef.current || element.muted) return;
+      const previous = activeSpokenMedia.current;
+      if (previous && previous !== element && !previous.paused) previous.pause();
+      activeSpokenMedia.current = element;
+      setMediaDucked(true);
+    };
+    const handleEnded = (event: Event) => {
+      if (event.target instanceof HTMLMediaElement) release(event.target);
+    };
+    const handleVolume = (event: Event) => {
+      const element = event.target;
+      if (!(element instanceof HTMLMediaElement) || element === songRef.current) return;
+      if (!element.muted && !element.paused) handlePlay(event);
+    };
+    const observer = new MutationObserver(() => {
+      const active = activeSpokenMedia.current;
+      if (active && !active.isConnected) release(active);
+    });
+
+    root.addEventListener("play", handlePlay, true);
+    root.addEventListener("ended", handleEnded, true);
+    root.addEventListener("emptied", handleEnded, true);
+    root.addEventListener("volumechange", handleVolume, true);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => {
+      root.removeEventListener("play", handlePlay, true);
+      root.removeEventListener("ended", handleEnded, true);
+      root.removeEventListener("emptied", handleEnded, true);
+      root.removeEventListener("volumechange", handleVolume, true);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.querySelector(".revealExperience");
@@ -179,11 +244,15 @@ export function RevealSoundtrack({
             <span className="srOnly">Birthday song volume</span>
             <input type="range" min="0" max="1" step=".05" value={volume} onChange={event => setVolume(Number(event.target.value))} />
           </label>
+          <label title="Music level while someone is speaking">
+            <span className="srOnly">Ducked music level</span>
+            <input type="range" min=".03" max=".18" step=".01" value={duckVolume} onChange={event => setDuckVolume(Number(event.target.value))} />
+          </label>
           <button type="button" onClick={toggleChorus} aria-pressed={chorusEnabled}>{chorusEnabled ? "Voices on" : "Voices off"}</button>
           <button className="masterMute" type="button" onClick={() => setMasterMuted(value => !value)} aria-pressed={masterMuted}>
             {masterMuted ? "Unmute all" : "Mute all"}
           </button>
-          {ducked && <span className="soundtrackDucked" aria-live="polite">Music and chorus paused for this voice</span>}
+          {shouldDuck && <span className="soundtrackDucked" aria-live="polite">Music lowered; name chorus paused for this voice</span>}
         </aside>
       )}
     </>
