@@ -159,3 +159,8 @@
     transform: none;
   }
 }
+
+.openingQuestion{padding:clamp(1rem,2.4vw,1.65rem);border:2px solid transparent;border-radius:1.25rem;background:linear-gradient(#261127,#261127) padding-box,linear-gradient(120deg,#ff7895,#f5bc7a,#d88bd8,#ff8b78) border-box;box-shadow:0 1rem 3rem rgba(255,92,143,.12)}
+.openingQuestion textarea{margin-top:.8rem;padding:1rem;border:1px solid rgba(255,220,190,.28);border-radius:1rem;background:rgba(255,255,255,.055);transition:border-color .18s,box-shadow .18s,background .18s}.openingQuestion textarea:focus{outline:0;border-color:#ffc58e;background:rgba(255,255,255,.08);box-shadow:0 0 0 4px rgba(255,140,150,.16),0 0 2rem rgba(255,118,158,.16)}
+.memoryInputModes{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:1rem}.memoryInputModes button{min-height:48px;border:1px solid rgba(255,211,167,.32);border-radius:.9rem;background:rgba(255,255,255,.045);color:#fff4e9;font-weight:850;cursor:pointer}.memoryInputModes button[aria-pressed=true]{border-color:#ffc889;background:linear-gradient(135deg,rgba(255,114,151,.3),rgba(244,176,108,.22));box-shadow:0 .7rem 2rem rgba(255,97,143,.12)}
+.speechNotice{display:block;margin-top:.65rem;color:#ffe0af;font-weight:700;line-height:1.45}

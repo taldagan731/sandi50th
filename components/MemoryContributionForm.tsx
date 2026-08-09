@@ -103,6 +103,8 @@ export function MemoryContributionForm({
   const [opened, setOpened] = useState(ownerArchive || startWithUpload);
   const [memoryError, setMemoryError] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [inputMode, setInputMode] = useState<"type" | "speak">("type");
+  const [speechNotice, setSpeechNotice] = useState("");
   const [listening, setListening] = useState(false);
   const [speechDraft, setSpeechDraft] = useState("");
   const [speechError, setSpeechError] = useState("");
@@ -121,59 +123,108 @@ export function MemoryContributionForm({
   const extracted = useRef<Record<string, CompletedFile>>({});
   const celebrated = useRef(false);
   const speechRecognition = useRef<SpeechRecognitionLike | null>(null);
+  const speechRecorder = useRef<MediaRecorder | null>(null);
+  const speechStream = useRef<MediaStream | null>(null);
+  const speechChunks = useRef<Blob[]>([]);
 
   useEffect(() => {
     const speechWindow = window as SpeechWindow;
-    setSpeechSupported(Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition));
-    return () => speechRecognition.current?.stop();
+    setSpeechSupported(Boolean(
+      speechWindow.SpeechRecognition ||
+      speechWindow.webkitSpeechRecognition ||
+      (typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder !== "undefined")
+    ));
+    return () => {
+      speechRecognition.current?.stop();
+      if (speechRecorder.current?.state === "recording") speechRecorder.current.stop();
+      speechStream.current?.getTracks().forEach(track => track.stop());
+    };
   }, []);
 
-  function toggleDictation() {
+  function stopDictation() {
+    speechRecognition.current?.stop();
+    if (speechRecorder.current?.state === "recording") speechRecorder.current.stop();
+    speechStream.current?.getTracks().forEach(track => track.stop());
+    speechStream.current = null;
+    setListening(false);
+    setSpeechDraft("");
+  }
+
+  async function toggleDictation() {
     if (listening) {
-      speechRecognition.current?.stop();
+      stopDictation();
       return;
     }
 
-    const speechWindow = window as SpeechWindow;
-    const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-    if (!Recognition) {
-      setSpeechError("Speech input is not available in this browser. You can still type your memory or choose another contribution option above.");
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setSpeechError("This browser cannot record inside the page. Choose Record your voice above to use the phone recorder or upload a Voice Memos file.");
       return;
     }
 
-    const recognition = new Recognition();
-    const startingText = firstMemory.trim();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    recognition.onresult = event => {
-      let finished = "";
-      let interim = "";
-      for (let index = 0; index < event.results.length; index += 1) {
-        const words = event.results[index][0]?.transcript ?? "";
-        if (event.results[index].isFinal) finished += words + " ";
-        else interim += words;
+    try {
+      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = chooseSpeechMimeType();
+      const recorder = mimeType ? new MediaRecorder(media, { mimeType }) : new MediaRecorder(media);
+      speechStream.current = media;
+      speechRecorder.current = recorder;
+      speechChunks.current = [];
+      recorder.ondataavailable = event => { if (event.data.size) speechChunks.current.push(event.data); };
+      recorder.onstop = () => {
+        const type = recorder.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(speechChunks.current, { type });
+        if (blob.size) {
+          const extension = type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm";
+          const file = new File([blob], `spoken-memory-${Date.now()}.${extension}`, { type, lastModified: Date.now() });
+          addIncoming([file]);
+          setFirstMemory(current => current.trim() || "Voice memory recorded for Sandi. Please edit this sentence if the live transcript did not appear.");
+          setSpeechNotice("Your original voice recording is attached and will be kept with Sandi's story. You can edit the words above before continuing.");
+        }
+        speechChunks.current = [];
+        speechRecorder.current = null;
+      };
+      recorder.start(500);
+
+      const speechWindow = window as SpeechWindow;
+      const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+      if (Recognition) {
+        const recognition = new Recognition();
+        const startingText = firstMemory.trim();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+        recognition.onresult = event => {
+          let finished = "";
+          let interim = "";
+          for (let index = 0; index < event.results.length; index += 1) {
+            const words = event.results[index][0]?.transcript ?? "";
+            if (event.results[index].isFinal) finished += words + " ";
+            else interim += words;
+          }
+          setFirstMemory([startingText, finished.trim()].filter(Boolean).join(" "));
+          setSpeechDraft(interim.trim());
+          setMemoryError("");
+        };
+        recognition.onerror = event => {
+          setSpeechNotice(event.error === "not-allowed"
+            ? "Live transcription was blocked, but your original audio is still recording. Keep speaking, then edit the text before continuing."
+            : "Live transcription paused, but your original audio is still recording safely. Keep speaking and tap Stop when finished.");
+          setSpeechDraft("");
+        };
+        recognition.onend = () => { speechRecognition.current = null; setSpeechDraft(""); };
+        speechRecognition.current = recognition;
+        try { recognition.start(); } catch { setSpeechNotice("Your voice is recording. Live words are unavailable here, so you can edit the text after stopping."); }
+      } else {
+        setSpeechNotice("Your voice is recording. Live words are unavailable in this browser, so you can edit the text after stopping.");
       }
-      setFirstMemory([startingText, finished.trim()].filter(Boolean).join(" "));
-      setSpeechDraft(interim.trim());
-      setMemoryError("");
-    };
-    recognition.onerror = event => {
-      setSpeechError(event.error === "not-allowed"
-        ? "Microphone access was not allowed. Choose Allow when your browser asks, or type your memory instead."
-        : "The microphone stopped before the words were captured. Tap the microphone and try again.");
+
+      setSpeechError("");
+      setListening(true);
+    } catch (cause) {
+      setSpeechError(cause instanceof DOMException && (cause.name === "NotAllowedError" || cause.name === "SecurityError")
+        ? "Microphone access was blocked. Choose Allow when the browser asks, or use Record your voice above to open the phone recorder."
+        : "The microphone could not open. Use Record your voice above; the phone recorder and existing Voice Memos files are accepted.");
       setListening(false);
-      setSpeechDraft("");
-    };
-    recognition.onend = () => {
-      setListening(false);
-      setSpeechDraft("");
-      speechRecognition.current = null;
-    };
-    speechRecognition.current = recognition;
-    setSpeechError("");
-    setListening(true);
-    recognition.start();
+    }
   }
   useEffect(() => {
     if (!submitted || celebrated.current) return;
@@ -479,22 +530,28 @@ export function MemoryContributionForm({
         <label className="openingQuestion">
           <span>When you think of Sandi, what is the first memory that comes to mind? <b className="requiredMark">Required to continue</b></span>
           <small className="memoryInstruction" id="memory-instruction">Write a sentence or two here first - then you will be able to add photos, video, or a voice recording.</small>
+          <div className="memoryInputModes" role="group" aria-label="Choose how to add your memory">
+            <button type="button" aria-pressed={inputMode === "type"} onClick={() => { if (listening) stopDictation(); setInputMode("type"); }}>Type</button>
+            <button type="button" aria-pressed={inputMode === "speak"} onClick={() => setInputMode("speak")}>Speak</button>
+          </div>
           <textarea
             rows={6}
             required
             value={firstMemory}
             onChange={event => { setFirstMemory(event.target.value); if (memoryError) setMemoryError(""); }}
-            placeholder="Tell us what happened, where you were, or why you remember it."
+            placeholder={inputMode === "speak" ? "Your spoken words will appear here. You can correct names before sending." : "Tell us what happened, where you were, or why you remember it."}
             aria-invalid={Boolean(memoryError)}
             aria-describedby={memoryError ? "memory-instruction memory-error" : "memory-instruction"}
           />
-          {speechSupported && (
+          {inputMode === "speak" && speechSupported && (
             <button type="button" className="memoryMic" aria-pressed={listening} onClick={toggleDictation}>
-              <span aria-hidden="true">{listening ? "■" : "●"}</span>
-              {listening ? "Stop listening" : "Speak instead of typing"}
+              <span aria-hidden="true">{listening ? "Stop" : "Mic"}</span>
+              {listening ? "Stop and attach my recording" : "Tap to speak instead of typing"}
             </button>
           )}
-          {listening && <small className="speechStatus" role="status">Listening now... speak naturally. {speechDraft && <em>{speechDraft}</em>}</small>}
+          {inputMode === "speak" && !speechSupported && <small className="speechError">This browser cannot record here. Choose Record your voice at the top to use the phone recorder or a Voice Memos file.</small>}
+          {listening && <small className="speechStatus" role="status">Recording your original voice now. {speechDraft && <em>{speechDraft}</em>}</small>}
+          {speechNotice && <small className="speechNotice" role="status">{speechNotice}</small>}
           {speechError && <small className="speechError" role="alert">{speechError}</small>}
         </label>
         {!opened && (
@@ -757,4 +814,10 @@ function UploadThumbnail({ item }: { item: SelectedFile }) {
     return <video src={item.preview} muted playsInline onError={() => setFailed(true)} />;
   }
   return <img src={item.preview} alt="" onError={() => setFailed(true)} />;
+}
+
+function chooseSpeechMimeType() {
+  if (typeof MediaRecorder === "undefined") return "";
+  return ["audio/mp4", "audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/webm"]
+    .find(type => MediaRecorder.isTypeSupported(type)) || "";
 }
