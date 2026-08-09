@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { WaterRipplePreview } from "@/components/WaterRipplePreview";
+import { HeroVideoPreview } from "@/components/HeroVideoPreview";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
 import "./water-preview.css";
 
@@ -9,5 +9,5 @@ export const metadata: Metadata = { title: "Private beach-water motion review", 
 
 export default async function WaterPreviewPage(){
   if(!await hasRevealPreviewAccess())notFound();
-  return <main className="waterPreviewPage"><WaterRipplePreview/></main>;
+  return <main className="waterPreviewPage"><HeroVideoPreview/></main>;
 }
