@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type PointerEvent, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChildhoodCylinder.module.css";
 
 type Photo = {
@@ -32,13 +32,50 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
     return approvedIds.flatMap(id => byId.get(id) ? [byId.get(id)!] : []);
   }, [photos]);
   const gallery = useMemo(() => [...chapterPhotos]
+    .filter(photo => !approvedIds.includes(photo.id as (typeof approvedIds)[number]))
     .sort((a, b) => (a.yearStart ?? 9999) - (b.yearStart ?? 9999) || a.displayOrder - b.displayOrder)
     .slice(0, 59), [chapterPhotos]);
   const pointer = useRef({ active: false, x: 0, at: 0, moved: false, velocity: 0 });
+  const galleryRef = useRef<HTMLElement>(null);
   const [dragAngle, setDragAngle] = useState(0);
   const [paused, setPaused] = useState(false);
   const [expanded, setExpanded] = useState<Photo | null>(null);
   const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const element = galleryRef.current;
+    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let visible = false;
+    let frame = 0;
+    let lastY = window.scrollY;
+    let lastAt = performance.now();
+    let smoothed = 0;
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { rootMargin: "20% 0px" });
+    observer.observe(element);
+
+    const update = () => {
+      const now = performance.now();
+      const elapsed = Math.max(16, now - lastAt);
+      const velocity = ((window.scrollY - lastY) / elapsed) * 1000;
+      smoothed = smoothed * .78 + velocity * .22;
+      const degrees = Math.max(-12, Math.min(12, smoothed / 95));
+      element.style.setProperty("--kinetic-skew", `${degrees.toFixed(2)}deg`);
+      lastY = window.scrollY;
+      lastAt = now;
+      frame = 0;
+    };
+    const onScroll = () => {
+      if (!visible || frame) return;
+      frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   if (!selected.length) return null;
 
@@ -82,7 +119,7 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
         </div></div>
       </div>
       <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
-      <section className={styles.gallery} aria-labelledby="childhood-gallery-title"><header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine more photographs, given room to breathe.</h3></header><div>{gallery.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /><span>{photo.yearStart || "Open full photograph"}</span></button>)}</div></section>
+      <section ref={galleryRef} className={styles.gallery} aria-labelledby="childhood-gallery-title"><header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine more photographs, alive as you move through them.</h3></header><div>{gallery.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><span className={styles.galleryFrame}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></span><span>{photo.yearStart || "Open full photograph"}</span></button>)}</div></section>
       {expanded && <div className={styles.viewer} role="dialog" aria-modal="true" aria-label="Expanded photograph"><div className={styles.controls}><button type="button" onClick={() => { setExpanded(null); setPaused(false); }}>Close</button><button type="button" onClick={() => setZoom(value => Math.max(1, value - .5))}>−</button><button type="button" onClick={() => setZoom(value => Math.min(5, value + .5))}>+</button></div><div className={styles.viewport} onDoubleClick={() => setZoom(value => value === 1 ? 2.5 : 1)}><img src={mediaUrl(expanded.id)} alt={expanded.caption || expanded.originalName} style={{ transform: `scale(${zoom})` }} /></div></div>}
     </section>
   );
