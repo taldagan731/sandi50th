@@ -171,6 +171,8 @@
 .oneStepPromise span{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.6rem .85rem;border:1px solid rgba(255,211,167,.28);border-radius:999px;background:rgba(255,255,255,.055)}
 @media(max-width:930px){.contributionColumns{grid-template-columns:minmax(0,1fr)}}
 +.helpAddress,.uploadFallback{overflow-wrap:anywhere}
+.memoryForm label,.memoryForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),.memoryForm textarea,.memoryForm select{min-width:0;max-width:100%}
+.memoryForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),.memoryForm textarea,.memoryForm select{display:block;width:100%;}
 +@media(max-width:700px){
  .oneStepPromise{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
  .oneStepPromise span{min-width:0;padding:.55rem .35rem;text-align:center}
