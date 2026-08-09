@@ -164,3 +164,12 @@
 .openingQuestion textarea{margin-top:.8rem;padding:1rem;border:1px solid rgba(255,220,190,.28);border-radius:1rem;background:rgba(255,255,255,.055);transition:border-color .18s,box-shadow .18s,background .18s}.openingQuestion textarea:focus{outline:0;border-color:#ffc58e;background:rgba(255,255,255,.08);box-shadow:0 0 0 4px rgba(255,140,150,.16),0 0 2rem rgba(255,118,158,.16)}
 .memoryInputModes{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:1rem}.memoryInputModes button{min-height:48px;border:1px solid rgba(255,211,167,.32);border-radius:.9rem;background:rgba(255,255,255,.045);color:#fff4e9;font-weight:850;cursor:pointer}.memoryInputModes button[aria-pressed=true]{border-color:#ffc889;background:linear-gradient(135deg,rgba(255,114,151,.3),rgba(244,176,108,.22));box-shadow:0 .7rem 2rem rgba(255,97,143,.12)}
 .speechNotice{display:block;margin-top:.65rem;color:#ffe0af;font-weight:700;line-height:1.45}
+
+/* Keep the one-step promise and form inside the narrowest phone viewport. */
+.contributionHub,.contributionChoiceIntro,.contributionPath,.memoryForm,.contributionColumns,.oneStepNameOnly{min-width:0;max-width:100%}
+.oneStepPromise{display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.oneStepPromise span{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.6rem .85rem;border:1px solid rgba(255,211,167,.28);border-radius:999px;background:rgba(255,255,255,.055)}
+@media(max-width:700px){
+ .oneStepPromise{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+ .oneStepPromise span{min-width:0;padding:.55rem .35rem;text-align:center}
+}

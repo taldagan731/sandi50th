@@ -46,8 +46,8 @@ export function RevealSoundtrack({
       const start = song.volume;
       const startedAt = performance.now();
       const fade = (now: number) => {
-        const progress = Math.min(1, (now - startedAt) / duration);
-        song.volume = start + (target - start) * progress;
+        const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
+        song.volume = Math.max(0, Math.min(1, start + (target - start) * progress));
         fadeFrame.current = progress < 1 ? requestAnimationFrame(fade) : null;
       };
       fadeFrame.current = requestAnimationFrame(fade);
