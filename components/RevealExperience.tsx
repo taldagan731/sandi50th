@@ -10,6 +10,7 @@ import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 import { ChildhoodCylinder } from "@/components/ChildhoodCylinder";
+import { ChapterContributionPoem, FamilyFinalePoem } from "@/components/ContributionPoems";
 
 type RevealMedia = {
   id: string;
@@ -248,6 +249,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
               {chapter.text.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             </div>
 
+            <ChapterContributionPoem chapterNumber={chapter.number} />
+
             {chapterWrittenMemories.length > 0 && <WrittenMemoryCollection items={chapterWrittenMemories} />}
 
             {chapterAnswers.length > 0 && <ChapterFamilyVoices answers={chapterAnswers} />}
@@ -318,6 +321,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
       {voiceMemories.length > 0 && (
         <VoiceWall items={voiceMemories} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} />
       )}
+
+      <FamilyFinalePoem />
 
       {birthdayMessages.length > 0 && (
         <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={completeRevealFinale} />
