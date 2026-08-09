@@ -11,6 +11,9 @@
 .requiredMark{display:inline-block;margin-left:.45rem;padding:.2rem .45rem;border-radius:999px;background:#d7b16c;color:#27151e;font:800 .66rem/1 var(--sans);text-transform:uppercase;letter-spacing:.06em}
 .memoryOpeningActions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
 .memoryRequirement{margin:.9rem 0 0;padding:.85rem 1rem;border:1px solid rgba(255,148,148,.5);border-radius:.75rem;background:rgba(160,38,54,.2);color:#ffe0e0;font-weight:700}
+.memoryMic{width:max-content;min-height:44px;margin-top:.8rem;padding:.65rem 1rem;border:1px solid rgba(255,216,174,.55);border-radius:999px;background:rgba(255,255,255,.08);color:#fff8ee;font-weight:800;cursor:pointer}
+.memoryMic span{display:inline-grid;place-items:center;margin-right:.45rem;color:#ff8e84}.memoryMic[aria-pressed=true]{background:#d84e72;border-color:#ffb596}.memoryMic[aria-pressed=true] span{color:#fff}
+.speechStatus,.speechError{display:block;margin-top:.65rem;line-height:1.45}.speechStatus{color:#ffe0af}.speechStatus em{display:block;margin-top:.25rem;color:#fff;font-style:italic}.speechError{color:#ffd0d0;font-weight:700}
 .albumDrop{border-style:dashed;transition:border-color .2s,background .2s}
 .albumDrop.isDragging{border-color:#d7b16c;background:rgba(215,177,108,.12)}
 .albumActions{display:flex;justify-content:center;gap:.65rem;flex-wrap:wrap;margin-top:.8rem}

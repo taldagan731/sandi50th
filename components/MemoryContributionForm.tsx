@@ -48,6 +48,23 @@ const prompts = [
   "What do you wish for her next fifty years?"
 ];
 
+type SpeechResult = { isFinal: boolean; 0: { transcript: string } };
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<SpeechResult> }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+type SpeechWindow = Window & {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+};
+
 type UploadStatus = "ready" | "uploading" | "uploaded" | "failed";
 type SelectedFile = {
   file: File;
@@ -85,6 +102,10 @@ export function MemoryContributionForm({
   const [firstMemory, setFirstMemory] = useState(ownerArchive ? "Owner archive batch" : "");
   const [opened, setOpened] = useState(ownerArchive || startWithUpload);
   const [memoryError, setMemoryError] = useState("");
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechDraft, setSpeechDraft] = useState("");
+  const [speechError, setSpeechError] = useState("");
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
@@ -99,7 +120,61 @@ export function MemoryContributionForm({
   const completed = useRef<Record<string, CompletedFile>>({});
   const extracted = useRef<Record<string, CompletedFile>>({});
   const celebrated = useRef(false);
+  const speechRecognition = useRef<SpeechRecognitionLike | null>(null);
 
+  useEffect(() => {
+    const speechWindow = window as SpeechWindow;
+    setSpeechSupported(Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition));
+    return () => speechRecognition.current?.stop();
+  }, []);
+
+  function toggleDictation() {
+    if (listening) {
+      speechRecognition.current?.stop();
+      return;
+    }
+
+    const speechWindow = window as SpeechWindow;
+    const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!Recognition) {
+      setSpeechError("Speech input is not available in this browser. You can still type your memory or choose another contribution option above.");
+      return;
+    }
+
+    const recognition = new Recognition();
+    const startingText = firstMemory.trim();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = event => {
+      let finished = "";
+      let interim = "";
+      for (let index = 0; index < event.results.length; index += 1) {
+        const words = event.results[index][0]?.transcript ?? "";
+        if (event.results[index].isFinal) finished += words + " ";
+        else interim += words;
+      }
+      setFirstMemory([startingText, finished.trim()].filter(Boolean).join(" "));
+      setSpeechDraft(interim.trim());
+      setMemoryError("");
+    };
+    recognition.onerror = event => {
+      setSpeechError(event.error === "not-allowed"
+        ? "Microphone access was not allowed. Choose Allow when your browser asks, or type your memory instead."
+        : "The microphone stopped before the words were captured. Tap the microphone and try again.");
+      setListening(false);
+      setSpeechDraft("");
+    };
+    recognition.onend = () => {
+      setListening(false);
+      setSpeechDraft("");
+      speechRecognition.current = null;
+    };
+    speechRecognition.current = recognition;
+    setSpeechError("");
+    setListening(true);
+    recognition.start();
+  }
   useEffect(() => {
     if (!submitted || celebrated.current) return;
     celebrated.current = true;
@@ -413,6 +488,14 @@ export function MemoryContributionForm({
             aria-invalid={Boolean(memoryError)}
             aria-describedby={memoryError ? "memory-instruction memory-error" : "memory-instruction"}
           />
+          {speechSupported && (
+            <button type="button" className="memoryMic" aria-pressed={listening} onClick={toggleDictation}>
+              <span aria-hidden="true">{listening ? "■" : "●"}</span>
+              {listening ? "Stop listening" : "Speak instead of typing"}
+            </button>
+          )}
+          {listening && <small className="speechStatus" role="status">Listening now... speak naturally. {speechDraft && <em>{speechDraft}</em>}</small>}
+          {speechError && <small className="speechError" role="alert">{speechError}</small>}
         </label>
         {!opened && (
           <>
