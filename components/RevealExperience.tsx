@@ -9,6 +9,7 @@ import { SandiSignaturePrelude } from "@/components/SandiSignaturePrelude";
 import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
+import { ChildhoodCylinder } from "@/components/ChildhoodCylinder";
 
 type RevealMedia = {
   id: string;
@@ -127,6 +128,7 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
   );
   const contributedMedia = useMemo(() => media.filter(item => item.collection !== "name"), [media]);
   const contributedTotal = contributedMedia.length + writtenMemories.length;
+  const allArchivePhotos = useMemo(() => archiveMedia.filter(item => item.mimeType.startsWith("image/")), [archiveMedia]);
 
   useEffect(() => {
     if (!expandedPhoto) return;
@@ -249,6 +251,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
             {chapterWrittenMemories.length > 0 && <WrittenMemoryCollection items={chapterWrittenMemories} />}
 
             {chapterAnswers.length > 0 && <ChapterFamilyVoices answers={chapterAnswers} />}
+
+            {chapter.number === 1 && <ChildhoodCylinder photos={allArchivePhotos} chapterPhotos={allArchivePhotos.filter(item => item.chapterNumber === 1)} />}
 
             {chapterMedia.length > 0 && (
               <section className="memoryCarousel" aria-label={`Memories for ${chapter.title}`}>
