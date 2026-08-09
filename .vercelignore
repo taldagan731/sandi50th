@@ -1,0 +1,7 @@
+work/
+tests/
+playwright-report/
+test-results/
+.next/
+node_modules/
+

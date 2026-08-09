@@ -15,7 +15,7 @@ function diagnostics(page: Page): Diagnostics {
   page.on("pageerror", error => result.pageErrors.push(error.message));
   page.on("requestfailed", request => {
     const failure = request.failure()?.errorText ?? "request failed";
-    if (!/ERR_ABORTED|cancelled|canceled/i.test(failure)) result.failedRequests.push(`${failure} ${request.url()}`);
+    if (!/ERR_ABORTED|cancelled|canceled|NS_BINDING_ABORTED|NS_ERROR_PARSED_DATA_CACHED/i.test(failure)) result.failedRequests.push(`${failure} ${request.url()}`);
   });
   page.on("response", response => {
     if (response.status() >= 400 && !/favicon\.ico/.test(response.url())) {
