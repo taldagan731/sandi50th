@@ -406,6 +406,7 @@ export function MemoryContributionForm({
           <small className="memoryInstruction" id="memory-instruction">Write a sentence or two here first - then you will be able to add photos, video, or a voice recording.</small>
           <textarea
             rows={6}
+            required
             value={firstMemory}
             onChange={event => { setFirstMemory(event.target.value); if (memoryError) setMemoryError(""); }}
             placeholder="Tell us what happened, where you were, or why you remember it."
