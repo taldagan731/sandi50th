@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, chapterNumberFromContributor, isTestContributor } from "@/lib/chapters";
 import { FAMILY_QA_SEED, decodeFamilyQaMetadata } from "@/lib/family-qa";
@@ -71,7 +70,6 @@ function LockedReveal() {
         <span className="eyebrow">PRIVATE REVEAL</span>
         <h1>This story opens on August 11.</h1>
         <p>Until then, only the project owner can open the film and living archive.</p>
-        <Link className="primary" href="/studio">Open Story Studio</Link>
       </section>
     </main>
   );
