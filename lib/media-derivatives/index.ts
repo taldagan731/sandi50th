@@ -65,10 +65,15 @@ async function browserSafeJpeg(original: Buffer, heic: boolean, manualRotation: 
     ? Buffer.from(await convertHeic({ buffer: original, format: "JPEG", quality: 0.94 }))
     : original;
 
-  const pipeline = heic
+  const orientedPipeline = heic
     ? await explicitlyOrientDecoded(decoded, originalOrientation)
     : sharp(decoded, { failOn: "none", limitInputPixels: 120_000_000 }).autoOrient();
-  const derivative = await pipeline
+  // Sharp applies only one rotation operation per pipeline. Materialize the
+  // EXIF-corrected pixels first, then apply the owner's cumulative quarter-turn.
+  const oriented = await orientedPipeline.raw().toBuffer({ resolveWithObject: true });
+  const derivative = await sharp(oriented.data, {
+    raw: { width: oriented.info.width, height: oriented.info.height, channels: oriented.info.channels }
+  })
     .rotate(manualRotation)
     .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
     .flatten({ background: "#f5d9dd" })
