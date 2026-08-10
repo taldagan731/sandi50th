@@ -2,6 +2,7 @@
 
 import { type CSSProperties, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChildhoodCylinder.module.css";
+import { PhotoStoryViewer } from "@/components/PhotoStoryViewer";
 
 type Photo = {
   id: string;
@@ -35,47 +36,42 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
     .filter(photo => !approvedIds.includes(photo.id as (typeof approvedIds)[number]))
     .sort((a, b) => (a.yearStart ?? 9999) - (b.yearStart ?? 9999) || a.displayOrder - b.displayOrder)
     .slice(0, 59), [chapterPhotos]);
+  const galleryRows = useMemo(() => {
+    const rows: Photo[][] = [[], [], []];
+    gallery.forEach((photo, index) => rows[index % rows.length].push(photo));
+    return rows;
+  }, [gallery]);
   const pointer = useRef({ active: false, x: 0, at: 0, moved: false, velocity: 0 });
   const galleryRef = useRef<HTMLElement>(null);
   const [dragAngle, setDragAngle] = useState(0);
   const [paused, setPaused] = useState(false);
   const [expanded, setExpanded] = useState<Photo | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [marqueeVisible, setMarqueeVisible] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(true);
+  const [touchPaused, setTouchPaused] = useState(false);
 
   useEffect(() => {
     const element = galleryRef.current;
     if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let visible = false;
-    let frame = 0;
-    let lastY = window.scrollY;
-    let lastAt = performance.now();
-    let smoothed = 0;
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { rootMargin: "20% 0px" });
+    const observer = new IntersectionObserver(([entry]) => setMarqueeVisible(entry.isIntersecting), { threshold: .01 });
+    const handleVisibility = () => setDocumentVisible(!document.hidden);
     observer.observe(element);
-
-    const update = () => {
-      const now = performance.now();
-      const elapsed = Math.max(16, now - lastAt);
-      const velocity = ((window.scrollY - lastY) / elapsed) * 1000;
-      smoothed = smoothed * .78 + velocity * .22;
-      const degrees = Math.max(-12, Math.min(12, smoothed / 95));
-      element.style.setProperty("--kinetic-skew", `${degrees.toFixed(2)}deg`);
-      lastY = window.scrollY;
-      lastAt = now;
-      frame = 0;
-    };
-    const onScroll = () => {
-      if (!visible || frame) return;
-      frame = requestAnimationFrame(update);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
+    handleVisibility();
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (frame) cancelAnimationFrame(frame);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
+
+  useEffect(() => {
+    if (!touchPaused || expanded) return;
+    function resumeFromOutside(event: globalThis.PointerEvent) {
+      if (event.target instanceof Node && !galleryRef.current?.contains(event.target)) setTouchPaused(false);
+    }
+    document.addEventListener("pointerdown", resumeFromOutside, true);
+    return () => document.removeEventListener("pointerdown", resumeFromOutside, true);
+  }, [touchPaused, expanded]);
 
   if (!selected.length) return null;
 
@@ -105,10 +101,15 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
   }
   function open(photo: Photo) {
     if (pointer.current.moved) { pointer.current.moved = false; return; }
-    setZoom(1);
     setExpanded(photo);
     setPaused(true);
   }
+  function closeViewer() {
+    setExpanded(null);
+    setPaused(false);
+    setTouchPaused(false);
+  }
+  const marqueePaused = !marqueeVisible || !documentVisible || touchPaused || expanded !== null;
 
   return (
     <section className={styles.section} aria-labelledby="childhood-cylinder-title">
@@ -119,8 +120,38 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
         </div></div>
       </div>
       <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
-      <section ref={galleryRef} className={styles.gallery} aria-labelledby="childhood-gallery-title"><header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine more photographs, alive as you move through them.</h3></header><div>{gallery.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><span className={styles.galleryFrame}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></span><span>{photo.yearStart || "Open full photograph"}</span></button>)}</div></section>
-      {expanded && <div className={styles.viewer} role="dialog" aria-modal="true" aria-label="Expanded photograph"><div className={styles.controls}><button type="button" onClick={() => { setExpanded(null); setPaused(false); }}>Close</button><button type="button" onClick={() => setZoom(value => Math.max(1, value - .5))}>−</button><button type="button" onClick={() => setZoom(value => Math.min(5, value + .5))}>+</button></div><div className={styles.viewport} onDoubleClick={() => setZoom(value => value === 1 ? 2.5 : 1)}><img src={mediaUrl(expanded.id)} alt={expanded.caption || expanded.originalName} style={{ transform: `scale(${zoom})` }} /></div></div>}
+      <section
+        ref={galleryRef}
+        className={`${styles.gallery} ${marqueePaused ? styles.marqueePaused : ""}`}
+        aria-labelledby="childhood-gallery-title"
+        onPointerDown={event => { if (event.pointerType !== "mouse") setTouchPaused(true); }}
+      >
+        <header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine photographs, drifting through time.</h3><p>Hover or touch to pause. Open any photograph to see the complete frame.</p></header>
+        <div className={styles.marqueeViewport} aria-label="Diagonal moving childhood photograph album">
+          <div className={styles.diagonalCanvas}>
+            {galleryRows.map((row, rowIndex) => (
+              <div className={`${styles.marqueeRow} ${rowIndex === 1 ? styles.reverse : ""}`} key={`row-${rowIndex}`}>
+                <div className={styles.marqueeTrack} style={{ "--marquee-duration": ["156s", "181s", "207s"][rowIndex] } as CSSProperties}>
+                  {[false, true].map(duplicate => (
+                    <div className={styles.marqueeGroup} aria-hidden={duplicate || undefined} key={duplicate ? "duplicate" : "original"}>
+                      {row.map(photo => (
+                        <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onClick={() => open(photo)}>
+                          <img src={mediaUrl(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" />
+                          <span>{photo.yearStart || photo.caption || "Open full photograph"}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.marqueeReducedGrid} aria-label="Childhood photograph album">
+          {gallery.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}
+        </div>
+      </section>
+      {expanded && <PhotoStoryViewer mediaId={expanded.id} src={mediaUrl(expanded.id)} alt={expanded.caption || expanded.originalName} onClose={closeViewer} />}
     </section>
   );
 }

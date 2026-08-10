@@ -10,9 +10,11 @@ import { FlowingCloudShader } from "@/components/FlowingCloudShader";
 import { fireRevealFinaleConfetti } from "@/lib/confetti";
 import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 import { ChildhoodCylinder } from "@/components/ChildhoodCylinder";
+import { ChapterFilmMarquee } from "@/components/ChapterFilmMarquee";
 import { ChapterContributionPoem, FamilyFinalePoem } from "@/components/ContributionPoems";
 import { TalDedication } from "@/components/TalDedication";
 import { ChapterNavigator } from "@/components/ChapterNavigator";
+import { PhotoStoryViewer } from "@/components/PhotoStoryViewer";
 
 type RevealMedia = {
   id: string;
@@ -31,7 +33,7 @@ type RevealMedia = {
   testRecord: boolean;
 };
 
-type ExpandedPhoto = { src: string; alt: string };
+type ExpandedPhoto = { id: string; src: string; alt: string };
 
 type RevealChapter = {
   number: number;
@@ -114,6 +116,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
     () => media.filter(item => item.collection !== "name" && item.chapterNumber === chapter?.number),
     [media, chapter]
   );
+  const chapterPhotos = useMemo(() => chapterMedia.filter(item => item.mimeType.startsWith("image/")), [chapterMedia]);
+  const chapterOtherMedia = useMemo(() => chapterMedia.filter(item => !item.mimeType.startsWith("image/")), [chapterMedia]);
   const chapterWrittenMemories = useMemo(
     () => writtenMemories.filter(item => item.chapterNumber === chapter?.number),
     [writtenMemories, chapter]
@@ -144,7 +148,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
 
   function photoFromTarget(target: EventTarget | null) {
     if (!(target instanceof HTMLImageElement) || target.dataset.revealPhoto !== "true") return null;
-    return { src: target.currentSrc || target.src, alt: target.alt };
+    const id = target.dataset.mediaId || target.src.match(/\/api\/reveal\/media\/([^/?]+)/)?.[1];
+    return id ? { id, src: target.currentSrc || target.src, alt: target.alt } : null;
   }
 
   function handlePhotoClick(event: MouseEvent<HTMLDivElement>) {
@@ -251,14 +256,16 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
 
             {chapter.number === 1 && <ChildhoodCylinder photos={allArchivePhotos} chapterPhotos={allArchivePhotos.filter(item => item.chapterNumber === 1)} />}
 
-            {chapterMedia.length > 0 && (
+            {chapter.number !== 1 && chapterPhotos.length > 0 && <ChapterFilmMarquee chapterNumber={chapter.number} chapterTitle={chapter.title} photos={chapterPhotos} />}
+
+            {chapterOtherMedia.length > 0 && (
               <section className="memoryCarousel" aria-label={`Memories for ${chapter.title}`}>
                 <header>
                   <span className="eyebrow">THE COMPLETE CHAPTER ARCHIVE</span>
-                  <p>All {chapterMedia.length} contributed media items. Scroll to see every one.</p>
+                  <p>All {chapterOtherMedia.length} video, audio, and document items. Scroll to see every one.</p>
                 </header>
                 <div className="memoryRail">
-                  {chapterMedia.map((item, index) => {
+                  {chapterOtherMedia.map((item, index) => {
                     const expanded = activeMediaId === item.id || (!activeMediaId && index === 0);
                     const url = `/api/reveal/media/${item.id}`;
                     return (
@@ -361,7 +368,7 @@ function ChapterFamilyVoices({ answers }: { answers: FamilyAnswer[] }) {
             {answer.photoAssetIds.length > 0 && (
               <div className="familyVoicePhotos">
                 {answer.photoAssetIds.map(photoId => (
-                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
+                  <img key={photoId} src={`/api/reveal/media/${photoId}`} alt={`Photograph linked to ${answer.contributorName}’s memory of Sandi`} loading="lazy" data-reveal-photo="true" data-media-id={photoId} role="button" tabIndex={0} />
                 ))}
               </div>
             )}
@@ -437,7 +444,7 @@ function FamilyChorus({ groups }: { groups: ChorusGroup[] }) {
         <p className="chorusQuestion">{group.question}</p>
         <figure key={answer.id}>
           {answer.photoAssetIds.length > 0 && (
-            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
+            <img src={`/api/reveal/media/${answer.photoAssetIds[0]}`} alt={`Photograph linked to ${answer.contributorName}’s answer about Sandi`} loading="lazy" data-reveal-photo="true" data-media-id={answer.photoAssetIds[0]} role="button" tabIndex={0} />
           )}
           <div>
             <blockquote>{answer.answer}</blockquote>
@@ -657,12 +664,7 @@ function Waveform({ large = false }: { large?: boolean }) {
 
 
 function PhotoFocus({ photo, onClose }: { photo: ExpandedPhoto; onClose: () => void }) {
-  return (
-    <div className="photoFocus" role="dialog" aria-modal="true" aria-label="Expanded photograph" onClick={onClose}>
-      <button type="button" onClick={onClose} aria-label="Close expanded photograph">Close</button>
-      <img src={photo.src} alt={photo.alt} onClick={event => event.stopPropagation()} />
-    </div>
-  );
+  return <PhotoStoryViewer mediaId={photo.id} src={photo.src} alt={photo.alt} onClose={onClose} />;
 }
 
 function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eager: boolean }) {
@@ -682,6 +684,7 @@ function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eag
       loading={eager ? "eager" : "lazy"}
       onError={() => setFailed(true)}
       data-reveal-photo="true"
+      data-media-id={item.id}
       role="button"
       tabIndex={0}
       aria-label={`Expand photograph: ${item.caption || item.originalName}`}

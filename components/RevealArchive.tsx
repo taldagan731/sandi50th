@@ -131,7 +131,7 @@ export function RevealTimeline({
                 {item.mimeType.startsWith("video/") ? (
                   <InViewVideoPreview item={item} url={url} />
                 ) : (
-                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" data-reveal-photo="true" role="button" tabIndex={0} />
+                  <img src={url} alt={item.caption || `A submitted memory from ${item.contributorName}`} loading="lazy" data-reveal-photo="true" data-media-id={item.id} role="button" tabIndex={0} />
                 )}
                 {item.mimeType.startsWith("video/") && <span>FILM</span>}
               </div>
@@ -160,7 +160,7 @@ export function UnassignedArchive({ items }: { items: ArchiveMedia[] }) {
             <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
               {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
               {item.mimeType.startsWith("image/") ? (
-                <img src={url} alt={item.caption || item.originalName} loading="lazy" data-reveal-photo="true" />
+                <img src={url} alt={item.caption || item.originalName} loading="lazy" data-reveal-photo="true" data-media-id={item.id} />
               ) : item.mimeType.startsWith("video/") ? (
                 <InViewVideoPreview item={item} url={url} />
               ) : (
