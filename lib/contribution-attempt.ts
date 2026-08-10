@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export type ContributionPath = "memory" | "photos" | "voice" | "birthday";
 
@@ -11,7 +11,7 @@ function attemptId() {
   return created;
 }
 
-export function trackContributionStep(path: ContributionPath, step: number, event: "selected" | "step" | "completed" = "step") {
+export function trackContributionStep(path: ContributionPath, step: number, event: "selected" | "step" | "sending" | "failed" | "completed" = "step") {
   if (typeof window === "undefined") return;
   void fetch("/api/contribution-events", {
     method: "POST",

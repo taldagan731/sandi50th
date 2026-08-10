@@ -36,6 +36,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const liveVideo = useRef<HTMLVideoElement>(null);
   const timer = useRef<number | null>(null);
   const celebrated = useRef(false);
+  const consentRef = useRef<HTMLInputElement>(null);
 
   const birthday = kind === "birthday";
   const effectiveKind: CaptureKind = birthday ? captureKind : "audio";
@@ -161,7 +162,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       setError("That recording is over the 5 GB limit. Email uploads@sandi50th.com and we will arrange another transfer.");
       return;
     }
-    if (!file.type.startsWith("audio/") && !file.type.startsWith("video/")) {
+    if (!isAudioVideoFile(file)) {
       setError("Please choose an audio or video recording.");
       return;
     }
@@ -180,7 +181,14 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       setError("Record or choose a message before sending.");
       return;
     }
+    if (!consentGiven) {
+      setError("Please check the permission box so we can safely add your recording for Sandi.");
+      consentRef.current?.focus();
+      consentRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+      return;
+    }
 
+    trackContributionStep(kind, 3, "sending");
     setPhase("uploading");
     setError("");
     setProgress(0);
@@ -231,6 +239,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       setConfirmation(String(prepared.submissionId));
       setPhase("success");
     } catch (cause) {
+      trackContributionStep(kind, 3, "failed");
       const reason = cause instanceof Error ? cause.message : "The recording could not be sent.";
       setError(reason + " The recording is still on this screen. Try again or email it to uploads@sandi50th.com.");
       setPhase("preview");
@@ -307,16 +316,17 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       {simpleStep === 3 && (
         <section className="simpleWizardStep">
           <h2>Ready to send.</h2>
-          <p>Your {birthday ? "birthday video" : "voice recording"} is ready. Everything else is optional.</p>
+          <p>Your {birthday ? "birthday video" : "voice recording"} is ready. Confirm permission, then tap Send.</p>
+          <label className="consent contributionConsent simpleConsent"><input ref={consentRef} type="checkbox" checked={consentGiven} onChange={event => { setConsentGiven(event.target.checked); if (event.target.checked) setError(""); }}/><span>I have permission to share this recording with Sandi. <strong>Required</strong></span></label>
+          {!consentGiven && <small className="simpleInlineHelp">Check this box, then tap Send recording now.</small>}
           {previewUrl && (effectiveKind === "video" ? <video className="recordingPlayback simpleFinalPreview" src={previewUrl} controls playsInline/> : <audio className="recordingPlayback simpleFinalPreview" src={previewUrl} controls/>)}
           <label htmlFor="recording-contact">Email or phone <em>Optional</em></label>
           <input id="recording-contact" value={contact} onChange={event => setContact(event.target.value)} placeholder="Only if we need help with the file" />
           <details className="simpleOptional"><summary>Add an optional note</summary><label>Note <em>Optional</em><input name="note" placeholder="A date, place, or detail"/></label><input type="hidden" name="relationship" value="Other"/></details>
-          <label className="consent contributionConsent simpleConsent"><input type="checkbox" checked={consentGiven} onChange={event => setConsentGiven(event.target.checked)}/><span>I have permission to share this recording with Sandi.</span></label>
-          {!consentGiven && <small className="simpleInlineHelp">Please confirm you have permission before sending.</small>}
+
           {phase === "uploading" && <div className="uploadProgress" role="status"><span style={{width: progress + "%"}}/><p>Sending... {Math.round(progress)}%</p></div>}
           {error && <div className="uploadError" role="alert"><strong>Not sent yet.</strong><p>{error}</p><a href={EMAIL_FALLBACK}>Email it instead</a></div>}
-          <div className="simpleWizardActions"><button className="secondary" type="button" disabled={phase === "uploading"} onClick={() => setSimpleStep(2)}>Back</button><button className="primary" type="submit" disabled={!recordingFile || !consentGiven || phase === "uploading"}>{phase === "uploading" ? "Sending... keep this page open" : "Send to Sandi"}</button></div>
+          <div className="simpleWizardActions"><button className="secondary" type="button" disabled={phase === "uploading"} onClick={() => setSimpleStep(2)}>Back</button><button className="primary" type="submit" disabled={!recordingFile || phase === "uploading"}>{phase === "uploading" ? "Sending... keep this page open" : "Send recording now"}</button></div>
         </section>
       )}
     </form>
@@ -342,9 +352,17 @@ function isVideoFile(file: File) {
   return /\.(mov|mp4|m4v|webm)$/i.test(file.name);
 }
 
+function isAudioVideoFile(file: File) {
+  if (file.type.startsWith("audio/") || file.type.startsWith("video/")) return true;
+  return /\.(m4a|aac|caf|mp3|wav|ogg|oga|webm|mov|mp4|m4v|3gp|3g2)$/i.test(file.name);
+}
+
 function normalizedType(file: File) {
-  if (file.type) return file.type.split(";")[0].toLowerCase();
   const name = file.name.toLowerCase();
+  const declared = file.type.split(";")[0].toLowerCase();
+  if (name.endsWith(".m4a") || declared === "audio/x-m4a" || declared === "audio/m4a") return "audio/mp4";
+  if (declared) return declared;
+
   if (name.endsWith(".m4a")) return "audio/x-m4a";
   if (name.endsWith(".mp4")) return "video/mp4";
   if (name.endsWith(".mov")) return "video/quicktime";

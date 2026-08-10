@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ const eventSchema = z.object({
   attemptId: z.string().uuid(),
   path: z.enum(["memory", "photos", "voice", "birthday"]),
   step: z.number().int().min(0).max(4),
-  event: z.enum(["selected", "step", "completed"])
+  event: z.enum(["selected", "step", "sending", "failed", "completed"])
 });
 
 export async function POST(request: Request) {
