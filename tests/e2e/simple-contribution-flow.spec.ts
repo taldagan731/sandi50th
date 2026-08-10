@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 async function choosePath(page: import("@playwright/test").Page, label: string) {
   await page.goto("/contribute", { waitUntil: "domcontentloaded" });
@@ -74,6 +74,11 @@ test("voice path creates a Safari M4A and reaches send", async ({ page }) => {
     Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) } });
   });
   await choosePath(page, "Record your voice");
+  const startInstruction = page.getByText("Tap Record voice now above to begin.");
+  await expect(startInstruction).toBeVisible();
+  await expect(page.locator(".recorderStage")).toHaveCount(0);
+  await expect(startInstruction).toHaveCSS("border-top-width", "0px");
+  await expect(startInstruction).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await page.getByRole("button", { name: "Record voice now" }).click();
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.locator("audio.recordingPlayback")).toBeVisible();

@@ -285,13 +285,17 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
             {birthday && <label className="filePicker secondary">Use phone camera<input type="file" accept="video/*" capture="user" disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback}/></label>}
             <label className="filePicker secondary">Choose an existing {birthday ? "video" : "recording"}<input type="file" accept={birthday ? "video/*" : "audio/*"} disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback}/></label>
           </div>}
-          <div className={"recorderStage recorder-" + phase}>
+          {(phase === "idle" || phase === "requesting") && (
+            <p className="recorderStartInstruction" aria-live="polite">
+              <span aria-hidden="true">{"\u2191"}</span> {phase === "requesting" ? "Opening your microphone..." : birthday ? "Tap Record video now above to begin." : "Tap Record voice now above to begin."}
+            </p>
+          )}
+          {(phase === "recording" || phase === "preview") && <div className={"recorderStage recorder-" + phase}>
             {phase === "recording" && effectiveKind === "video" && <video ref={liveVideo} autoPlay muted playsInline aria-label="Live camera preview"/>}
             {phase === "recording" && effectiveKind === "audio" && <div className="voicePulse" aria-hidden="true"><i/><i/><i/><i/><i/></div>}
             {phase === "recording" && <div className="recordingClock"><strong>{formatTime(seconds)}</strong><span>Tap Stop when you are finished.</span></div>}
             {phase === "preview" && previewUrl && (effectiveKind === "video" ? <video className="recordingPlayback" src={previewUrl} controls playsInline/> : <audio className="recordingPlayback" src={previewUrl} controls/>)}
-            {(phase === "idle" || phase === "requesting") && <div className="recorderStart"><strong>{phase === "requesting" ? "Opening..." : "Tap a recording button above."}</strong></div>}
-          </div>
+          </div>}
           {phase === "recording" && <button className="primary stopRecording" type="button" onClick={stopRecording}>Stop recording</button>}
           {phase === "preview" && <button className="secondary" type="button" onClick={recordAgain}>Record again</button>}
           {error && <p className="simpleInlineError" role="alert">{error}</p>}
