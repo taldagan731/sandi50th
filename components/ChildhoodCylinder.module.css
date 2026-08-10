@@ -67,6 +67,8 @@
  .gallery:not(.motionEnabled) .marqueeTrack,.chapterFilmSection:not(.motionEnabled) .marqueeTrack{animation:none!important;transform:none!important}
  .gallery:not(.motionEnabled) .marqueeRow::after,.chapterFilmSection:not(.motionEnabled) .marqueeRow::after{animation:none!important}
  .gallery:not(.motionEnabled) .marqueePhoto,.chapterFilmSection:not(.motionEnabled) .marqueePhoto{transition:none!important}
+ .gallery.motionEnabled .marqueeTrack,.chapterFilmSection.motionEnabled .marqueeTrack{animation-duration:var(--marquee-duration,170s)!important;animation-iteration-count:infinite!important}
+ .gallery.motionEnabled .marqueeRow::after,.chapterFilmSection.motionEnabled .marqueeRow::after{animation-duration:17s!important;animation-iteration-count:infinite!important}
 }
 
 .motionEnabled{--film-motion-enabled:1}
