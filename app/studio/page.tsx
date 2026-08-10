@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StoryStudio } from "@/components/StoryStudio";
 import "./studio-intelligence.css";
 import "./studio-live-feed.css";
+import "./media-deletion.css";
 import "./family-qa.css";
 import "./name-chorus-studio.css";
 

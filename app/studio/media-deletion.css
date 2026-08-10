@@ -1,0 +1,42 @@
+.mediaDeleteZone {
+  display: grid;
+  gap: .75rem;
+  margin-top: .2rem;
+  padding-top: .85rem;
+  border-top: 1px solid rgba(224, 101, 114, .24);
+}
+
+.mediaDeleteZone.isConfirming {
+  padding: .9rem;
+  border: 1px solid rgba(224, 101, 114, .58);
+  border-radius: .8rem;
+  background: rgba(116, 25, 43, .2);
+}
+
+.mediaDeleteZone p { margin: 0; color: #ffe1e3; font-size: .8rem; line-height: 1.55; }
+.mediaDeleteZone label { color: #ffd5d9; }
+.mediaDeleteZone label strong { color: #fff; text-transform: none; letter-spacing: normal; }
+
+.mediaDeleteStart,
+.mediaDeleteActions button {
+  min-height: 44px;
+  border: 1px solid rgba(224, 101, 114, .65);
+  border-radius: 999px;
+  padding: .65rem .9rem;
+  background: transparent;
+  color: #ffd5d9;
+  cursor: pointer;
+}
+
+.mediaDeleteStart { justify-self: start; }
+.mediaDeleteActions { display: flex; gap: .55rem; flex-wrap: wrap; }
+.mediaDeleteActions .mediaDeleteContinue { background: rgba(224, 101, 114, .16); }
+.mediaDeleteActions .mediaDeleteFinal { background: #b9394c; border-color: #ed7c8c; color: #fff; font-weight: 800; }
+.mediaDeleteStart:disabled,
+.mediaDeleteActions button:disabled { opacity: .42; cursor: not-allowed; }
+
+@media (max-width: 560px) {
+  .mediaDeleteStart,
+  .mediaDeleteActions,
+  .mediaDeleteActions button { width: 100%; }
+}

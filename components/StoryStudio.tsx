@@ -11,6 +11,7 @@ import { ContributionReadinessReport } from "@/components/ContributionReadinessR
 import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
 import { RevealShareStudio } from "@/components/RevealShareStudio";
 import { PhotoOrientationStudio } from "@/components/PhotoOrientationStudio";
+import { MediaDeletionControl } from "@/components/MediaDeletionControl";
 import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
@@ -693,6 +694,15 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
             : <button type="button" className="exclude" disabled={saving} onClick={() => save("excluded")}>Hide from reveal</button>}
           <button type="button" className="secondary compact" disabled={saving} onClick={() => save(status)}>Save details</button>
         </div>
+        {(item.mime_type.startsWith("image/") || item.mime_type.startsWith("video/")) && (
+          <MediaDeletionControl
+            mediaId={item.id}
+            mediaName={item.original_name}
+            mediaKind={item.mime_type.startsWith("video/") ? "video" : "photo"}
+            disabled={saving}
+            onDeleted={onSaved}
+          />
+        )}
         {error && <p className="studioError" role="alert">{error}</p>}
       </div>
     </section>
