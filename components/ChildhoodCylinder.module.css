@@ -9,7 +9,7 @@
 
 /* The remaining childhood album: three bounded diagonal rows. */
 .gallery>header p{margin:.7rem auto 0;color:rgba(255,248,242,.76);line-height:1.55}
-.gallery>.marqueeViewport{display:block;margin-inline:calc(50% - 50vw);height:clamp(28rem,39vw,34rem);overflow:hidden;touch-action:pan-y;background:linear-gradient(135deg,rgba(87,20,70,.2),rgba(232,91,109,.18));mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.gallery>.marqueeViewport{display:block;margin-inline:calc(50% - 50vw);height:clamp(28rem,39vw,34rem);overflow:hidden;touch-action:pan-y;background:linear-gradient(135deg,rgba(87,20,70,.2),rgba(232,91,109,.18));-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 .diagonalCanvas{display:grid;gap:clamp(1rem,1.8vw,1.45rem);width:112vw;margin-left:-6vw;padding-block:clamp(3.2rem,5.5vw,4.8rem);transform:rotate(-10deg);transform-origin:center;touch-action:pan-y}
 .marqueeRow{--marquee-gap:clamp(1rem,1.8vw,1.4rem);--marquee-height:clamp(8.2rem,11vw,10.5rem);width:100%;overflow:hidden;touch-action:pan-y}
 .marqueeTrack{display:flex;width:max-content;will-change:transform;backface-visibility:hidden;animation:marqueeLeft var(--marquee-duration,170s) linear infinite}
@@ -26,7 +26,7 @@
 @keyframes marqueeRight{from{transform:translate3d(-50%,0,0)}to{transform:translate3d(0,0,0)}}
 
 @media(max-width:700px){
- .gallery>.marqueeViewport{height:24rem;mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}
+ .gallery>.marqueeViewport{height:24rem;-webkit-mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent);mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}
  .diagonalCanvas{gap:.8rem;width:116vw;margin-left:-8vw;padding-block:2.8rem;transform:rotate(-8deg)}
  .marqueeRow{--marquee-gap:.8rem;--marquee-height:clamp(6.4rem,25vw,7.5rem)}
  .marqueePhoto{min-width:7.5rem;max-width:58vw}
@@ -52,12 +52,12 @@
 /* Reusable chapter film albums. */
 .chapterFilmSection{margin:clamp(4rem,8vw,7rem) calc(50% - 50vw);padding:clamp(2.5rem,5vw,4.5rem) max(.75rem,calc((100vw - 92rem)/2));overflow:hidden;background:radial-gradient(circle at 18% 18%,rgba(255,125,120,.28),transparent 30%),linear-gradient(145deg,#581a48,#8d3059 54%,#c95269);color:#fff8f2}
 .chapterFilmSection>header{max-width:58rem;margin:0 auto 1.5rem;text-align:center}.chapterFilmSection h3{margin:.5rem 0;font:400 clamp(2.2rem,5vw,4.5rem)/.96 var(--font-display,Georgia,serif);letter-spacing:-.04em}.chapterFilmSection>header p{margin:.7rem auto 0;color:rgba(255,248,242,.78);line-height:1.58}
-.chapterFilmSection>.marqueeViewport{display:block;margin-inline:calc(50% - 50vw);height:clamp(28rem,39vw,34rem);overflow:hidden;touch-action:pan-y;background:linear-gradient(135deg,rgba(87,20,70,.2),rgba(232,91,109,.18));mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.chapterFilmSection>.marqueeViewport{display:block;margin-inline:calc(50% - 50vw);height:clamp(28rem,39vw,34rem);overflow:hidden;touch-action:pan-y;background:linear-gradient(135deg,rgba(87,20,70,.2),rgba(232,91,109,.18));-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 .chapterFilmSection.oneRow{--film-row-count:1}.chapterFilmSection.twoRows{--film-row-count:2}.chapterFilmSection.threeRows{--film-row-count:3}
 .chapterFilmSection.oneRow>.marqueeViewport{height:clamp(14rem,20vw,17rem)}.chapterFilmSection.oneRow .diagonalCanvas{padding-block:3rem}
 .chapterFilmSection.twoRows>.marqueeViewport{height:clamp(21rem,29vw,26rem)}.chapterFilmSection.twoRows .diagonalCanvas{padding-block:3.2rem}
 .chapterFilmSection>.marqueeReducedGrid{display:none}
-@media(max-width:700px){.chapterFilmSection{padding-inline:.75rem}.chapterFilmSection>.marqueeViewport{height:24rem;mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}.chapterFilmSection.oneRow>.marqueeViewport{height:12rem}.chapterFilmSection.oneRow .diagonalCanvas{padding-block:2.2rem}.chapterFilmSection.twoRows>.marqueeViewport{height:18rem}.chapterFilmSection.twoRows .diagonalCanvas{padding-block:2.5rem}}
+@media(max-width:700px){.chapterFilmSection{padding-inline:.75rem}.chapterFilmSection>.marqueeViewport{height:24rem;-webkit-mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent);mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}.chapterFilmSection.oneRow>.marqueeViewport{height:12rem}.chapterFilmSection.oneRow .diagonalCanvas{padding-block:2.2rem}.chapterFilmSection.twoRows>.marqueeViewport{height:18rem}.chapterFilmSection.twoRows .diagonalCanvas{padding-block:2.5rem}}
 
 
 /* Reduced motion keeps the 35mm composition visible without movement. */

@@ -15,6 +15,11 @@ export type ChapterFilmPhoto = {
 };
 
 const mediaUrl = (id: string) => `/api/reveal/media/${id}`;
+const filmPhotoProps = (id: string) => ({
+  src: `${mediaUrl(id)}?width=640`,
+  srcSet: `${mediaUrl(id)}?width=640 640w, ${mediaUrl(id)}?width=960 960w`,
+  sizes: "(max-width: 700px) 58vw, 384px",
+});
 
 export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { chapterNumber: number; chapterTitle: string; photos: ChapterFilmPhoto[] }) {
   const galleryRef = useRef<HTMLElement>(null);
@@ -66,7 +71,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
       <div className={styles.marqueeViewport} aria-label={`Moving film album for ${chapterTitle}`}>
         <div className={styles.diagonalCanvas}>
           {rows.map((row, rowIndex) => {
-            const duration = `${Math.max(58, row.length * 8 + rowIndex * 11)}s`;
+            const duration = `${Math.min(104, Math.max(58, row.length * 4 + rowIndex * 10))}s`;
             return (
               <div className={`${styles.marqueeRow} ${rowIndex % 2 === 1 ? styles.reverse : ""}`} key={`chapter-${chapterNumber}-row-${rowIndex}`}>
                 <div className={styles.marqueeTrack} style={{ "--marquee-duration": duration } as CSSProperties}>
@@ -74,7 +79,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
                     <div className={styles.marqueeGroup} aria-hidden={duplicate || undefined} key={duplicate ? "duplicate" : "original"}>
                       {row.map(photo => (
                         <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onClick={() => setExpanded(photo)}>
-                          <img src={mediaUrl(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" />
+                          <img {...filmPhotoProps(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" decoding="async" />
                           <span>{photo.yearStart || photo.caption || "Open full photograph"}</span>
                         </button>
                       ))}

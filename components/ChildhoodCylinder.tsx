@@ -27,6 +27,11 @@ const approvedIds = [
 ] as const;
 
 const mediaUrl = (id: string) => `/api/reveal/media/${id}`;
+const filmPhotoProps = (id: string) => ({
+  src: `${mediaUrl(id)}?width=640`,
+  srcSet: `${mediaUrl(id)}?width=640 640w, ${mediaUrl(id)}?width=960 960w`,
+  sizes: "(max-width: 700px) 58vw, 384px",
+});
 
 export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; chapterPhotos: Photo[] }) {
   const selected = useMemo(() => {
@@ -118,7 +123,7 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
       <header className={styles.header}><span className="eyebrow">ONCE UPON A TIME</span><h3 id="childhood-cylinder-title">Eighteen glimpses of the beginning.</h3><p>Drag to turn the photographs. Pause on one and open it to see the complete frame.</p></header>
       <div className={`${styles.stage} ${paused ? styles.paused : ""}`} tabIndex={0} role="region" aria-label="Childhood photograph cylinder" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onMouseEnter={() => setPaused(true)} onMouseLeave={() => { if (!pointer.current.active) setPaused(false); }} onKeyDown={event => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setDragAngle(angle => angle + (event.key === "ArrowLeft" ? 20 : -20)); } }}>
         <div className={styles.drift}><div className={styles.ring} style={{ "--drag-angle": `${dragAngle}deg` } as CSSProperties}>
-          {selected.map((photo, index) => <button key={photo.id} type="button" className={styles.face} style={{ "--face-angle": `${index * 20}deg` } as CSSProperties} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} draggable={false} loading={index < 5 ? "eager" : "lazy"} /><span>{photo.caption || photo.originalName}</span></button>)}
+          {selected.map((photo, index) => <button key={photo.id} type="button" className={styles.face} style={{ "--face-angle": `${index * 20}deg` } as CSSProperties} onClick={() => open(photo)}><img {...filmPhotoProps(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} draggable={false} loading={index < 5 ? "eager" : "lazy"} decoding="async" /><span>{photo.caption || photo.originalName}</span></button>)}
         </div></div>
       </div>
       <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
@@ -133,12 +138,12 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
           <div className={styles.diagonalCanvas}>
             {galleryRows.map((row, rowIndex) => (
               <div className={`${styles.marqueeRow} ${rowIndex === 1 ? styles.reverse : ""}`} key={`row-${rowIndex}`}>
-                <div className={styles.marqueeTrack} style={{ "--marquee-duration": ["156s", "181s", "207s"][rowIndex] } as CSSProperties}>
+                <div className={styles.marqueeTrack} style={{ "--marquee-duration": ["72s", "86s", "100s"][rowIndex] } as CSSProperties}>
                   {[false, true].map(duplicate => (
                     <div className={styles.marqueeGroup} aria-hidden={duplicate || undefined} key={duplicate ? "duplicate" : "original"}>
                       {row.map(photo => (
                         <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onClick={() => open(photo)}>
-                          <img src={mediaUrl(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" />
+                          <img {...filmPhotoProps(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" decoding="async" />
                           <span>{photo.yearStart || photo.caption || "Open full photograph"}</span>
                         </button>
                       ))}

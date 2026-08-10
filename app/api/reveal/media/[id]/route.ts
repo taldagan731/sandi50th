@@ -1,5 +1,6 @@
 import { head } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { isTestContributor } from "@/lib/chapters";
@@ -71,12 +72,33 @@ export async function GET(
   if (ifNoneMatch) headers["If-None-Match"] = ifNoneMatch;
 
   const response = await fetch(blob.url, { headers });
+  const requestedWidthParam = searchParams.get("width");
+  const requestedWidth = Number(requestedWidthParam);
+  const presentationWidth = presentationImage && requestedWidthParam !== null && Number.isFinite(requestedWidth)
+    ? Math.min(1600, Math.max(320, Math.round(requestedWidth)))
+    : null;
+  if (presentationWidth && response.ok) {
+    const resized = await sharp(Buffer.from(await response.arrayBuffer()), { failOn: "none" })
+      .resize({ width: presentationWidth, withoutEnlargement: true })
+      .jpeg({ quality: 82, progressive: true })
+      .toBuffer();
+    return new NextResponse(new Uint8Array(resized), {
+      status: 200,
+      headers: {
+        "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400",
+        "Content-Type": "image/jpeg",
+        "Content-Length": String(resized.length),
+        "Content-Disposition": "inline",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  }
   const outgoing = new Headers();
   for (const name of ["content-type", "content-length", "content-range", "accept-ranges", "etag", "last-modified"]) {
     const value = response.headers.get(name);
     if (value) outgoing.set(name, value);
   }
-  outgoing.set("Cache-Control", "private, no-store");
+  outgoing.set("Cache-Control", downloadOriginal ? "private, no-store" : "private, max-age=3600, stale-while-revalidate=86400");
   outgoing.set("X-Content-Type-Options", "nosniff");
   const safeFilename = media.original_name.replace(/[^\x20-\x7E]/g, "_").replace(/[\\"]/g, "_").slice(0, 180) || "memory";
   const disposition = downloadOriginal ? "attachment" : "inline";
