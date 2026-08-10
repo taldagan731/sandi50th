@@ -97,7 +97,7 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
       </div>
       <div className="photoStoryImageViewport" onDoubleClick={() => setZoom(value => value === 1 ? 2.5 : 1)}>
         {imageLoading && !imageFailed && <p className="photoStoryImageLoading" role="status">Opening the photograph...</p>}
-        {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} className={imageLoading ? "is-loading" : undefined} src={fullImageSrc} alt={alt} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
+        {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} className={imageLoading ? "is-loading" : undefined} src={fullImageSrc} alt={alt} data-media-id={mediaId} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
       </div>
       <section className="photoStoryPanel" aria-label="Stories attached to this photograph">
         <form className="photoStoryForm" onSubmit={submit}>

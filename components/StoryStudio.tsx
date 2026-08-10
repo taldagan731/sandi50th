@@ -12,6 +12,8 @@ import { DuplicateReviewStudio } from "@/components/DuplicateReviewStudio";
 import { RevealShareStudio } from "@/components/RevealShareStudio";
 import { PhotoOrientationStudio } from "@/components/PhotoOrientationStudio";
 import { MediaDeletionControl } from "@/components/MediaDeletionControl";
+import { PhotoFaceTagStudio } from "@/components/PhotoFaceTagStudio";
+import { FaceTaggingStudio } from "@/components/FaceTaggingStudio";
 import type { ContributionReport } from "@/lib/studio/contribution-report";
 
 type MediaItem = {
@@ -351,6 +353,7 @@ export function StoryStudio() {
       <RevealShareStudio />
 
       <PhotoOrientationStudio />
+      <FaceTaggingStudio />
       <details className="studioTools ownerArchiveImporter">
         <summary>Import owner archive photographs</summary>
         <MemoryContributionForm mode="ownerArchive" />
@@ -711,6 +714,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
             </div>
           </div>
         )}
+        {selected && isPhoto && <PhotoFaceTagStudio mediaId={item.id} imageSrc={previewUrl} alt={caption || item.original_name} />}
         {item.mime_type.startsWith("image/") && (
           <div className={`intelligenceCard intelligence-${item.analysis_status || "unprocessed"}`}>
             <div className="intelligenceStatus">

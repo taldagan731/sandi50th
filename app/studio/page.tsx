@@ -7,6 +7,7 @@ import "./family-qa.css";
 import "./name-chorus-studio.css";
 import "./mobile-studio.css";
 import "./media-organizer.css";
+import "./face-tags.css";
 
 
 export const metadata: Metadata = {

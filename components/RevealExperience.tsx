@@ -15,6 +15,7 @@ import { ChapterContributionPoem, FamilyFinalePoem } from "@/components/Contribu
 import { TalDedication } from "@/components/TalDedication";
 import { ChapterNavigator } from "@/components/ChapterNavigator";
 import { PhotoStoryViewer } from "@/components/PhotoStoryViewer";
+import { PhotoFaceHoverLayer } from "@/components/PhotoFaceHoverLayer";
 
 type RevealMedia = {
   id: string;
@@ -205,6 +206,7 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
 
   return (
     <div className="revealExperience" onClick={handlePhotoClick} onKeyDown={handlePhotoKey}>
+      <PhotoFaceHoverLayer />
       {reviewIncludesTests && <aside className="testReviewBanner"><strong>Owner review mode</strong><span>Automated and test uploads are included and clearly marked. They remain excluded from real counts and the public reveal.</span></aside>}
       <header className="revealMasthead">
         <FlowingCloudShader palette="champagne" className="approvedPinkChampagneShader" />

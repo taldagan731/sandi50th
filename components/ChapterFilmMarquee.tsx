@@ -79,7 +79,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
                     <div className={styles.marqueeGroup} aria-hidden={duplicate || undefined} key={duplicate ? "duplicate" : "original"}>
                       {row.map(photo => (
                         <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); setExpanded(photo); } }} onClick={() => setExpanded(photo)}>
-                          <img {...filmPhotoProps(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" decoding="async" />
+                          <img {...filmPhotoProps(photo.id)} data-reveal-photo="true" data-media-id={photo.id} alt={duplicate ? "" : photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" decoding="async" />
                           <span>{photo.yearStart || photo.caption || "Open full photograph"}</span>
                         </button>
                       ))}
@@ -92,7 +92,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
         </div>
       </div>
       <div className={styles.marqueeReducedGrid} aria-label={`Photograph album for ${chapterTitle}`}>
-        {ordered.map(photo => <button type="button" key={photo.id} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); setExpanded(photo); } }} onClick={() => setExpanded(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" /></button>)}
+        {ordered.map(photo => <button type="button" key={photo.id} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); setExpanded(photo); } }} onClick={() => setExpanded(photo)}><img src={mediaUrl(photo.id)} data-reveal-photo="true" data-media-id={photo.id} alt={photo.caption || `Photograph from ${chapterTitle} shared by ${photo.contributorName}`} loading="lazy" /></button>)}
       </div>
       {expanded && <PhotoStoryViewer mediaId={expanded.id} src={mediaUrl(expanded.id)} alt={expanded.caption || expanded.originalName} onClose={() => { setExpanded(null); setTouchPaused(false); }} />}
     </section>

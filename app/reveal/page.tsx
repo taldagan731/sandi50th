@@ -21,6 +21,7 @@ import "./reveal-contribute-cta.css";
 import "./mobile-reveal.css";
 import "./photo-stories.css";
 import "./chapter-navigator.css";
+import "./face-tags.css";
 
 export const dynamic = "force-dynamic";
 
