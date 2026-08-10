@@ -45,6 +45,7 @@
   }
 
   .storyStudioPage .reviewFields label { font-size: .78rem; line-height: 1.4; }
+  .storyStudioPage button { min-height: 44px !important; }
   .storyStudioPage .studioSubmissionDecision button { min-height: 44px; }
   .storyStudioPage .contributionConsent { min-height: 44px; }
   .storyStudioPage .contributionConsent input {
