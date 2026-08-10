@@ -53,13 +53,13 @@ async function referenceSheet(references: Reference[], mediaById: Map<string, Me
   const columns = Math.min(4, cells.length);
   const rows = Math.ceil(cells.length / columns);
   const width = columns * 210;
-  const height = rows * 220;
+  const height = rows * 190;
   const composites: sharp.OverlayOptions[] = [];
   cells.forEach((cell, index) => {
     const x = (index % columns) * 210 + 15;
-    const y = Math.floor(index / columns) * 220 + 10;
+    const y = Math.floor(index / columns) * 190 + 5;
     composites.push({ input: cell.crop, left: x, top: y });
-    composites.push({ input: Buffer.from(`<svg width="180" height="24"><text x="90" y="18" text-anchor="middle" fill="#fff" font-size="17" font-family="Arial" font-weight="700">${cell.label}</text></svg>`), left: x, top: y + 184 });
+
   });
   const sheet = await sharp({ create: { width, height, channels: 3, background: "#321126" } }).composite(composites).jpeg({ quality: 86 }).toBuffer();
   return { sheet, cells };
@@ -77,7 +77,7 @@ async function askAnthropic(target: Buffer, sheet: Buffer, legend: string) {
       messages: [{ role: "user", content: [
         { type: "image", source: { type: "base64", media_type: "image/jpeg", data: target.toString("base64") } },
         { type: "image", source: { type: "base64", media_type: "image/jpeg", data: sheet.toString("base64") } },
-        { type: "text", text: `The first image is the target. The second is a reference sheet. References: ${legend}. Find visible faces in the target and compare only against those references. Coordinates must be normalized 0..1 against the entire target image. Use null when identity is uncertain. Return exactly {"faces":[{"reference":"R1 or null","confidence":0.0,"x":0.0,"y":0.0,"width":0.0,"height":0.0}]}. Confidence means same-person visual similarity, not face-detection confidence.` }
+        { type: "text", text: `The first image is the target. The second is a reference sheet ordered left-to-right, then top-to-bottom. References in that same order: ${legend}. Find visible faces in the target and compare only against those references. Coordinates must be normalized 0..1 against the entire target image. Use null when identity is uncertain. Return exactly {"faces":[{"reference":"R1 or null","confidence":0.0,"x":0.0,"y":0.0,"width":0.0,"height":0.0}]}. Confidence means same-person visual similarity, not face-detection confidence.` }
       ] }]
     })
   });
