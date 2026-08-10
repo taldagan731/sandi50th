@@ -64,7 +64,11 @@
 @media(prefers-reduced-motion:reduce){
  .gallery>.marqueeViewport,.chapterFilmSection>.marqueeViewport{display:block}
  .gallery>.marqueeReducedGrid,.chapterFilmSection>.marqueeReducedGrid{display:none}
- .marqueeTrack{animation:none!important;transform:none!important}
- .marqueeRow::after{animation:none!important}
- .marqueePhoto{transition:none!important}
+ .gallery:not(.motionEnabled) .marqueeTrack,.chapterFilmSection:not(.motionEnabled) .marqueeTrack{animation:none!important;transform:none!important}
+ .gallery:not(.motionEnabled) .marqueeRow::after,.chapterFilmSection:not(.motionEnabled) .marqueeRow::after{animation:none!important}
+ .gallery:not(.motionEnabled) .marqueePhoto,.chapterFilmSection:not(.motionEnabled) .marqueePhoto{transition:none!important}
 }
+
+.motionEnabled{--film-motion-enabled:1}
+.filmMotionToggle{min-height:44px;margin:1rem auto 0;padding:.7rem 1.15rem;border:1px solid rgba(255,222,180,.55);border-radius:999px;background:linear-gradient(135deg,rgba(255,211,151,.94),rgba(255,139,132,.94));box-shadow:0 .65rem 1.6rem rgba(52,7,38,.24);color:#4b1332;font-weight:900;cursor:pointer}
+.filmMotionToggle:hover,.filmMotionToggle:focus-visible{transform:scale(1.04);outline:2px solid #fff1d3;outline-offset:3px}

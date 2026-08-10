@@ -3,6 +3,7 @@
 import { type CSSProperties, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChildhoodCylinder.module.css";
 import { PhotoStoryViewer } from "@/components/PhotoStoryViewer";
+import { useFilmMotionPreference } from "@/lib/use-film-motion-preference";
 
 type Photo = {
   id: string;
@@ -49,10 +50,11 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
   const [marqueeVisible, setMarqueeVisible] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(true);
   const [touchPaused, setTouchPaused] = useState(false);
+  const filmMotion = useFilmMotionPreference();
 
   useEffect(() => {
     const element = galleryRef.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!element) return;
     const observer = new IntersectionObserver(([entry]) => setMarqueeVisible(entry.isIntersecting), { threshold: .01 });
     const handleVisibility = () => setDocumentVisible(!document.hidden);
     observer.observe(element);
@@ -109,7 +111,7 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
     setPaused(false);
     setTouchPaused(false);
   }
-  const marqueePaused = !marqueeVisible || !documentVisible || touchPaused || expanded !== null;
+  const marqueePaused = !filmMotion.moving || !marqueeVisible || !documentVisible || touchPaused || expanded !== null;
 
   return (
     <section className={styles.section} aria-labelledby="childhood-cylinder-title">
@@ -122,11 +124,11 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
       <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
       <section
         ref={galleryRef}
-        className={`${styles.gallery} ${marqueePaused ? styles.marqueePaused : ""}`}
+        className={`${styles.gallery} ${filmMotion.moving ? styles.motionEnabled : ""} ${marqueePaused ? styles.marqueePaused : ""}`}
         aria-labelledby="childhood-gallery-title"
         onPointerDown={event => { if (event.pointerType !== "mouse") setTouchPaused(true); }}
       >
-        <header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine photographs, drifting through time.</h3><p>Hover or touch to pause. Open any photograph to see the complete frame.</p></header>
+        <header><span className="eyebrow">THE CHILDHOOD ALBUM</span><h3 id="childhood-gallery-title">Fifty-nine photographs, drifting through time.</h3><p>Hover or touch to pause. Open any photograph to see the complete frame.</p>{filmMotion.reducedMotion && <button className={styles.filmMotionToggle} type="button" aria-pressed={filmMotion.moving} onPointerDown={event => event.stopPropagation()} onClick={filmMotion.toggle}>{filmMotion.moving ? "Pause film strips" : "Play film strips"}</button>}</header>
         <div className={styles.marqueeViewport} aria-label="Diagonal moving childhood photograph album">
           <div className={styles.diagonalCanvas}>
             {galleryRows.map((row, rowIndex) => (

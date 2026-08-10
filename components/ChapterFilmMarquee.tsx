@@ -3,6 +3,7 @@
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { PhotoStoryViewer } from "@/components/PhotoStoryViewer";
 import styles from "./ChildhoodCylinder.module.css";
+import { useFilmMotionPreference } from "@/lib/use-film-motion-preference";
 
 export type ChapterFilmPhoto = {
   id: string;
@@ -21,6 +22,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
   const [visible, setVisible] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(true);
   const [touchPaused, setTouchPaused] = useState(false);
+  const filmMotion = useFilmMotionPreference();
   const ordered = useMemo(() => [...photos].sort((a, b) => (a.yearStart ?? 9999) - (b.yearStart ?? 9999) || a.displayOrder - b.displayOrder), [photos]);
   const rowCount = ordered.length >= 9 ? 3 : ordered.length >= 4 ? 2 : 1;
   const rows = useMemo(() => {
@@ -31,7 +33,7 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
 
   useEffect(() => {
     const element = galleryRef.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!element) return;
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: .01 });
     const handleVisibility = () => setDocumentVisible(!document.hidden);
     observer.observe(element);
@@ -50,15 +52,16 @@ export function ChapterFilmMarquee({ chapterNumber, chapterTitle, photos }: { ch
   }, [touchPaused, expanded]);
 
   if (!ordered.length) return null;
-  const paused = !visible || !documentVisible || touchPaused || expanded !== null;
+  const paused = !filmMotion.moving || !visible || !documentVisible || touchPaused || expanded !== null;
   const rowClass = rowCount === 1 ? styles.oneRow : rowCount === 2 ? styles.twoRows : styles.threeRows;
 
   return (
-    <section ref={galleryRef} className={`${styles.chapterFilmSection} ${rowClass} ${paused ? styles.marqueePaused : ""}`} aria-labelledby={`chapter-film-title-${chapterNumber}`} onPointerDown={event => { if (event.pointerType !== "mouse") setTouchPaused(true); }}>
+    <section ref={galleryRef} className={`${styles.chapterFilmSection} ${rowClass} ${filmMotion.moving ? styles.motionEnabled : ""} ${paused ? styles.marqueePaused : ""}`} aria-labelledby={`chapter-film-title-${chapterNumber}`} onPointerDown={event => { if (event.pointerType !== "mouse") setTouchPaused(true); }}>
       <header>
         <span className="eyebrow">CHAPTER {String(chapterNumber).padStart(2, "0")} · THE PHOTOGRAPH ALBUM</span>
         <h3 id={`chapter-film-title-${chapterNumber}`}>{chapterTitle}, alive on film.</h3>
         <p>{ordered.length} photograph{ordered.length === 1 ? "" : "s"}. Hover or touch a strip to pause; open any frame to look closer and add what you remember.</p>
+        {filmMotion.reducedMotion && <button className={styles.filmMotionToggle} type="button" aria-pressed={filmMotion.moving} onPointerDown={event => event.stopPropagation()} onClick={filmMotion.toggle}>{filmMotion.moving ? "Pause film strips" : "Play film strips"}</button>}
       </header>
       <div className={styles.marqueeViewport} aria-label={`Moving film album for ${chapterTitle}`}>
         <div className={styles.diagonalCanvas}>
