@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type PhotoStory = {
@@ -23,6 +23,12 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
   const [imageLoading, setImageLoading] = useState(true);
   const [imageFailed, setImageFailed] = useState(false);
   const [imageAttempt, setImageAttempt] = useState(0);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [faceTagging, setFaceTagging] = useState(false);
+  const [faceDraft, setFaceDraft] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [faceName, setFaceName] = useState("");
+  const [faceSending, setFaceSending] = useState(false);
+  const [faceMessage, setFaceMessage] = useState("");
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -55,6 +61,32 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
     setImageFailed(false);
     setImageAttempt(0);
   }, [src]);
+
+  function chooseFace(event: PointerEvent<HTMLImageElement>) {
+    if (!faceTagging || zoom !== 1) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = .16;
+    const height = .2;
+    const centerX = (event.clientX - rect.left) / rect.width;
+    const centerY = (event.clientY - rect.top) / rect.height;
+    setFaceDraft({ x: Math.max(0, Math.min(1 - width, centerX - width / 2)), y: Math.max(0, Math.min(1 - height, centerY - height / 2)), width, height });
+    setFaceMessage("Face selected. Add the personâ€™s name below.");
+  }
+
+  async function submitFaceTag() {
+    if (!faceDraft || !faceName.trim()) { setFaceMessage("Tap a face and enter the personâ€™s name."); return; }
+    setFaceSending(true); setFaceMessage("");
+    try {
+      const response = await fetch("/api/photo-face-tags", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaId, personName: faceName.trim(), authorName: authorName.trim(), ...faceDraft, website: "" }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "That face tag could not be saved.");
+      setFaceTagging(false); setFaceDraft(null); setFaceName("");
+      setFaceMessage("Sent to the photo curator for confirmation. Thank you.");
+    } catch (cause) { setFaceMessage(cause instanceof Error ? cause.message : "That face tag could not be saved."); }
+    finally { setFaceSending(false); }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,14 +124,16 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
         <div>
           <button type="button" onClick={() => setZoom(value => Math.max(1, value - .5))} aria-label="Zoom out">−</button>
           <button type="button" onClick={() => setZoom(value => Math.min(5, value + .5))} aria-label="Zoom in">+</button>
+          <button type="button" className={faceTagging ? "is-active" : ""} aria-pressed={faceTagging} onClick={() => { setFaceTagging(value => !value); setFaceDraft(null); setFaceMessage(""); setZoom(1); }}>{faceTagging ? "Cancel tagging" : "Tag someone"}</button>
           <button type="button" onClick={onClose}>Close</button>
         </div>
       </div>
       <div className="photoStoryImageViewport" onDoubleClick={() => setZoom(value => value === 1 ? 2.5 : 1)}>
         {imageLoading && !imageFailed && <p className="photoStoryImageLoading" role="status">Opening the photograph...</p>}
-        {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} className={imageLoading ? "is-loading" : undefined} src={fullImageSrc} alt={alt} data-media-id={mediaId} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
+        {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} ref={imageRef} className={`${imageLoading ? "is-loading " : ""}${faceTagging ? "is-face-tagging" : ""}`} src={fullImageSrc} alt={alt} data-media-id={mediaId} onPointerUp={chooseFace} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
       </div>
       <section className="photoStoryPanel" aria-label="Stories attached to this photograph">
+        {(faceTagging || faceMessage) && <div className="publicFaceTagger"><div><strong>Tag someone in this photograph</strong><p>{faceTagging ? "Tap the center of a face above, then enter the personâ€™s name. Tags are reviewed before appearing publicly." : faceMessage}</p></div>{faceTagging && <><label>Personâ€™s name<input value={faceName} onChange={event => setFaceName(event.target.value)} maxLength={80} placeholder="Who is this?" /></label><button type="button" disabled={faceSending || !faceDraft || !faceName.trim()} onClick={submitFaceTag}>{faceSending ? "Sendingâ€¦" : "Submit face tag"}</button></>}<p role="status">{faceTagging ? faceMessage : ""}</p></div>}
         <form className="photoStoryForm" onSubmit={submit}>
           <header><span>WHO’S HERE? WHAT DO YOU REMEMBER?</span><h2>Add to this photograph.</h2><p>Names, a detail, an impression, or a whole story—anything you remember belongs here.</p></header>
           <div className="photoStoryFields">
