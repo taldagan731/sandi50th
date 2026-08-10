@@ -123,10 +123,10 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
       <header className={styles.header}><span className="eyebrow">ONCE UPON A TIME</span><h3 id="childhood-cylinder-title">Eighteen glimpses of the beginning.</h3><p>Drag to turn the photographs. Pause on one and open it to see the complete frame.</p></header>
       <div className={`${styles.stage} ${paused ? styles.paused : ""}`} tabIndex={0} role="region" aria-label="Childhood photograph cylinder" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onMouseEnter={() => setPaused(true)} onMouseLeave={() => { if (!pointer.current.active) setPaused(false); }} onKeyDown={event => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setDragAngle(angle => angle + (event.key === "ArrowLeft" ? 20 : -20)); } }}>
         <div className={styles.drift}><div className={styles.ring} style={{ "--drag-angle": `${dragAngle}deg` } as CSSProperties}>
-          {selected.map((photo, index) => <button key={photo.id} type="button" className={styles.face} style={{ "--face-angle": `${index * 20}deg` } as CSSProperties} onClick={() => open(photo)}><img {...filmPhotoProps(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} draggable={false} loading={index < 5 ? "eager" : "lazy"} decoding="async" /><span>{photo.caption || photo.originalName}</span></button>)}
+          {selected.map((photo, index) => <button key={photo.id} type="button" className={styles.face} style={{ "--face-angle": `${index * 20}deg` } as CSSProperties} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); open(photo); } }} onClick={() => open(photo)}><img {...filmPhotoProps(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} draggable={false} loading={index < 5 ? "eager" : "lazy"} decoding="async" /><span>{photo.caption || photo.originalName}</span></button>)}
         </div></div>
       </div>
-      <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
+      <div className={styles.reducedGrid}>{selected.map(photo => <button type="button" key={photo.id} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); open(photo); } }} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Childhood photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}</div>
       <section
         ref={galleryRef}
         className={`${styles.gallery} ${filmMotion.moving ? styles.motionEnabled : ""} ${marqueePaused ? styles.marqueePaused : ""}`}
@@ -142,7 +142,7 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
                   {[false, true].map(duplicate => (
                     <div className={styles.marqueeGroup} aria-hidden={duplicate || undefined} key={duplicate ? "duplicate" : "original"}>
                       {row.map(photo => (
-                        <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onClick={() => open(photo)}>
+                        <button className={styles.marqueePhoto} type="button" key={photo.id + (duplicate ? "-duplicate" : "")} tabIndex={duplicate ? -1 : undefined} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); open(photo); } }} onClick={() => open(photo)}>
                           <img {...filmPhotoProps(photo.id)} alt={duplicate ? "" : photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" decoding="async" />
                           <span>{photo.yearStart || photo.caption || "Open full photograph"}</span>
                         </button>
@@ -155,7 +155,7 @@ export function ChildhoodCylinder({ photos, chapterPhotos }: { photos: Photo[]; 
           </div>
         </div>
         <div className={styles.marqueeReducedGrid} aria-label="Childhood photograph album">
-          {gallery.map(photo => <button type="button" key={photo.id} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}
+          {gallery.map(photo => <button type="button" key={photo.id} onPointerUp={event => { if (event.pointerType !== "mouse") { event.preventDefault(); open(photo); } }} onClick={() => open(photo)}><img src={mediaUrl(photo.id)} alt={photo.caption || `Photograph of Sandi shared by ${photo.contributorName}`} loading="lazy" /></button>)}
         </div>
       </section>
       {expanded && <PhotoStoryViewer mediaId={expanded.id} src={mediaUrl(expanded.id)} alt={expanded.caption || expanded.originalName} onClose={closeViewer} />}

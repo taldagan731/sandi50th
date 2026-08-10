@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type PhotoStory = {
   id: string;
@@ -19,6 +20,9 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
   const [authorName, setAuthorName] = useState("");
   const [peopleText, setPeopleText] = useState("");
   const [memory, setMemory] = useState("");
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageAttempt, setImageAttempt] = useState(0);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -40,6 +44,17 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
   }, [mediaId]);
 
   const people = useMemo(() => peopleText.split(",").map(value => value.trim()).filter(Boolean), [peopleText]);
+  const fullImageSrc = useMemo(() => {
+    const cleanSrc = src.split("?")[0];
+    const sizedSrc = cleanSrc.includes("/api/reveal/media/") ? `${cleanSrc}?width=1600` : src;
+    return imageAttempt > 0 ? `${sizedSrc}${sizedSrc.includes("?") ? "&" : "?"}retry=${imageAttempt}` : sizedSrc;
+  }, [src, imageAttempt]);
+
+  useEffect(() => {
+    setImageLoading(true);
+    setImageFailed(false);
+    setImageAttempt(0);
+  }, [src]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,7 +85,7 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
 
   const storyCopies = stories.length > 2 ? [false, true] : [false];
 
-  return (
+  const dialog = (
     <div className="photoStoryViewer" role="dialog" aria-modal="true" aria-label="Expanded photograph and shared stories">
       <div className="photoStoryToolbar">
         <span>Look closer · add what you remember</span>
@@ -81,7 +96,8 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
         </div>
       </div>
       <div className="photoStoryImageViewport" onDoubleClick={() => setZoom(value => value === 1 ? 2.5 : 1)}>
-        <img src={src} alt={alt} style={{ transform: `scale(${zoom})` }} />
+        {imageLoading && !imageFailed && <p className="photoStoryImageLoading" role="status">Opening the photograph...</p>}
+        {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} className={imageLoading ? "is-loading" : undefined} src={fullImageSrc} alt={alt} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
       </div>
       <section className="photoStoryPanel" aria-label="Stories attached to this photograph">
         <form className="photoStoryForm" onSubmit={submit}>
@@ -104,4 +120,5 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
       </section>
     </div>
   );
+  return createPortal(dialog, document.body);
 }
