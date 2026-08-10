@@ -27,7 +27,8 @@ function publicTag(tag: Record<string, unknown>) {
   return {
     id: String(tag.id), name: String(tag.person_name || ""), x: Number(tag.x), y: Number(tag.y),
     width: Number(tag.width), height: Number(tag.height), status: String(tag.status), source: String(tag.source),
-    confidence: tag.confidence == null ? null : Number(tag.confidence)
+    confidence: tag.confidence == null ? null : Number(tag.confidence),
+    referenceTagId: tag.reference_tag_id ? String(tag.reference_tag_id) : null
   };
 }
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
   const mediaId = new URL(request.url).searchParams.get("mediaId");
   if (!mediaId || !await ownerMedia(owner, mediaId)) return NextResponse.json({ error: "Photograph not found." }, { status: 404 });
   const { data, error } = await owner.supabase.from("photo_face_tags")
-    .select("id,person_name,x,y,width,height,status,source,confidence")
+    .select("id,person_name,x,y,width,height,status,source,confidence,reference_tag_id")
     .eq("project_id", owner.project.id).eq("media_asset_id", mediaId).neq("status", "rejected").order("created_at");
   if (error) {
     if (error.code === "42P01" || error.code === "PGRST205" || /photo_face_tags|schema cache/i.test(error.message)) return NextResponse.json({ tags: [], people: [], migrationRequired: true });
@@ -62,16 +63,22 @@ export async function POST(request: Request) {
     const { data, error } = await owner.supabase.from("photo_face_tags").insert({
       project_id: owner.project.id, media_asset_id: body.mediaId, person_name: body.personName,
       x: body.x, y: body.y, width, height, status: "confirmed", source: "manual", confidence: 1
-    }).select("id,person_name,x,y,width,height,status,source,confidence").single();
+    }).select("id,person_name,x,y,width,height,status,source,confidence,reference_tag_id").single();
     if (error) return NextResponse.json({ error: (error.code === "42P01" || error.code === "PGRST205") ? "Install supabase/photo-face-tags-migration.sql first." : error.message }, { status: (error.code === "42P01" || error.code === "PGRST205") ? 503 : 500 });
     return NextResponse.json({ tag: publicTag(data) }, { status: 201 });
   }
-  const { data: existing } = await owner.supabase.from("photo_face_tags").select("id,project_id").eq("id", body.tagId).eq("project_id", owner.project.id).maybeSingle();
+  const { data: existing } = await owner.supabase.from("photo_face_tags").select("id,project_id,reference_tag_id").eq("id", body.tagId).eq("project_id", owner.project.id).maybeSingle();
   if (!existing) return NextResponse.json({ error: "Face tag not found." }, { status: 404 });
   if (body.action === "remove") {
     const { error } = await owner.supabase.from("photo_face_tags").delete().eq("id", body.tagId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
+  }
+  if (body.action === "confirm" && existing.reference_tag_id) {
+    const { error: replaceError } = await owner.supabase.from("photo_face_tags")
+      .update({ status: "rejected", updated_at: new Date().toISOString() })
+      .eq("id", existing.reference_tag_id).eq("project_id", owner.project.id);
+    if (replaceError) return NextResponse.json({ error: replaceError.message }, { status: 500 });
   }
   const update = body.action === "confirm"
     ? { status: "confirmed", person_name: body.personName, confidence: 1, updated_at: new Date().toISOString() }

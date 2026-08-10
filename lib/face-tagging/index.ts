@@ -102,17 +102,18 @@ async function photoInventory(projectId: string) {
 export async function faceTaggingStatus(projectId: string) {
   const supabase = createAdminClient();
   const photos = await photoInventory(projectId);
-  const { data, error } = await supabase.from("photo_face_tags").select("media_asset_id,status,person_name").eq("project_id", projectId);
+  const { data, error } = await supabase.from("photo_face_tags").select("media_asset_id,status,person_name,source,confidence").eq("project_id", projectId);
   if (error) {
     if (migrationMissing(error)) return { migrationRequired: true, total: photos.length, scanned: 0, remaining: photos.length, confirmed: 0, questions: 0, people: 0 };
     throw error;
   }
   const scanned = new Set((data ?? []).map(item => item.media_asset_id)).size;
   const people = new Set((data ?? []).filter(item => item.status === "confirmed" && item.person_name).map(item => item.person_name.toLowerCase())).size;
-  const questionIds = [...new Set((data ?? []).filter(item => item.status === "suggested").map(item => item.media_asset_id))];
+  const needsReview = (item: { status: string; source?: string; confidence?: number | null }) => item.status === "suggested" || (item.status === "confirmed" && item.source === "manual" && item.confidence == null);
+  const questionIds = [...new Set((data ?? []).filter(needsReview).map(item => item.media_asset_id))];
   const photoById = new Map(photos.map(photo => [photo.id, photo]));
   const questionItems = questionIds.map(mediaId => ({ mediaId, name: photoById.get(mediaId)?.original_name || "Photograph needing review" }));
-  return { migrationRequired: false, total: photos.length, scanned, remaining: Math.max(0, photos.length - scanned), confirmed: (data ?? []).filter(item => item.status === "confirmed").length, questions: (data ?? []).filter(item => item.status === "suggested").length, people, questionItems };
+  return { migrationRequired: false, total: photos.length, scanned, remaining: Math.max(0, photos.length - scanned), confirmed: (data ?? []).filter(item => item.status === "confirmed").length, questions: (data ?? []).filter(needsReview).length, people, questionItems };
 }
 
 export async function processNextFacePhoto(projectId: string) {

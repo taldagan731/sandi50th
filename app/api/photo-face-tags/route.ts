@@ -55,15 +55,32 @@ export async function POST(request: Request) {
   if (!access) return NextResponse.json({ error: "This photograph is not available." }, { status: 404 });
   const width = Math.min(parsed.data.width, 1 - parsed.data.x);
   const height = Math.min(parsed.data.height, 1 - parsed.data.y);
+  const { data: current } = await access.supabase.from("photo_face_tags")
+    .select("id,x,y,width,height")
+    .eq("project_id", access.projectId)
+    .eq("media_asset_id", parsed.data.mediaId)
+    .eq("status", "confirmed");
+  const overlap = (current ?? []).map(tag => {
+    const left = Math.max(parsed.data.x, Number(tag.x));
+    const top = Math.max(parsed.data.y, Number(tag.y));
+    const right = Math.min(parsed.data.x + width, Number(tag.x) + Number(tag.width));
+    const bottom = Math.min(parsed.data.y + height, Number(tag.y) + Number(tag.height));
+    const intersection = Math.max(0, right - left) * Math.max(0, bottom - top);
+    const union = width * height + Number(tag.width) * Number(tag.height) - intersection;
+    return { id: String(tag.id), score: union > 0 ? intersection / union : 0 };
+  }).sort((a, b) => b.score - a.score)[0];
+  const replacesTagId = overlap && overlap.score >= .25 ? overlap.id : null;
   const { error } = await access.supabase.from("photo_face_tags").insert({
     project_id: access.projectId, media_asset_id: parsed.data.mediaId, person_name: parsed.data.personName,
-    x: parsed.data.x, y: parsed.data.y, width, height, status: "suggested", source: "manual", confidence: null
+    x: parsed.data.x, y: parsed.data.y, width, height,
+    status: replacesTagId ? "suggested" : "confirmed", source: "manual", confidence: null,
+    reference_tag_id: replacesTagId
   });
   if (error) {
     if (error.code === "42P01" || error.code === "PGRST205" || /photo_face_tags|schema cache/i.test(error.message)) return NextResponse.json({ error: "Photo tagging is being prepared." }, { status: 503 });
     return NextResponse.json({ error: "That face tag could not be saved. Please try again." }, { status: 500 });
   }
-  return NextResponse.json({ ok: true, pendingReview: true }, { status: 201 });
+  return NextResponse.json({ ok: true, pendingReview: true, published: !replacesTagId, proposedChange: Boolean(replacesTagId) }, { status: 201 });
 }
 
 export async function GET(request: Request) {

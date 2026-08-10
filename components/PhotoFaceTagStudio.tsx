@@ -4,7 +4,7 @@ import { type PointerEvent, useEffect, useRef, useState } from "react";
 
 type Tag = {
   id: string; name: string; x: number; y: number; width: number; height: number;
-  status: "confirmed" | "suggested"; source: "manual" | "ai"; confidence: number | null;
+  status: "confirmed" | "suggested"; source: "manual" | "ai"; confidence: number | null; referenceTagId: string | null;
 };
 
 export function PhotoFaceTagStudio({ mediaId, imageSrc, alt }: { mediaId: string; imageSrc: string; alt: string }) {
@@ -60,6 +60,7 @@ export function PhotoFaceTagStudio({ mediaId, imageSrc, alt }: { mediaId: string
     if (saved) { setDraft(null); setName(""); }
   }
 
+  const reviewItems = tags.filter(tag => tag.status === "suggested" || (tag.status === "confirmed" && tag.source === "manual" && tag.confidence === null));
   const suggested = tags.filter(tag => tag.status === "suggested");
   return (
     <section className="faceTagStudio" aria-label={`People in ${alt}`}>
@@ -74,7 +75,7 @@ export function PhotoFaceTagStudio({ mediaId, imageSrc, alt }: { mediaId: string
           </div>
           {draft && <div className="faceTagDraft"><label>Who is this?<input autoFocus list={`face-names-${mediaId}`} value={name} onChange={event => setName(event.target.value)} placeholder="Type a name" maxLength={80} /></label><button type="button" disabled={working === "draft"} onClick={saveDraft}>{working === "draft" ? "Saving…" : "Save name"}</button><button type="button" onClick={() => setDraft(null)}>Cancel</button></div>}
           <datalist id={`face-names-${mediaId}`}>{people.map(person => <option key={person} value={person} />)}</datalist>
-          {suggested.length > 0 && <div className="faceTagQuestions"><strong>AI needs your answer</strong>{suggested.map(tag => <div key={tag.id}><label>{tag.name ? `Is this ${tag.name}?` : "Who is this person?"}<input list={`face-names-${mediaId}`} value={answers[tag.id] ?? tag.name} onChange={event => setAnswers(current => ({ ...current, [tag.id]: event.target.value }))} /></label><button type="button" disabled={working === tag.id} onClick={() => send({ action: "confirm", tagId: tag.id, personName: (answers[tag.id] ?? tag.name).trim() }, tag.id)}>Confirm</button><button type="button" disabled={working === tag.id} onClick={() => send({ action: "reject", tagId: tag.id }, tag.id)}>Not this person</button>{tag.confidence != null && <small>{Math.round(tag.confidence * 100)}% AI confidence</small>}</div>)}</div>}
+          {reviewItems.length > 0 && <div className="faceTagQuestions"><strong>Photo tags need your review</strong>{reviewItems.map(tag => { const existingName = tags.find(item => item.id === tag.referenceTagId)?.name || "the existing tag"; return <div key={tag.id}><label>{tag.referenceTagId ? `Change ${existingName} to ${tag.name}?` : tag.status === "confirmed" ? `New public tag: ${tag.name}` : tag.name ? `Is this ${tag.name}?` : "Who is this person?"}<input list={`face-names-${mediaId}`} value={answers[tag.id] ?? tag.name} onChange={event => setAnswers(current => ({ ...current, [tag.id]: event.target.value }))} /></label><button type="button" disabled={working === tag.id} onClick={() => send({ action: "confirm", tagId: tag.id, personName: (answers[tag.id] ?? tag.name).trim() }, tag.id)}>Confirm</button><button type="button" disabled={working === tag.id} onClick={() => send({ action: "reject", tagId: tag.id }, tag.id)}>{tag.status === "confirmed" ? "Remove tag" : tag.referenceTagId ? "Reject change" : "Reject tag"}</button>{tag.confidence != null && <small>{Math.round(tag.confidence * 100)}% AI confidence</small>}</div>})}</div>}
         </>
       )}
       {error && <p className="studioError" role="alert">{error}</p>}

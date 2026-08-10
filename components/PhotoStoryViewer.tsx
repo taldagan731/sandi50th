@@ -83,7 +83,7 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || "That face tag could not be saved.");
       setFaceTagging(false); setFaceDraft(null); setFaceName("");
-      setFaceMessage("Sent to the photo curator for confirmation. Thank you.");
+      setFaceMessage(body.proposedChange ? "Your suggested change was sent to the photo curator. The existing tag stays until it is approved." : "The new tag is visible now and was also sent to the photo curator for review. Thank you.");
     } catch (cause) { setFaceMessage(cause instanceof Error ? cause.message : "That face tag could not be saved."); }
     finally { setFaceSending(false); }
   }
