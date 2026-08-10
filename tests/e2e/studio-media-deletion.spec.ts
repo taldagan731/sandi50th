@@ -67,7 +67,16 @@ test("Studio requires two confirmations and Purple50 before deleting a photo", a
   });
 
   await page.goto("/studio");
-  await page.getByText("Organize, search, and edit contributions").click();
+  await expect(page.getByRole("heading", { name: "Tap a photograph or video to manage it." })).toBeVisible();
+  await page.getByRole("button", { name: "Select photo to manage" }).click();
+  const destination = page.getByLabel("Move to website section");
+  await expect(destination).toBeVisible();
+  await expect(destination.locator("option")).toHaveText([
+    "Unassigned", "01 - Once Upon a Time", "02 - Growing Up in Roslyn", "03 - Finding Her Voice",
+    "04 - Building Something Bigger", "05 - The Family She Chose", "06 - Around the World",
+    "07 - The People Who Love Her", "08 - Still Becoming"
+  ]);
+  await expect(page.getByRole("button", { name: "Hide from website" })).toBeVisible();
 
   await page.getByRole("button", { name: "Permanently delete photo" }).click();
   expect(deleteRequests).toBe(0);

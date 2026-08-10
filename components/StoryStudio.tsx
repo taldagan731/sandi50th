@@ -49,6 +49,11 @@ type MediaItem = {
   assignment_rationale?: string | null;
 };
 
+const STORY_CHAPTERS = [
+  "Once Upon a Time", "Growing Up in Roslyn", "Finding Her Voice", "Building Something Bigger",
+  "The Family She Chose", "Around the World", "The People Who Love Her", "Still Becoming"
+] as const;
+
 type Submission = {
   id: string;
   name: string;
@@ -324,6 +329,7 @@ export function StoryStudio() {
           <p>{regularSubmissions.length} contributions · {counts.total} files · {storyCounts.hidden} contributions and {counts.hidden} files hidden</p>
         </div>
         <div className="studioToolbarActions">
+          <a className="primary studioPhotoOrganizerLink" href="#media-organizer">Manage photos &amp; videos</a>
           <button
             className={revealPublic ? "secondary revealAccess isPublic" : "secondary revealAccess"}
             type="button"
@@ -362,8 +368,12 @@ export function StoryStudio() {
       <DuplicateReviewStudio />
 
 
-      <details className="studioTools">
-        <summary>Organize, search, and edit contributions</summary>
+      <section className="studioTools studioMediaOrganizer" id="media-organizer" aria-labelledby="media-organizer-title">
+        <header className="studioOrganizerHeader">
+          <span className="eyebrow">PHOTO &amp; VIDEO ORGANIZER</span>
+          <h2 id="media-organizer-title">Tap a photograph or video to manage it.</h2>
+          <p>Select any item below to hide or restore it, move it to one of the eight website chapters, edit its details, or permanently delete it with the protected phrase.</p>
+        </header>
       <section className="studioIntelligence" aria-labelledby="photo-intelligence-title">
         <header>
           <div>
@@ -394,7 +404,7 @@ export function StoryStudio() {
           <label>Chapter
             <select value={chapterFacet} onChange={event => setChapterFacet(event.target.value)}>
               <option value="">All chapters</option>
-              {Array.from({ length: 8 }, (_, index) => <option key={index + 1} value={index + 1}>Chapter {index + 1}</option>)}
+              {STORY_CHAPTERS.map((title, index) => <option key={title} value={index + 1}>{String(index + 1).padStart(2, "0")} - {title}</option>)}
             </select>
           </label>
           <label>Person
@@ -477,7 +487,7 @@ export function StoryStudio() {
           </article>
         ))}
       </div>
-      </details>
+      </section>
 
       <FamilyQaStudio
         media={regularSubmissions.flatMap(submission => submission.media.map(item => ({
@@ -577,9 +587,13 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
   const [saving, setSaving] = useState(false);
   const [posterReady, setPosterReady] = useState(Boolean(item.poster_path));
   const [error, setError] = useState("");
+  const [selected, setSelected] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isPhoto = item.mime_type.startsWith("image/");
+  const isVideo = item.mime_type.startsWith("video/");
+  const manageable = isPhoto || isVideo;
 
-  async function save(nextStatus: "included" | "excluded" = status) {
+  async function save(nextStatus: "included" | "excluded" = status, nextChapter = chapter) {
     setSaving(true);
     setError("");
     const response = await fetch("/api/studio/review", {
@@ -588,7 +602,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
       body: JSON.stringify({
         mediaId: item.id,
         reviewStatus: nextStatus,
-        chapterNumber: chapter ? Number(chapter) : null,
+        chapterNumber: nextChapter ? Number(nextChapter) : null,
         caption,
         notes,
         displayOrder: Number(order) || 0
@@ -634,8 +648,8 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
 
   const mediaUrl = `/api/studio/media/${item.id}`;
   return (
-    <section className={`reviewMedia review-${status}`}>
-      <div className="reviewPreview">
+    <section id={`manage-media-${item.id}`} className={`reviewMedia review-${status} ${selected ? "isSelected" : ""}`}>
+      <div className={`reviewPreview ${isPhoto ? "isSelectable" : ""}`} role={isPhoto ? "button" : undefined} tabIndex={isPhoto ? 0 : undefined} aria-label={isPhoto ? `Manage ${item.original_name}` : undefined} onClick={isPhoto ? () => setSelected(true) : undefined} onKeyDown={isPhoto ? event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected(true); } } : undefined}>
         {item.mime_type.startsWith("video/") ? (
           <video ref={videoRef} controls preload="metadata" poster={posterReady ? `${mediaUrl}?poster=1` : undefined}>
             <source src={mediaUrl} type={item.mime_type} />
@@ -653,8 +667,10 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           <a className="downloadFile" href={mediaUrl} target="_blank" rel="noreferrer">Open {item.original_name}</a>
         )}
       </div>
-      <div className="reviewFields">
+      {manageable && <button className="mediaManageToggle" type="button" aria-expanded={selected} onClick={() => setSelected(value => !value)}>{selected ? "Close options" : `Select ${isVideo ? "video" : "photo"} to manage`}</button>}
+      <div className={`reviewFields ${!manageable || selected ? "isOpen" : ""}`}>
         <strong>{item.original_name}</strong>
+        {manageable && <span className={`mediaVisibilityBadge ${status === "excluded" ? "isHidden" : ""}`}>{status === "excluded" ? "Hidden from the website" : "Visible on the website"}</span>}
         <small>{formatBytes(item.bytes)}</small>
         {item.mime_type.startsWith("image/") && (
           <div className={`intelligenceCard intelligence-${item.analysis_status || "unprocessed"}`}>
@@ -674,10 +690,10 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
             {item.analysis_error && <p className="studioError">{item.analysis_error}</p>}
           </div>
         )}
-        <label>Chapter
-          <select value={chapter} onChange={event => setChapter(event.target.value)}>
+        <label>Move to website section
+          <select value={chapter} disabled={saving} onChange={event => { const nextChapter = event.target.value; setChapter(nextChapter); void save(status, nextChapter); }}>
             <option value="">Unassigned</option>
-            {Array.from({ length: 8 }, (_, index) => <option key={index + 1} value={index + 1}>Chapter {index + 1}</option>)}
+            {STORY_CHAPTERS.map((title, index) => <option key={title} value={index + 1}>{String(index + 1).padStart(2, "0")} - {title}</option>)}
           </select>
         </label>
         <label>Caption<textarea rows={2} value={caption} onChange={event => setCaption(event.target.value)} /></label>
@@ -691,7 +707,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
         <div className="reviewActions">
           {status === "excluded"
             ? <button type="button" className="include" disabled={saving} onClick={() => save("included")}>Restore to reveal</button>
-            : <button type="button" className="exclude" disabled={saving} onClick={() => save("excluded")}>Hide from reveal</button>}
+            : <button type="button" className="exclude" disabled={saving} onClick={() => save("excluded")}>Hide from website</button>}
           <button type="button" className="secondary compact" disabled={saving} onClick={() => save(status)}>Save details</button>
         </div>
         {(item.mime_type.startsWith("image/") || item.mime_type.startsWith("video/")) && (

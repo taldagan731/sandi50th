@@ -6,6 +6,8 @@ import "./media-deletion.css";
 import "./family-qa.css";
 import "./name-chorus-studio.css";
 import "./mobile-studio.css";
+import "./media-organizer.css";
+
 
 export const metadata: Metadata = {
   title: "Private Story Studio",
