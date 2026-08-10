@@ -1,1 +1,90 @@
-.soundtrackDock{grid-template-columns:auto minmax(5rem,9rem) minmax(5rem,9rem) auto auto}.soundtrackDock label span{display:block;margin-bottom:.2rem;font-size:.68rem;font-weight:800;letter-spacing:.04em}.soundtrackDock .masterMute{padding-inline:.8rem;border-radius:999px;background:rgba(255,158,122,.15);color:#fff2e4}.soundtrackDock button[aria-pressed=false]{opacity:.66}.musicInvitation p{max-width:36rem}.soundtrackDucked{grid-column:1/-1}@media(max-width:620px){.soundtrackDock{right:max(.55rem,env(safe-area-inset-right));bottom:max(.55rem,env(safe-area-inset-bottom));left:max(.55rem,env(safe-area-inset-left));grid-template-columns:repeat(3,1fr);border-radius:1rem}.soundtrackDock label{grid-column:1/-1;grid-row:auto}.soundtrackDock button{min-height:44px}.soundtrackDock .masterMute{grid-column:auto}.soundtrackDucked{grid-column:1/-1}.musicInvitation{grid-template-columns:auto 1fr}.musicInvitation button{grid-column:1/-1;width:100%}}
+.soundtrackDock {
+  grid-template-columns: auto minmax(5rem, 9rem) minmax(5rem, 9rem) auto auto;
+}
+
+.soundtrackDock label span {
+  display: block;
+  margin-bottom: .2rem;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.soundtrackDock .masterMute {
+  padding-inline: .8rem;
+  border-radius: 999px;
+  background: rgba(255, 158, 122, .15);
+  color: #fff2e4;
+}
+
+.soundtrackDock button[aria-pressed="false"] { opacity: .66; }
+.musicInvitation p { max-width: 36rem; }
+.soundtrackDucked { grid-column: 1 / -1; }
+
+@media (max-width: 620px) {
+  .revealExperience .soundtrackDock {
+    right: max(.55rem, env(safe-area-inset-right));
+    bottom: max(.55rem, env(safe-area-inset-bottom));
+    left: max(.55rem, env(safe-area-inset-left));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: .35rem .45rem;
+    padding: .55rem;
+    border-radius: 1rem;
+  }
+
+  .revealExperience .soundtrackDock button {
+    min-width: 0;
+    min-height: 44px;
+    padding: .45rem .25rem;
+    font-size: .78rem;
+    line-height: 1.05;
+    white-space: normal;
+  }
+
+  .revealExperience .soundtrackDock > button:nth-of-type(1) {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+  }
+
+  .revealExperience .soundtrackDock > button:nth-of-type(2) {
+    grid-column: 3 / span 2;
+    grid-row: 1;
+  }
+
+  .revealExperience .soundtrackDock > .masterMute {
+    grid-column: 5 / span 2;
+    grid-row: 1;
+    padding-inline: .25rem;
+  }
+
+  .revealExperience .soundtrackDock label {
+    min-width: 0;
+    grid-row: 2;
+  }
+
+  .revealExperience .soundtrackDock label:nth-of-type(1) { grid-column: 1 / span 3; }
+  .revealExperience .soundtrackDock label:nth-of-type(2) { grid-column: 4 / span 3; }
+
+  .revealExperience .soundtrackDock label span {
+    overflow: hidden;
+    margin-bottom: .1rem;
+    font-size: .62rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .revealExperience .soundtrackDock input { min-height: 24px; }
+  .soundtrackDucked { grid-column: 1 / -1; }
+
+  .musicInvitation {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .65rem;
+    padding: .75rem;
+  }
+
+  .musicInvitation > span { width: 2.5rem; }
+  .musicInvitation strong { font-size: 1.05rem; }
+  .musicInvitation p { font-size: .78rem; line-height: 1.35; }
+  .musicInvitation button { grid-column: 1 / -1; width: 100%; }
+}
