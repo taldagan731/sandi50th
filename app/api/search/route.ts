@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { STORY_CHAPTERS, chapterNumberFromContributor, isTestContributor } from "@/lib/chapters";
+import { STORY_CHAPTERS, isTestContributor } from "@/lib/chapters";
+import { displayChapterForSubmission, genuineSubmissionText } from "@/lib/submission-display";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStudioOwner } from "@/lib/studio/auth";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
@@ -11,7 +12,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const querySchema = z.string().trim().min(2).max(80);
-const SPECIAL_TEXT_PROMPTS = new Set(["VOICE_WALL", "BIRTHDAY_MESSAGE", "NAME_CHORUS", "OWNER_ARCHIVE"]);
 
 type SearchResult = {
   id: string;
@@ -103,15 +103,12 @@ export async function GET(request: Request) {
   });
 
   for (const item of visibleSubmissions) {
-    const prompt = String(item.prompt ?? "").toUpperCase();
-    if (SPECIAL_TEXT_PROMPTS.has(prompt)) continue;
-    const chapterNumber = chapterNumberFromContributor(item.life_chapter);
-    if (!chapterNumber) continue;
-    const firstMemory = String(item.first_memory ?? "").trim();
-    const story = String(item.story ?? "").trim();
-    const haystack = searchable([item.name, item.relationship, firstMemory, story, item.approximate_year, item.location, item.prompt].join(" "));
-    if ((!firstMemory && !story) || !haystack.includes(needle)) continue;
-    const body = firstMemory || story;
+    const text = genuineSubmissionText(item);
+    if (!text) continue;
+    const chapterNumber = displayChapterForSubmission(item);
+    const haystack = searchable([item.name, item.relationship, text.firstMemory, text.story, item.approximate_year, item.location, item.prompt].join(" "));
+    if (!haystack.includes(needle)) continue;
+    const body = text.firstMemory || text.story;
     results.push({ id: `text-${item.id}`, kind: "text", title: excerpt(body), detail: `Written by ${item.name || "Someone who loves Sandi"} · Chapter ${String(chapterNumber).padStart(2, "0")}`, href: `/reveal?chapter=${chapterNumber}&memory=${item.id}#memory-${item.id}`, chapterNumber });
   }
 
@@ -123,7 +120,7 @@ export async function GET(request: Request) {
     const originalName = String(item.original_name || "Photograph");
     const haystack = searchable([originalName, description, item.analysis_objects, item.analysis_event_clues, submission?.name, ...names].join(" "));
     if (!haystack.includes(needle)) continue;
-    const chapterNumber = Number(item.chapter_number) || chapterNumberFromContributor(submission?.life_chapter);
+    const chapterNumber = Number(item.chapter_number) || (submission ? displayChapterForSubmission(submission) : 7);
     const isPhoto = String(item.mime_type).startsWith("image/");
     const peopleDetail = names.length ? ` · ${names.join(", ")}` : "";
     const contributorDetail = submission?.name ? ` from ${submission.name}` : "";

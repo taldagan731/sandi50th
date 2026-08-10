@@ -9,6 +9,7 @@ import { requireStudioOwner } from "@/lib/studio/auth";
 import { hasRevealPreviewAccess } from "@/lib/reveal-preview";
 import { getRevealShareAccess } from "@/lib/reveal-share";
 import { getRevealProject, isRevealPublic } from "@/lib/reveal-visibility";
+import { displayChapterForSubmission, genuineSubmissionText } from "@/lib/submission-display";
 import "./reveal-recordings.css";
 import "./reveal-archive.css";
 import "./name-chorus.css";
@@ -49,8 +50,6 @@ type MediaRow = {
   date_inference_source?: string | null;
   canonical_media_id?: string | null;
 };
-
-const SPECIAL_TEXT_PROMPTS = new Set(["VOICE_WALL", "BIRTHDAY_MESSAGE", "NAME_CHORUS", "OWNER_ARCHIVE"]);
 
 function contributorYearRange(value: string | null | undefined) {
   if (!value) return null;
@@ -150,19 +149,16 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
   const presentationMediaRows = mediaRows;
 
   const writtenMemories = submissionRows.flatMap(item => {
-    if (item.status === "family_qa" || SPECIAL_TEXT_PROMPTS.has(item.prompt?.toUpperCase() ?? "")) return [];
-    const firstMemory = item.first_memory?.trim() ?? "";
-    const story = item.story?.trim() ?? "";
-    if (!firstMemory && !story) return [];
-    const chapterNumber = chapterNumberFromContributor(item.life_chapter);
-    if (!chapterNumber) return [];
+    const text = genuineSubmissionText(item);
+    if (!text) return [];
+    const chapterNumber = displayChapterForSubmission(item);
     return [{
       id: item.id,
       chapterNumber,
       contributorName: item.name || "Someone who loves Sandi",
       relationship: item.relationship || "",
-      firstMemory,
-      story,
+      firstMemory: text.firstMemory,
+      story: text.story,
       when: item.approximate_year || "",
       place: item.location || ""
     }];
@@ -237,7 +233,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
             originalName: item.original_name,
             mimeType: item.mime_type,
             caption: item.caption ?? "",
-            chapterNumber: item.chapter_number,
+            chapterNumber: item.chapter_number || (submission ? displayChapterForSubmission(submission) : 7),
             poster: Boolean(item.poster_path),
             contributorName: submission?.name ?? "Someone who loves Sandi",
             relationship: submission?.relationship ?? "",

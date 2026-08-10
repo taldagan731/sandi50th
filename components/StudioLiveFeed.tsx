@@ -152,7 +152,7 @@ export function StudioLiveFeed({ submissions, newIds, lastRefreshed, onVisibilit
                 {!submission.media.length && <p className="textOnlyMemory">Text memory</p>}
 
                 <footer className="liveItemFooter">
-                  <span>{isHidden ? "Excluded from the reveal" : "Visible in the archive"}</span>
+                  <span>{isHidden ? "Excluded from the reveal" : "Visible on the site"}</span>
                   <button
                     type="button"
                     className={isHidden ? "include" : "exclude"}
