@@ -116,7 +116,7 @@ export async function faceTaggingStatus(projectId: string) {
   return { migrationRequired: false, total: photos.length, scanned, remaining: Math.max(0, photos.length - scanned), confirmed: (data ?? []).filter(item => item.status === "confirmed").length, questions: (data ?? []).filter(needsReview).length, people, questionItems };
 }
 
-export async function processNextFacePhoto(projectId: string) {
+export async function processNextFacePhoto(projectId: string, options: { dryRun?: boolean } = {}) {
   const supabase = createAdminClient();
   const photos = await photoInventory(projectId);
   const { data: allTags, error } = await supabase.from("photo_face_tags").select("id,media_asset_id,person_name,x,y,width,height,status").eq("project_id", projectId);
@@ -133,6 +133,7 @@ export async function processNextFacePhoto(projectId: string) {
   const { sheet, cells } = await referenceSheet([...uniqueReferences.values()].slice(0, 16), mediaById);
   const rawTarget = await mediaBuffer(target);
   const targetJpeg = await sharp(rawTarget, { failOn: "none" }).resize({ width: 1400, height: 1400, fit: "inside", withoutEnlargement: true }).flatten({ background: "#321126" }).jpeg({ quality: 78 }).toBuffer();
+  if (options.dryRun) return { complete: false, dryRun: true, mediaId: target.id, inserted: 0, targetBytes: targetJpeg.length, referenceSheetBytes: sheet.length, references: cells.length };
   const result = await askAnthropic(targetJpeg, sheet, cells.map(cell => `${cell.label}=${cell.name}`).join(", "));
   const cellByLabel = new Map(cells.map(cell => [cell.label, cell]));
   const rows = result.faces.map(face => {

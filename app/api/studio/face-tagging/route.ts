@@ -17,17 +17,19 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     if (process.env.FACE_MATCHING_EXTERNAL_APPROVED !== "true") {
       return NextResponse.json({ error: "Owner approval is required before reduced face crops are sent to Anthropic for comparison.", externalApprovalRequired: true }, { status: 412 });
     }
-    const result = await processNextFacePhoto(owner.project.id);
+    const dryRun = new URL(request.url).searchParams.get("dryRun") === "1";
+    const result = await processNextFacePhoto(owner.project.id, { dryRun });
     const status = await faceTaggingStatus(owner.project.id);
     return NextResponse.json({ result, status });
   } catch (error) {
+    console.error("studio-face-tagging", error);
     const message = error instanceof Error ? error.message : "AI face matching could not continue.";
     return NextResponse.json({ error: message }, { status: /photo_face_tags/i.test(message) ? 503 : 500 });
   }
