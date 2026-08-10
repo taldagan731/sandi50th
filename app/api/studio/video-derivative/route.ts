@@ -18,6 +18,27 @@ function derivativePath(submissionId: string, mediaId: string) {
   return `incoming/${submissionId}/web/${mediaId}-web.mp4`;
 }
 
+export async function GET(request: Request) {
+  const owner = await requireStudioAccess();
+  if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const filename = new URL(request.url).searchParams.get("filename")?.trim() || "";
+  if (!/^[A-Za-z0-9._ -]{1,180}$/.test(filename)) return NextResponse.json({ error: "Enter an exact video filename." }, { status: 400 });
+
+  const columns = "id,submission_id,storage_path,original_name,mime_type,bytes,poster_path,review_status,reviewer_notes";
+  const exact = await owner.supabase.from("media_assets").select(columns).ilike("original_name", filename).limit(5);
+  if (exact.error) return NextResponse.json({ error: exact.error.message }, { status: 500 });
+  let matches = exact.data ?? [];
+  if (!matches.length) {
+    const preserved = await owner.supabase.from("media_assets").select(columns).ilike("reviewer_notes", `%${filename}%`).limit(5);
+    if (preserved.error) return NextResponse.json({ error: preserved.error.message }, { status: 500 });
+    matches = (preserved.data ?? []).filter(item => String(item.reviewer_notes || "").toLowerCase().includes(filename.toLowerCase()));
+  }
+  if (matches.length !== 1) return NextResponse.json({ error: matches.length ? "More than one video matched that filename." : "Video not found." }, { status: matches.length ? 409 : 404 });
+  const media = matches[0];
+  const { data: submission } = await owner.supabase.from("submissions").select("id").eq("id", media.submission_id).eq("project_id", owner.project.id).maybeSingle();
+  if (!submission || !String(media.mime_type).startsWith("video/")) return NextResponse.json({ error: "Video not found." }, { status: 404 });
+  return NextResponse.json({ media });
+}
 export async function POST(request: Request) {
   try {
     const body = await request.json() as HandleUploadBody;
