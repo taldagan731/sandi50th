@@ -5,6 +5,7 @@ import { upload } from "@vercel/blob/client";
 import { fireContributionConfetti } from "@/lib/confetti";
 import { fireContributionBalloons } from "@/lib/balloons";
 import { NameChorusRecorder } from "@/components/NameChorusRecorder";
+import { trackContributionStep } from "@/lib/contribution-attempt";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const EMAIL_FALLBACK = "mailto:uploads@sandi50th.com?subject=Sandi%2050th%20recording";
@@ -26,6 +27,9 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [contributorName, setContributorName] = useState("");
+  const [simpleStep, setSimpleStep] = useState(1);
+  const [contact, setContact] = useState("");
+  const [consentGiven, setConsentGiven] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<BlobPart[]>([]);
@@ -37,11 +41,16 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   const effectiveKind: CaptureKind = birthday ? captureKind : "audio";
 
   useEffect(() => {
+    trackContributionStep(kind, simpleStep);
+  }, [kind, simpleStep]);
+
+  useEffect(() => {
     if (phase !== "success" || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
     fireContributionBalloons();
-  }, [phase]);
+    trackContributionStep(kind, 4, "completed");
+  }, [kind, phase]);
 
   useEffect(() => {
     return () => {
@@ -89,7 +98,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         setPhase("idle");
       };
       nextRecorder.onstop = () => {
-        const type = nextRecorder.mimeType || mimeType || (requestedKind === "video" ? "video/webm" : "audio/webm");
+        const type = (nextRecorder.mimeType || mimeType || (requestedKind === "video" ? "video/webm" : "audio/webm")).split(";", 1)[0].toLowerCase();
         const blob = new Blob(chunks.current, { type });
         if (!blob.size) {
           setError("The phone created an empty recording. Tap Use phone camera; it is the most reliable option on this device.");
@@ -125,7 +134,10 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       window.clearInterval(timer.current);
       timer.current = null;
     }
-    if (recorder.current?.state === "recording") recorder.current.stop();
+    if (recorder.current?.state === "recording") {
+      try { recorder.current.requestData(); } catch { /* optional in older browsers */ }
+      recorder.current.stop();
+    }
   }
 
   function recordAgain() {
@@ -177,8 +189,8 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
       const form = new FormData(event.currentTarget);
       const contentType = normalizedType(recordingFile);
       const payload = {
-        name: String(form.get("name") ?? ""),
-        contact: String(form.get("contact") ?? ""),
+        name: contributorName.trim(),
+        contact: contact.trim(),
         relationship: String(form.get("relationship") ?? "Friend"),
         firstMemory: birthday ? "A birthday message recorded for Sandi." : "A voice memory recorded for Sandi.",
         story: String(form.get("note") ?? ""),
@@ -187,7 +199,7 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
         people: "",
         lifeChapter: birthday ? "Birthday wishes" : "Sandi today",
         prompt: birthday ? "BIRTHDAY_MESSAGE" : "VOICE_WALL",
-        consent: Boolean(form.get("consent")),
+        consent: consentGiven,
         files: [{ name: recordingFile.name, type: contentType, size: recordingFile.size }]
       };
       setContributorName(payload.name);
@@ -246,110 +258,63 @@ export function RecordingContributionForm({ kind }: { kind: RecordingKind }) {
   }
 
   return (
-    <form className="recordingForm panel" onSubmit={submitRecording}>
-      <header className="recorderHeader">
-        <span className="eyebrow">{birthday ? "FOR AUGUST 11" : "A VOICE IN HER STORY"}</span>
-        <h2>{birthday ? "Record a birthday message for Sandi." : "Tell the memory in your own voice."}</h2>
-        <p>{birthday
-          ? "Speak to her directly. Say her name. Tell her what you’d say if she were in front of you."
-          : "Thirty to sixty seconds is enough. The pauses, the laugh, and the way you say her name are part of the memory."}</p>
+    <form className="recordingForm panel simpleContributionWizard" onSubmit={submitRecording} noValidate>
+      <header className="simpleWizardHeader">
+        <span>Step {simpleStep} of 3</span>
+        <div aria-hidden="true"><i className={simpleStep >= 1 ? "done" : ""}/><i className={simpleStep >= 2 ? "done" : ""}/><i className={simpleStep >= 3 ? "done" : ""}/></div>
       </header>
 
-      {phase !== "uploading" && (
-        <fieldset className="recordingMethods">
-          <legend>1. Choose how to record</legend>
-          {birthday && <button className="primary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("video")}>Record video now</button>}
-          <button className="secondary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("audio")}>Record voice now</button>
-          {birthday && <label className="filePicker secondary nativeCapture">Use phone camera<input type="file" accept="video/*" capture="user" disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback} /></label>}
-          <label className="filePicker secondary">Choose an existing recording<input type="file" accept={birthday ? "audio/*,video/*" : "audio/*"} disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback} /></label>
-          <small>Direct recording requires one browser permission tap. If that prompt fails, Use phone camera opens the phone's own recorder.</small>
-        </fieldset>
+      {simpleStep === 1 && (
+        <section className="simpleWizardStep">
+          <h2>First, what is your name?</h2>
+          <p>Sandi should know exactly who this came from.</p>
+          <label htmlFor="recording-name">Your name <strong>Required</strong></label>
+          <input id="recording-name" autoFocus value={contributorName} onChange={event => setContributorName(event.target.value)} placeholder="Your name" />
+          {!contributorName.trim() && <small className="simpleInlineHelp">We need your name so Sandi knows who this is from.</small>}
+          <button className="primary simpleContinue" type="button" disabled={!contributorName.trim()} onClick={() => setSimpleStep(2)}>Continue</button>
+        </section>
       )}
 
-      <div className={"recorderStage recorder-" + phase}>
-        {phase === "recording" && effectiveKind === "video" && <video ref={liveVideo} autoPlay muted playsInline aria-label="Live camera preview" />}
-        {phase === "recording" && effectiveKind === "audio" && <div className="voicePulse" aria-hidden="true"><i/><i/><i/><i/><i/></div>}
-        {phase === "recording" && (
-          <div className="recordingClock" aria-live="polite">
-            <strong>{formatTime(seconds)}</strong>
-            <span>{seconds < 30 ? "Take your time — 30 to 120 seconds is a helpful guide." : seconds <= 120 ? "You are in the suggested range." : "You may finish your thought; this is a gentle guide, not a cutoff."}</span>
+      {simpleStep === 2 && (
+        <section className="simpleWizardStep">
+          <h2>{birthday ? "Record your birthday video." : "Record your voice."}</h2>
+          <p>{birthday ? "Speak directly to Sandi. A short message is perfect." : "Tell the memory naturally. Thirty seconds is enough."}</p>
+          {phase !== "uploading" && <div className="simpleRecordingChoices">
+            {birthday && <button className="primary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("video")}>Record video now</button>}
+            {!birthday && <button className="primary" type="button" disabled={phase === "requesting" || phase === "recording"} onClick={() => beginRecording("audio")}>Record voice now</button>}
+            {birthday && <label className="filePicker secondary">Use phone camera<input type="file" accept="video/*" capture="user" disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback}/></label>}
+            <label className="filePicker secondary">Choose an existing {birthday ? "video" : "recording"}<input type="file" accept={birthday ? "video/*" : "audio/*"} disabled={phase === "requesting" || phase === "recording"} onChange={chooseFallback}/></label>
+          </div>}
+          <div className={"recorderStage recorder-" + phase}>
+            {phase === "recording" && effectiveKind === "video" && <video ref={liveVideo} autoPlay muted playsInline aria-label="Live camera preview"/>}
+            {phase === "recording" && effectiveKind === "audio" && <div className="voicePulse" aria-hidden="true"><i/><i/><i/><i/><i/></div>}
+            {phase === "recording" && <div className="recordingClock"><strong>{formatTime(seconds)}</strong><span>Tap Stop when you are finished.</span></div>}
+            {phase === "preview" && previewUrl && (effectiveKind === "video" ? <video className="recordingPlayback" src={previewUrl} controls playsInline/> : <audio className="recordingPlayback" src={previewUrl} controls/>)}
+            {(phase === "idle" || phase === "requesting") && <div className="recorderStart"><strong>{phase === "requesting" ? "Opening..." : "Tap a recording button above."}</strong></div>}
           </div>
-        )}
-
-        {phase === "preview" && previewUrl && (
-          effectiveKind === "video"
-            ? <video className="recordingPlayback" src={previewUrl} controls playsInline />
-            : <audio className="recordingPlayback" src={previewUrl} controls />
-        )}
-
-        {(phase === "idle" || phase === "requesting") && (
-          <div className="recorderStart">
-            <strong>{phase === "requesting" ? "Opening " + (effectiveKind === "video" ? "camera..." : "microphone...") : "Choose any recording option above."}</strong>
-            <span>{birthday ? "Video, voice, the phone camera, and existing recordings are all accepted." : "Record here or choose a Voice Memos file from your phone."}</span>
-          </div>
-        )}
-      </div>
-
-      {phase === "recording" && <button className="primary stopRecording" type="button" onClick={stopRecording}>Stop recording</button>}
-      {phase === "preview" && (
-        <div className="recordingActions">
-          <button className="secondary" type="button" onClick={recordAgain}>Re-record</button>
-          <span>Play it back before sending. Two or three attempts are welcome.</span>
-        </div>
+          {phase === "recording" && <button className="primary stopRecording" type="button" onClick={stopRecording}>Stop recording</button>}
+          {phase === "preview" && <button className="secondary" type="button" onClick={recordAgain}>Record again</button>}
+          {error && <p className="simpleInlineError" role="alert">{error}</p>}
+          {!recordingFile && phase !== "recording" && <small className="simpleInlineHelp">Make or choose one recording before continuing.</small>}
+          <div className="simpleWizardActions"><button className="secondary" type="button" onClick={() => setSimpleStep(1)}>Back</button><button className="primary" type="button" disabled={!recordingFile || phase !== "preview"} onClick={() => setSimpleStep(3)}>Continue</button></div>
+        </section>
       )}
 
-      <section className="recorderIdentity">
-        <span className="eyebrow">2. Add your name</span>
-        <div className="grid2 recorderRequiredDetails">
-          <label>Your name<input name="name" required placeholder="Your name" /></label>
-          <label>Email or phone<input name="contact" required placeholder="Only if we need help with the file" /></label>
-        </div>
-        {birthday ? (
-          <details className="recorderOptional">
-            <summary>Optional details</summary>
-            <div className="grid2">
-              <label>Your relationship to Sandi
-                <select name="relationship" defaultValue="Friend">
-                  <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
-                </select>
-              </label>
-              <label>Optional note<input name="note" placeholder="A date, place, or detail we should know" /></label>
-            </div>
-          </details>
-        ) : (
-          <div className="grid2 recorderOptionalOpen">
-            <label>Your relationship to Sandi
-              <select name="relationship" defaultValue="Friend">
-                <option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option>
-              </select>
-            </label>
-            <label>Optional note<input name="note" placeholder="A date, place, or detail we should know" /></label>
-          </div>
-        )}
-      </section>
-
-      <label className="consent contributionConsent">
-        <input name="consent" type="checkbox" required />
-        <span>I give permission to include this recording in Sandi’s private birthday film and archive.</span>
-      </label>
-
-      {phase === "uploading" && (
-        <div className="uploadProgress" role="status" aria-live="polite">
-          <span style={{ width: progress + "%" }} />
-          <p>Sending and backing up your recording… {Math.round(progress)}%</p>
-        </div>
+      {simpleStep === 3 && (
+        <section className="simpleWizardStep">
+          <h2>Ready to send.</h2>
+          <p>Your {birthday ? "birthday video" : "voice recording"} is ready. Everything else is optional.</p>
+          {previewUrl && (effectiveKind === "video" ? <video className="recordingPlayback simpleFinalPreview" src={previewUrl} controls playsInline/> : <audio className="recordingPlayback simpleFinalPreview" src={previewUrl} controls/>)}
+          <label htmlFor="recording-contact">Email or phone <em>Optional</em></label>
+          <input id="recording-contact" value={contact} onChange={event => setContact(event.target.value)} placeholder="Only if we need help with the file" />
+          <details className="simpleOptional"><summary>Add an optional note</summary><label>Note <em>Optional</em><input name="note" placeholder="A date, place, or detail"/></label><input type="hidden" name="relationship" value="Other"/></details>
+          <label className="consent contributionConsent simpleConsent"><input type="checkbox" checked={consentGiven} onChange={event => setConsentGiven(event.target.checked)}/><span>I have permission to share this recording with Sandi.</span></label>
+          {!consentGiven && <small className="simpleInlineHelp">Please confirm you have permission before sending.</small>}
+          {phase === "uploading" && <div className="uploadProgress" role="status"><span style={{width: progress + "%"}}/><p>Sending... {Math.round(progress)}%</p></div>}
+          {error && <div className="uploadError" role="alert"><strong>Not sent yet.</strong><p>{error}</p><a href={EMAIL_FALLBACK}>Email it instead</a></div>}
+          <div className="simpleWizardActions"><button className="secondary" type="button" disabled={phase === "uploading"} onClick={() => setSimpleStep(2)}>Back</button><button className="primary" type="submit" disabled={!recordingFile || !consentGiven || phase === "uploading"}>{phase === "uploading" ? "Sending... keep this page open" : "Send to Sandi"}</button></div>
+        </section>
       )}
-      {error && (
-        <div className="uploadError" role="alert">
-          <strong>The recording has not been confirmed yet.</strong>
-          <p>{error}</p>
-          <a href={EMAIL_FALLBACK}>Email the recording instead</a>
-        </div>
-      )}
-      <button className="primary submitMemory" type="submit" disabled={!recordingFile || phase === "uploading" || phase === "recording"}>
-        {phase === "uploading" ? "Please keep this page open…" : birthday ? "3. Send my birthday message" : "Send my voice memory"}
-      </button>
-      <p className="secureNote">The recording goes directly to private storage and joins Sandi’s growing story. The reveal itself stays locked until August 11.</p>
     </form>
   );
 }

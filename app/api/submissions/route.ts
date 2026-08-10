@@ -16,7 +16,7 @@ const ALLOWED_EXACT = new Set(["application/pdf", "application/zip", "applicatio
 const requestSchema = z.object({
   sourceType: z.enum(["contributor", "owner_archive"]).default("contributor"),
   name: z.string().trim().min(1).max(120),
-  contact: z.string().trim().min(1).max(200),
+  contact: z.string().trim().max(200).optional().default(""),
   relationship: z.string().trim().max(100).default("Other"),
   firstMemory: z.string().trim().min(1).max(5000),
   story: z.string().trim().max(10000).optional().default(""),

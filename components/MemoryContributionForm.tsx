@@ -6,6 +6,7 @@ import { PostUploadPhotoReview } from "@/components/PostUploadPhotoReview";
 import { fireContributionConfetti } from "@/lib/confetti";
 import { fireContributionBalloons } from "@/lib/balloons";
 import { NameChorusRecorder } from "@/components/NameChorusRecorder";
+import { trackContributionStep } from "@/lib/contribution-attempt";
 import {
   ChangeEvent,
   DragEvent,
@@ -110,6 +111,9 @@ export function MemoryContributionForm({
   const [submitted, setSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
   const [contributorName, setContributorName] = useState("");
+  const [simpleStep, setSimpleStep] = useState(1);
+  const [contact, setContact] = useState("");
+  const [consentGiven, setConsentGiven] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeFile, setActiveFile] = useState("");
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -231,11 +235,16 @@ export function MemoryContributionForm({
     }
   }
   useEffect(() => {
+    if (!ownerArchive) trackContributionStep(startWithUpload ? "photos" : "memory", simpleStep);
+  }, [ownerArchive, simpleStep, startWithUpload]);
+
+  useEffect(() => {
     if (!submitted || celebrated.current) return;
     celebrated.current = true;
     fireContributionConfetti();
     fireContributionBalloons();
-  }, [submitted]);
+    if (!ownerArchive) trackContributionStep(startWithUpload ? "photos" : "memory", 4, "completed");
+  }, [ownerArchive, startWithUpload, submitted]);
 
   useEffect(() => {
     const input = folderInput.current;
@@ -372,7 +381,7 @@ export function MemoryContributionForm({
       const payload = {
         sourceType: ownerArchive ? "owner_archive" : "contributor",
         name: ownerArchive ? "Owner archive" : String(form.get("name") ?? ""),
-        contact: ownerArchive ? "Private owner import" : String(form.get("contact") ?? ""),
+        contact: ownerArchive ? "Private owner import" : String(form.get("contact") ?? "").trim(),
         relationship: ownerArchive ? "Owner archive" : String(form.get("relationship") ?? "Other"),
         firstMemory: ownerArchive ? "Owner archive batch" : firstMemory.trim() || "Photographs or video shared for Sandi's birthday story.",
         story: String(form.get("story") ?? ""),
@@ -531,6 +540,77 @@ export function MemoryContributionForm({
   }
 
   const failedCount = files.filter(item => item.status === "failed").length;
+
+  if (!ownerArchive) {
+    const hasContribution = startWithUpload ? files.length > 0 : firstMemory.trim().length > 0;
+    return (
+      <form className="memoryForm simpleContributionWizard" onSubmit={submit} noValidate>
+        <input type="hidden" name="name" value={contributorName} />
+        <input type="hidden" name="chapter" value={initialChapter ?? "Not sure"} />
+        <input type="hidden" name="prompt" value={startWithUpload ? "PHOTO_UPLOAD" : "MEMORY"} />
+        <section className="panel simpleWizardCard">
+          <header className="simpleWizardHeader">
+            <span>Step {simpleStep} of 3</span>
+            <div aria-hidden="true"><i className={simpleStep >= 1 ? "done" : ""}/><i className={simpleStep >= 2 ? "done" : ""}/><i className={simpleStep >= 3 ? "done" : ""}/></div>
+          </header>
+
+          {simpleStep === 1 && (
+            <div className="simpleWizardStep">
+              <h2>First, what is your name?</h2>
+              <p>Sandi should know exactly who this came from.</p>
+              <label htmlFor="simple-name">Your name <strong>Required</strong></label>
+              <input id="simple-name" autoFocus value={contributorName} onChange={event => setContributorName(event.target.value)} placeholder="Your name" />
+              {!contributorName.trim() && <small className="simpleInlineHelp">We need your name so Sandi knows who this is from.</small>}
+              <button className="primary simpleContinue" type="button" disabled={!contributorName.trim()} onClick={() => setSimpleStep(2)}>Continue</button>
+            </div>
+          )}
+
+          {simpleStep === 2 && !startWithUpload && (
+            <div className="simpleWizardStep">
+              <h2>Share one memory of Sandi.</h2>
+              <p>A sentence is enough. It does not need to be polished.</p>
+              <label htmlFor="simple-memory">Your memory <strong>Required</strong></label>
+              <textarea id="simple-memory" autoFocus rows={7} value={firstMemory} onChange={event => setFirstMemory(event.target.value)} placeholder="I remember when..." />
+              {!firstMemory.trim() && <small className="simpleInlineHelp">Write at least one sentence before continuing.</small>}
+              <div className="simpleWizardActions"><button className="secondary" type="button" onClick={() => setSimpleStep(1)}>Back</button><button className="primary" type="button" disabled={!firstMemory.trim()} onClick={() => setSimpleStep(3)}>Continue</button></div>
+            </div>
+          )}
+
+          {simpleStep === 2 && startWithUpload && (
+            <div className="simpleWizardStep">
+              <h2>Choose the photos you want to send.</h2>
+              <p>You can select several at once. No captions are required.</p>
+              <label className="filePicker primary simplePhotoPicker">Choose photos<input type="file" multiple accept="image/*,.heic,.heif" onChange={chooseFiles} /></label>
+              {!files.length && <small className="simpleInlineHelp">Choose at least one photo before continuing.</small>}
+              {files.length > 0 && <div className="simpleFileSummary"><strong>{files.length} photo{files.length === 1 ? "" : "s"} ready</strong><span>{formatBytes(totalSize)}</span></div>}
+              {files.length > 0 && <div className="thumbnailGrid simpleThumbnails">{files.map(item => <article key={item.id} className="uploadTile"><div className="uploadThumb"><UploadThumbnail item={item}/></div><div className="uploadTileCopy"><strong>{item.relativePath}</strong><small>{formatBytes(item.file.size)}</small></div><button type="button" aria-label={"Remove " + item.file.name} onClick={() => removeFile(item.id)}>?</button></article>)}</div>}
+              {uploadError && <p className="simpleInlineError" role="alert">{uploadError}</p>}
+              <div className="simpleWizardActions"><button className="secondary" type="button" onClick={() => setSimpleStep(1)}>Back</button><button className="primary" type="button" disabled={!files.length} onClick={() => setSimpleStep(3)}>Continue</button></div>
+            </div>
+          )}
+
+          {simpleStep === 3 && (
+            <div className="simpleWizardStep">
+              <h2>Ready to send.</h2>
+              <p>That is all we need. The details below are optional.</p>
+              <label htmlFor="simple-contact">Email or phone <em>Optional</em></label>
+              <input id="simple-contact" name="contact" value={contact} onChange={event => setContact(event.target.value)} placeholder="Only if we need help with the file" />
+              <details className="simpleOptional">
+                <summary>Add optional details</summary>
+                <label>Your relationship to Sandi <em>Optional</em><select name="relationship" defaultValue="Other"><option>Family</option><option>Friend</option><option>Childhood friend</option><option>College friend</option><option>Colleague</option><option>Neighbor</option><option>Other</option></select></label>
+                {!startWithUpload && <label>Anything else? <em>Optional</em><textarea name="story" rows={4} placeholder="A date, place, inside joke, or extra detail" /></label>}
+              </details>
+              <label className="consent contributionConsent simpleConsent"><input name="consent" type="checkbox" checked={consentGiven} onChange={event => setConsentGiven(event.target.checked)} /><span>I have permission to share this with Sandi.</span></label>
+              {!consentGiven && <small className="simpleInlineHelp">Please confirm you have permission before sending.</small>}
+              {uploading && <div className="uploadProgress" role="status"><span style={{ width: totalProgress + "%" }}/><p>{activeFile} {files.length ? Math.round(totalProgress) + "%" : ""}</p></div>}
+              {uploadError && <div className="uploadError" role="alert"><strong>Not sent yet.</strong><p>{uploadError}</p><a href={EMAIL_FALLBACK}>Email it instead</a></div>}
+              <div className="simpleWizardActions"><button className="secondary" type="button" disabled={uploading} onClick={() => setSimpleStep(2)}>Back</button><button className="primary" type="submit" disabled={!consentGiven || uploading}>{uploading ? "Sending? keep this page open" : failedCount ? "Retry sending" : "Send to Sandi"}</button></div>
+            </div>
+          )}
+        </section>
+      </form>
+    );
+  }
 
   return (
     <form className={"memoryForm" + (ownerArchive ? " ownerArchiveForm" : startWithUpload ? " photoOnlyForm" : "")} onSubmit={submit}>
