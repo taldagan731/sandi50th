@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type SearchResult = { id: string; kind: "chapter" | "text" | "photo" | "media"; title: string; detail: string; href: string };
@@ -58,7 +57,7 @@ export function GlobalSiteSearch() {
             <header><div><span>FIND IT IN HER STORY</span><h2 id="global-search-title">Search memories and photographs</h2></div><button type="button" aria-label="Close search" onClick={() => setOpen(false)}>×</button></header>
             <label className="globalSearchField"><span aria-hidden="true">⌕</span><input ref={inputRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Try a person, place, phrase, or photograph…" autoComplete="off" /></label>
             <p className="globalSearchStatus" aria-live="polite">{status}</p>
-            <div className="globalSearchResults">{results.map(result => <Link key={result.id} href={result.href} onClick={() => setOpen(false)}><span>{LABELS[result.kind]}</span><strong>{result.title}</strong><small>{result.detail}</small></Link>)}</div>
+            <div className="globalSearchResults">{results.map(result => <a key={result.id} href={result.href} onClick={() => setOpen(false)}><span>{LABELS[result.kind]}</span><strong>{result.title}</strong><small>{result.detail}</small></a>)}</div>
           </section>
         </div>
       )}
