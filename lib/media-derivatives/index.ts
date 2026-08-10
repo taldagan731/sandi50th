@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import convertHeic from "heic-convert";
 import sharp from "sharp";
 import { put } from "@vercel/blob";
@@ -145,7 +146,8 @@ export async function createImageDerivative(
       conversionError = error instanceof Error ? error.message : "The original image could not be decoded.";
       derivative = await preservedPhotoPlaceholder();
     }
-    const derivativePath = `posters/${media.id}-web.jpg`;
+    const derivativeHash = createHash("sha256").update(derivative).digest("hex").slice(0, 16);
+    const derivativePath = `posters/${media.id}-web-${derivativeHash}.jpg`;
     await put(derivativePath, derivative, {
       access: "private",
       addRandomSuffix: false,
