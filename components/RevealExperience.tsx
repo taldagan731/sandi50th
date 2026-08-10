@@ -143,6 +143,25 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
   const allArchivePhotos = useMemo(() => archiveMedia.filter(item => item.mimeType.startsWith("image/")), [archiveMedia]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedChapter = Number(params.get("chapter"));
+    const requestedMedia = params.get("media");
+    const requestedMemory = params.get("memory");
+    if (Number.isInteger(requestedChapter)) {
+      const index = chapters.findIndex(item => item.number === requestedChapter);
+      if (index >= 0) setChapterIndex(index);
+    }
+    if (requestedMedia) {
+      const photo = media.find(item => item.id === requestedMedia && item.mimeType.startsWith("image/"));
+      if (photo) setExpandedPhoto({ id: photo.id, src: `/api/reveal/media/${photo.id}`, alt: photo.caption || photo.originalName });
+    } else if (requestedMemory) {
+      window.setTimeout(() => document.getElementById(`memory-${requestedMemory}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 180);
+    } else if (requestedChapter) {
+      window.setTimeout(() => document.getElementById("reveal-story-room")?.scrollIntoView({ behavior: "smooth", block: "start" }), 180);
+    }
+  }, [chapters, media]);
+
+  useEffect(() => {
     if (!expandedPhoto) return;
     function closeOnEscape(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") setExpandedPhoto(null);
@@ -400,7 +419,7 @@ function WrittenMemoryCollection({ items }: { items: WrittenMemory[] }) {
       <header><span className="eyebrow">WRITTEN BY HER PEOPLE</span><p>Every submitted written memory assigned to this chapter.</p></header>
       <div>
         {items.map(item => (
-          <figure key={item.id} className="writtenMemoryCard">
+          <figure key={item.id} id={`memory-${item.id}`} className="writtenMemoryCard">
             {item.firstMemory && <><small>FIRST MEMORY</small><blockquote>{item.firstMemory}</blockquote></>}
             {item.story && <p>{item.story}</p>}
             <figcaption>
