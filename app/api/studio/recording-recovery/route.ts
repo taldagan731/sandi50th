@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     results.push({
       submission,
       media: media ?? [],
-      blobs: uploaded.map(blob => ({ pathname: blob.pathname, bytes: blob.size, uploadedAt: blob.uploadedAt, contentType: blob.contentType })),
+      blobs: uploaded.map(blob => ({ pathname: blob.pathname, bytes: blob.size, uploadedAt: blob.uploadedAt })),
       recoverable: uploaded.length > 0
     });
   }
