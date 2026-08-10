@@ -33,13 +33,6 @@
  .marqueePhoto img{max-width:58vw}
 }
 
-@media(prefers-reduced-motion:reduce){
- .gallery>.marqueeViewport{display:none}
- .gallery>.marqueeReducedGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.8rem,2vw,1.25rem);margin-top:2rem}
- .marqueeReducedGrid button{display:block;overflow:hidden;min-height:8rem;border:0;border-radius:.65rem;padding:0;background:rgba(44,9,36,.25);cursor:zoom-in}
- .marqueeReducedGrid img{display:block;width:100%;height:100%;aspect-ratio:4/3;object-fit:cover}
-}
-@media(max-width:700px) and (prefers-reduced-motion:reduce){.gallery>.marqueeReducedGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 
 /* Warm 35mm film treatment for the diagonal childhood album. */
@@ -54,7 +47,6 @@
 .marqueeRow:hover::after,.marqueeRow:focus-within::after,.marqueePaused .marqueeRow::after{animation-play-state:paused}
 @keyframes filmSheen{0%,18%{background-position:125% 0}72%,100%{background-position:-80% 0}}
 @media(max-width:700px){.marqueeGroup{padding-block:1.08rem}.marqueeGroup::before,.marqueeGroup::after{height:.58rem;background-size:.98rem .58rem}.marqueeGroup::before{top:.23rem}.marqueeGroup::after{bottom:.23rem}}
-@media(prefers-reduced-motion:reduce){.marqueeRow::after{animation:none}}
 
 
 /* Reusable chapter film albums. */
@@ -66,5 +58,13 @@
 .chapterFilmSection.twoRows>.marqueeViewport{height:clamp(21rem,29vw,26rem)}.chapterFilmSection.twoRows .diagonalCanvas{padding-block:3.2rem}
 .chapterFilmSection>.marqueeReducedGrid{display:none}
 @media(max-width:700px){.chapterFilmSection{padding-inline:.75rem}.chapterFilmSection>.marqueeViewport{height:24rem;mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}.chapterFilmSection.oneRow>.marqueeViewport{height:12rem}.chapterFilmSection.oneRow .diagonalCanvas{padding-block:2.2rem}.chapterFilmSection.twoRows>.marqueeViewport{height:18rem}.chapterFilmSection.twoRows .diagonalCanvas{padding-block:2.5rem}}
-@media(prefers-reduced-motion:reduce){.chapterFilmSection>.marqueeViewport{display:none}.chapterFilmSection>.marqueeReducedGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.8rem,2vw,1.25rem);margin-top:2rem}.chapterFilmSection .marqueeReducedGrid button{display:block;overflow:hidden;min-height:8rem;border:0;border-radius:.65rem;padding:0;background:rgba(44,9,36,.25);cursor:zoom-in}.chapterFilmSection .marqueeReducedGrid img{display:block;width:100%;height:100%;aspect-ratio:4/3;object-fit:cover}}
-@media(max-width:700px) and (prefers-reduced-motion:reduce){.chapterFilmSection>.marqueeReducedGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Reduced motion keeps the 35mm composition visible without movement. */
+@media(prefers-reduced-motion:reduce){
+ .gallery>.marqueeViewport,.chapterFilmSection>.marqueeViewport{display:block}
+ .gallery>.marqueeReducedGrid,.chapterFilmSection>.marqueeReducedGrid{display:none}
+ .marqueeTrack{animation:none!important;transform:none!important}
+ .marqueeRow::after{animation:none!important}
+ .marqueePhoto{transition:none!important}
+}
