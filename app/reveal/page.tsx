@@ -18,6 +18,7 @@ import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 import "./tal-dedication.css";
 import "./reveal-contribute-cta.css";
+import "./mobile-reveal.css";
 
 export const dynamic = "force-dynamic";
 

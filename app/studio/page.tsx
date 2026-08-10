@@ -5,6 +5,7 @@ import "./studio-live-feed.css";
 import "./media-deletion.css";
 import "./family-qa.css";
 import "./name-chorus-studio.css";
+import "./mobile-studio.css";
 
 export const metadata: Metadata = {
   title: "Private Story Studio",

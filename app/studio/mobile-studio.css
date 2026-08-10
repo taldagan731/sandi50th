@@ -1,0 +1,64 @@
+/* Narrow-phone Studio hardening: keep every owner control readable and tappable. */
+@media (max-width: 560px) {
+  .storyStudioPage > .shell { width: min(100% - 1rem, 73.75rem); }
+  .storyStudioPage .studioApp,
+  .storyStudioPage .studioTools,
+  .storyStudioPage .ownerArchiveForm,
+  .storyStudioPage .ownerArchiveNotice,
+  .storyStudioPage .contributionColumns,
+  .storyStudioPage .formDetails,
+  .storyStudioPage .contributionGrid,
+  .storyStudioPage .uploadBox,
+  .storyStudioPage .albumActions,
+  .storyStudioPage .studioSubmission,
+  .storyStudioPage .studioMediaGrid,
+  .storyStudioPage .reviewMedia,
+  .storyStudioPage .reviewFields,
+  .storyStudioPage .reviewActions { min-width: 0; max-width: 100%; }
+
+  .storyStudioPage .ownerArchiveNotice,
+  .storyStudioPage .formDetails,
+  .storyStudioPage .studioSubmission { padding: 1rem; }
+
+  .storyStudioPage .contributionColumns,
+  .storyStudioPage .contributionGrid { grid-template-columns: minmax(0, 1fr); }
+
+  .storyStudioPage .albumActions,
+  .storyStudioPage .reviewActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .storyStudioPage .albumActions > *,
+  .storyStudioPage .reviewActions > *,
+  .storyStudioPage .studioFilters button,
+  .storyStudioPage .compact { width: 100%; min-height: 44px; }
+
+  .storyStudioPage input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .storyStudioPage textarea,
+  .storyStudioPage select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .storyStudioPage .reviewFields label { font-size: .78rem; line-height: 1.4; }
+  .storyStudioPage .contributionConsent { min-height: 44px; }
+  .storyStudioPage .contributionConsent input {
+    width: 24px !important;
+    min-width: 24px;
+    height: 24px;
+    margin-top: 0 !important;
+  }
+
+  .storyStudioPage h1,
+  .storyStudioPage h2,
+  .storyStudioPage h3,
+  .storyStudioPage p,
+  .storyStudioPage strong,
+  .storyStudioPage small,
+  .storyStudioPage label,
+  .storyStudioPage dd { overflow-wrap: anywhere; }
+}
