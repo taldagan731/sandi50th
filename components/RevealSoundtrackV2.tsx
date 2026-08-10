@@ -214,13 +214,14 @@ export function RevealSoundtrack({
     const contextPromise = ensureAudioContext().catch(() => null);
     try {
       await song.play();
-      const context = await contextPromise;
       if (!startedRef.current) {
         startedRef.current = true;
         onStart();
       }
       setPlaying(true);
-      if (context && chorusEnabled) void playChorus();
+      void contextPromise.then(context => {
+        if (context && chorusEnabled) void playChorus();
+      });
       return true;
     } catch {
       if (reportFailure) setError(true);
