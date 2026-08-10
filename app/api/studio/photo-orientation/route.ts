@@ -10,6 +10,7 @@ export const maxDuration = 300;
 
 const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("scan"), offset: z.number().int().min(0), limit: z.number().int().min(1).max(8).default(4) }),
+  z.object({ action: z.literal("rebuildManualRotations") }),
   z.object({ action: z.literal("rotate"), mediaId: z.string().uuid(), direction: z.enum(["left", "right"]) })
 ]);
 
@@ -62,6 +63,15 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
     const photos = await ownerPhotos(owner);
+    if (body.action === "rebuildManualRotations") {
+      const marked = photos.filter(media => manualRotationFromNotes(media.reviewer_notes) !== 0);
+      const results = [];
+      for (const media of marked) {
+        const repair = await createImageDerivative(owner.supabase, media, { force: true });
+        results.push({ id: media.id, rotation: manualRotationFromNotes(media.reviewer_notes), repaired: repair.status === "converted", error: repair.error ?? null });
+      }
+      return NextResponse.json({ ok: true, marked: marked.length, repaired: results.filter(item => item.repaired).length, failed: results.filter(item => !item.repaired).length });
+    }
     if (body.action === "scan") {
       const batch = photos.slice(body.offset, body.offset + body.limit);
       const results = [];
