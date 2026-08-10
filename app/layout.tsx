@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ParticleTextEffect } from "@/components/ui/particle-text-effect";
 import { isRevealPublic } from "@/lib/reveal-visibility";
 import "./globals.css";
 import "./celebration-pass.css";
@@ -28,5 +29,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body>{children}<footer className="siteCredits" aria-label="Site credits"><span>Developed by Tal Dagan</span><span>Co-producers: Jenny Banayan, Beth Baluarte, and Shiry Yoseph</span></footer></body></html>;
+  return <html lang="en"><body>{children}<ParticleTextEffect /></body></html>;
 }
