@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     .select("id,person_name,x,y,width,height,status,source,confidence")
     .eq("project_id", owner.project.id).eq("media_asset_id", mediaId).neq("status", "rejected").order("created_at");
   if (error) {
-    if (error.code === "42P01") return NextResponse.json({ tags: [], people: [], migrationRequired: true });
+    if (error.code === "42P01" || error.code === "PGRST205" || /photo_face_tags|schema cache/i.test(error.message)) return NextResponse.json({ tags: [], people: [], migrationRequired: true });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   const { data: names } = await owner.supabase.from("photo_face_tags").select("person_name")
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       project_id: owner.project.id, media_asset_id: body.mediaId, person_name: body.personName,
       x: body.x, y: body.y, width, height, status: "confirmed", source: "manual", confidence: 1
     }).select("id,person_name,x,y,width,height,status,source,confidence").single();
-    if (error) return NextResponse.json({ error: error.code === "42P01" ? "Install supabase/photo-face-tags-migration.sql first." : error.message }, { status: error.code === "42P01" ? 503 : 500 });
+    if (error) return NextResponse.json({ error: (error.code === "42P01" || error.code === "PGRST205") ? "Install supabase/photo-face-tags-migration.sql first." : error.message }, { status: (error.code === "42P01" || error.code === "PGRST205") ? 503 : 500 });
     return NextResponse.json({ tag: publicTag(data) }, { status: 201 });
   }
   const { data: existing } = await owner.supabase.from("photo_face_tags").select("id,project_id").eq("id", body.tagId).eq("project_id", owner.project.id).maybeSingle();

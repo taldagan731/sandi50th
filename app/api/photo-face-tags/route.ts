@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     .neq("person_name", "")
     .order("x");
   if (error) {
-    if (error.code === "42P01") return NextResponse.json({ tags: [], unavailable: true });
+    if (error.code === "42P01" || error.code === "PGRST205" || /photo_face_tags|schema cache/i.test(error.message)) return NextResponse.json({ tags: [], unavailable: true });
     return NextResponse.json({ tags: [] }, { status: 500 });
   }
   return NextResponse.json({

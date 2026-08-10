@@ -6,6 +6,9 @@ import { isTestContributor } from "@/lib/chapters";
 
 const MODEL = process.env.ANTHROPIC_FACE_TAG_MODEL || process.env.ANTHROPIC_PHOTO_MODEL || "claude-sonnet-5";
 const AUTO_CONFIRM_THRESHOLD = .97;
+function migrationMissing(error: { code?: string; message?: string } | null) {
+  return Boolean(error && (error.code === "42P01" || error.code === "PGRST205" || /photo_face_tags|schema cache/i.test(error.message || "")));
+}
 const faceSchema = z.object({
   faces: z.array(z.object({
     reference: z.string().nullable(), confidence: z.number().min(0).max(1),
@@ -101,7 +104,7 @@ export async function faceTaggingStatus(projectId: string) {
   const photos = await photoInventory(projectId);
   const { data, error } = await supabase.from("photo_face_tags").select("media_asset_id,status,person_name").eq("project_id", projectId);
   if (error) {
-    if (error.code === "42P01") return { migrationRequired: true, total: photos.length, scanned: 0, remaining: photos.length, confirmed: 0, questions: 0, people: 0 };
+    if (migrationMissing(error)) return { migrationRequired: true, total: photos.length, scanned: 0, remaining: photos.length, confirmed: 0, questions: 0, people: 0 };
     throw error;
   }
   const scanned = new Set((data ?? []).map(item => item.media_asset_id)).size;
