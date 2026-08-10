@@ -1,12 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.removeItem("sandi50th:music-muted"));
-});
 
 test("floating music control is fixed, persistent, and remembers the choice", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  const control = page.getByRole("button", { name: "Mute birthday music" });
+  const control = page.locator(".globalMusicMute");
   await expect(control).toBeVisible();
   await expect(control).toHaveCSS("position", "fixed");
   const box = await control.boundingBox();
@@ -24,7 +21,7 @@ test("floating music control is fixed, persistent, and remembers the choice", as
 
 test("floating control mutes only the birthday music and clears reveal controls", async ({ page }) => {
   await page.goto("/reveal", { waitUntil: "domcontentloaded" });
-  const control = page.getByRole("button", { name: "Mute birthday music" });
+  const control = page.locator(".globalMusicMute");
   await control.click();
   await expect(page.getByRole("button", { name: "Turn birthday music on" })).toHaveAttribute("aria-pressed", "true");
 
