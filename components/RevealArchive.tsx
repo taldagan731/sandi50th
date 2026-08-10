@@ -246,7 +246,7 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
       <header>
         <span className="eyebrow">THE FILM ARCHIVE</span>
         <h2 id="archive-films-title">Press play on the good parts.</h2>
-        <p>Home movies and shared clips bring the room to life. Choose one, turn up the sound, and let it play.</p>
+        <p>Every shared home movie, birthday film, and contributed clip is gathered here. Choose one, turn up the sound, and let it play.</p>
       </header>
 
       <div className="filmStackStage">
@@ -280,7 +280,14 @@ export function ArchiveVideoStack({ items }: { items: ArchiveMedia[] }) {
       </div>
       <nav className="filmQueue" aria-label="Archive films">
         {items.map((item, itemIndex) => (
-          <button key={item.id} type="button" aria-current={itemIndex === index ? "true" : undefined} onClick={() => select(itemIndex)}>
+          <button
+            key={item.id}
+            type="button"
+            data-film-media-id={item.id}
+            aria-label={`Play ${item.caption || item.originalName} from ${item.contributorName}`}
+            aria-current={itemIndex === index ? "true" : undefined}
+            onClick={() => select(itemIndex)}
+          >
             <span>{String(itemIndex + 1).padStart(2, "0")}</span>
             <strong>{item.contributorName}</strong>
           </button>

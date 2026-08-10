@@ -109,9 +109,13 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
     [media]
   );
   const reviewIncludesTests = media.some(item => item.testRecord);
-  const archiveVideos = useMemo(
-    () => archiveMedia.filter(item => item.mimeType.startsWith("video/")),
-    [archiveMedia]
+  const filmArchiveVideos = useMemo(
+    () => media.filter(item =>
+      item.mimeType.startsWith("video/") &&
+      item.collection !== "name" &&
+      !item.testRecord
+    ),
+    [media]
   );
   const chapterMedia = useMemo(
     () => media.filter(item => item.collection !== "name" && item.chapterNumber === chapter?.number),
@@ -317,7 +321,7 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
 
       {archiveMedia.some(item => !item.chapterNumber) && <UnassignedArchive items={archiveMedia.filter(item => !item.chapterNumber)} />}
 
-      {archiveVideos.length > 0 && <ArchiveVideoStack items={archiveVideos} />}
+      {filmArchiveVideos.length > 0 && <ArchiveVideoStack items={filmArchiveVideos} />}
 
       {chorusGroups.length > 0 && <FamilyChorus groups={chorusGroups} />}
 
