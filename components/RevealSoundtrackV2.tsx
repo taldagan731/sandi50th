@@ -130,6 +130,25 @@ export function RevealSoundtrack({
 
   useEffect(() => () => stopChorus(), []);
 
+  useEffect(() => {
+    let disposed = false;
+    const detach = () => {
+      document.removeEventListener("pointerdown", beginFromGesture, true);
+      document.removeEventListener("touchstart", beginFromGesture, true);
+      document.removeEventListener("keydown", beginFromGesture, true);
+    };
+    const attempt = async () => {
+      if (disposed || startedRef.current) return;
+      if (await startPlayback(false)) detach();
+    };
+    function beginFromGesture() { void attempt(); }
+    document.addEventListener("pointerdown", beginFromGesture, true);
+    document.addEventListener("touchstart", beginFromGesture, true);
+    document.addEventListener("keydown", beginFromGesture, true);
+    void attempt();
+    return () => { disposed = true; detach(); };
+  }, []);
+
   async function ensureAudioContext() {
     if (!audioContext.current) {
       const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -188,6 +207,28 @@ export function RevealSoundtrack({
     }
   }
 
+  async function startPlayback(reportFailure = false) {
+    const song = songRef.current;
+    if (!song) return false;
+    setError(false);
+    const contextPromise = ensureAudioContext().catch(() => null);
+    try {
+      await song.play();
+      const context = await contextPromise;
+      if (!startedRef.current) {
+        startedRef.current = true;
+        onStart();
+      }
+      setPlaying(true);
+      if (context && chorusEnabled) void playChorus();
+      return true;
+    } catch {
+      if (reportFailure) setError(true);
+      setPlaying(false);
+      return false;
+    }
+  }
+
   async function togglePlayback() {
     const song = songRef.current;
     if (!song) return;
@@ -197,21 +238,7 @@ export function RevealSoundtrack({
       setPlaying(false);
       return;
     }
-    setError(false);
-    try {
-      const contextPromise = ensureAudioContext();
-      await song.play();
-      await contextPromise;
-      if (!startedRef.current) {
-        startedRef.current = true;
-        onStart();
-      }
-      setPlaying(true);
-      if (chorusEnabled) void playChorus();
-    } catch {
-      setError(true);
-      setPlaying(false);
-    }
+    await startPlayback(true);
   }
 
   function toggleChorus() {
@@ -229,8 +256,8 @@ export function RevealSoundtrack({
           <strong>Come into the room.</strong>
           <p>Begin the birthday song and hear the names of the people who are here for Sandi.</p>
         </div>
-        <button type="button" onClick={togglePlayback}>{playing ? "Pause" : "Press play"}</button>
-        {error && <small role="status">The soundtrack could not start. Tap once more, or continue in silence.</small>}
+        {!playing && <small role="status">Music begins automatically. If your browser pauses sound, your first tap anywhere will start it.</small>}
+        {error && <small role="status">Sound is still paused by this browser. Tap anywhere in the reveal to begin.</small>}
       </div>
 
       <audio ref={songRef} preload="auto" loop onEnded={() => setPlaying(false)}>
