@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { ParticleTextEffect } from "@/components/ui/particle-text-effect";
+import { GlobalMusicMuteButton } from "@/components/GlobalMusicMuteButton";
 import { isRevealPublic } from "@/lib/reveal-visibility";
 import "./globals.css";
+import "./global-music-mute.css";
 import "./celebration-pass.css";
 import "./saturated-celebration.css";
 import "./high-energy-celebration.css";
@@ -29,5 +31,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body>{children}<ParticleTextEffect /></body></html>;
+  return <html lang="en"><body>{children}<GlobalMusicMuteButton /><ParticleTextEffect /></body></html>;
 }

@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MUSIC_MUTE_EVENT, MUSIC_MUTE_STORAGE_KEY, type MusicMuteEventDetail } from "@/lib/music-preference";
 
 const DEFAULT_TRACK = "/audio/tavalodet-mobarak.mp3";
+
+function savedMusicMutePreference() {
+  if (typeof window === "undefined") return false;
+  try { return window.localStorage.getItem(MUSIC_MUTE_STORAGE_KEY) === "true"; }
+  catch { return false; }
+}
 
 type NameRecording = { id: string; contributorName: string; displayOrder: number };
 
@@ -28,6 +35,7 @@ export function RevealSoundtrack({
   const startedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [masterMuted, setMasterMuted] = useState(false);
+  const [musicMuted, setMusicMuted] = useState(savedMusicMutePreference);
   const [chorusEnabled, setChorusEnabled] = useState(true);
   const [volume, setVolume] = useState(.56);
   const [duckVolume, setDuckVolume] = useState(.12);
@@ -38,10 +46,28 @@ export function RevealSoundtrack({
   const shouldDuck = ducked || mediaDucked;
 
   useEffect(() => {
+    const readSaved = () => {
+      try { setMusicMuted(window.localStorage.getItem(MUSIC_MUTE_STORAGE_KEY) === "true"); }
+      catch { setMusicMuted(false); }
+    };
+    const handleMute = (event: Event) => setMusicMuted((event as CustomEvent<MusicMuteEventDetail>).detail.muted);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === MUSIC_MUTE_STORAGE_KEY) setMusicMuted(event.newValue === "true");
+    };
+    readSaved();
+    window.addEventListener(MUSIC_MUTE_EVENT, handleMute);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(MUSIC_MUTE_EVENT, handleMute);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
     const song = songRef.current;
     if (song) {
-      const target = masterMuted ? 0 : shouldDuck ? Math.min(volume, duckVolume) : volume;
-      const duration = shouldDuck || masterMuted ? 300 : 1400;
+      const target = masterMuted || musicMuted ? 0 : shouldDuck ? Math.min(volume, duckVolume) : volume;
+      const duration = shouldDuck || masterMuted || musicMuted ? 300 : 1400;
       if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
       const start = song.volume;
       const startedAt = performance.now();
@@ -52,11 +78,11 @@ export function RevealSoundtrack({
       };
       fadeFrame.current = requestAnimationFrame(fade);
     }
-    if (chorusGain.current) chorusGain.current.gain.setTargetAtTime(masterMuted || shouldDuck || !chorusEnabled ? 0 : .13, audioContext.current?.currentTime ?? 0, .04);
+    if (chorusGain.current) chorusGain.current.gain.setTargetAtTime(masterMuted || musicMuted || shouldDuck || !chorusEnabled ? 0 : .13, audioContext.current?.currentTime ?? 0, .04);
     return () => {
       if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
     };
-  }, [chorusEnabled, duckVolume, masterMuted, shouldDuck, volume]);
+  }, [chorusEnabled, duckVolume, masterMuted, musicMuted, shouldDuck, volume]);
 
   useEffect(() => {
     const root = document.querySelector(".revealExperience");
