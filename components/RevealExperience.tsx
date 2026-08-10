@@ -12,6 +12,7 @@ import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/ballo
 import { ChildhoodCylinder } from "@/components/ChildhoodCylinder";
 import { ChapterContributionPoem, FamilyFinalePoem } from "@/components/ContributionPoems";
 import { TalDedication } from "@/components/TalDedication";
+import { ChapterNavigator } from "@/components/ChapterNavigator";
 
 type RevealMedia = {
   id: string;
@@ -177,13 +178,13 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
     setActiveMediaId(null);
     setActiveRecordingId(null);
     if (scroll) {
-      requestAnimationFrame(() => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         document.getElementById("reveal-story-room")?.scrollIntoView({
           behavior: reduceMotion ? "auto" : "smooth",
           block: "start"
         });
-      });
+      }));
     }
   }
 
@@ -226,19 +227,11 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
 
       {chapter && (
         <>
-          <nav className="revealChapterNav" aria-label="Story chapters">
-            {chapters.map((item, index) => (
-              <button
-                key={item.number}
-                type="button"
-                aria-current={index === chapterIndex ? "step" : undefined}
-                onClick={() => chooseChapter(index)}
-              >
-                <span>{String(item.number).padStart(2, "0")}</span>
-                <strong>{item.title}</strong>
-              </button>
-            ))}
-          </nav>
+          <ChapterNavigator
+            chapters={chapters}
+            currentIndex={chapterIndex}
+            onSelect={index => chooseChapter(index, true)}
+          />
 
           <article className="revealChapter" data-chapter={chapter.number} id="reveal-story-room" key={chapter.number}>
             <header>
@@ -294,9 +287,9 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
             )}
 
             <footer className="revealChapterControls">
-              <button type="button" disabled={chapterIndex === 0} onClick={() => setChapterIndex(index => Math.max(0, index - 1))}>Previous chapter</button>
+              <button type="button" disabled={chapterIndex === 0} onClick={() => chooseChapter(Math.max(0, chapterIndex - 1), true)}>Previous chapter</button>
               <span>{chapterIndex + 1} of {chapters.length}</span>
-              <button type="button" disabled={chapterIndex === chapters.length - 1} onClick={() => setChapterIndex(index => Math.min(chapters.length - 1, index + 1))}>Next chapter</button>
+              <button type="button" disabled={chapterIndex === chapters.length - 1} onClick={() => chooseChapter(Math.min(chapters.length - 1, chapterIndex + 1), true)}>Next chapter</button>
             </footer>
           </article>
         </>
