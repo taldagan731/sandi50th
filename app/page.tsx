@@ -89,10 +89,9 @@ export default function Home() {
           <h2>Come celebrate her with us.</h2>
           <p>Nothing needs to be polished. Send the photograph that makes you grin, tell the story only you know, or speak to her as if she were right in front of you.</p>
           <div className="actions"><Link className="primary" href="/contribute?mode=birthday#active-contribution-form">Record a birthday message</Link><Link className="secondary" href="/contribute">Share something else</Link></div>
+          <p className="continuingContributions">Contributions welcomed before and after August 11 · uploads@sandi50th.com</p>
         </div>
       </section>
-
-      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>Contributions welcomed before and after August 11 · uploads@sandi50th.com</span></div></footer>
     </main>
   );
 }
