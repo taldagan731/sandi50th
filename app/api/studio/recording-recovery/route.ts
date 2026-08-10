@@ -6,13 +6,30 @@ import { requireStudioAccess } from "@/lib/studio/auth";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const schema = z.object({ keyword: z.literal("Purple50"), action: z.enum(["audit", "finalizeOwnerArchive"]).default("audit"), submissionId: z.string().uuid().optional() });
+const schema = z.object({
+  keyword: z.literal("Purple50"),
+  action: z.enum(["audit", "inspectDraft", "finalizeOwnerArchive"]).default("audit"),
+  submissionId: z.string().uuid().optional()
+});
 
 export async function POST(request: Request) {
   const owner = await requireStudioAccess();
   if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Confirmation phrase required." }, { status: 400 });
+
+  if (parsed.data.action === "inspectDraft") {
+    if (!parsed.data.submissionId) return NextResponse.json({ error: "Submission ID required." }, { status: 400 });
+    const { data: draft, error } = await owner.supabase.from("submissions")
+      .select("id,name,prompt,first_memory,story,relationship,life_chapter,consent,status,created_at,upload_completed_at")
+      .eq("id", parsed.data.submissionId)
+      .eq("project_id", owner.project.id)
+      .is("upload_completed_at", null)
+      .maybeSingle();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!draft) return NextResponse.json({ error: "Incomplete submission not found." }, { status: 404 });
+    return NextResponse.json({ draft }, { headers: { "Cache-Control": "private, no-store" } });
+  }
 
   if (parsed.data.action === "finalizeOwnerArchive") {
     if (!parsed.data.submissionId) return NextResponse.json({ error: "Submission ID required." }, { status: 400 });
@@ -31,6 +48,7 @@ export async function POST(request: Request) {
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
     return NextResponse.json({ ok: true, submissionId: archive.id, fileCount: media.length, completedAt });
   }
+
   const { data: submissions, error } = await owner.supabase.from("submissions")
     .select("id,name,contact,prompt,status,created_at,upload_completed_at")
     .eq("project_id", owner.project.id)
