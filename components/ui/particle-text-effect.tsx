@@ -34,6 +34,7 @@ export function ParticleTextEffect() {
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [enhanced, setEnhanced] = useState(false);
+  const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -46,12 +47,46 @@ export function ParticleTextEffect() {
     let lastPaint = 0;
     let onScreen = true;
     let resizeTimer = 0;
+    let resolveTimer = 0;
+    let cycleTimer = 0;
+    let renderRatio = 1;
+
+    const stopCycleTimers = () => {
+      window.clearTimeout(resolveTimer);
+      window.clearTimeout(cycleTimer);
+    };
+
+    const scatterParticles = () => {
+      const width = canvas.width / renderRatio;
+      const height = parseFloat(canvas.style.height) || 138;
+      for (const particle of particles) {
+        particle.x = Math.random() * width;
+        particle.y = Math.random() < .5 ? -24 - Math.random() * 52 : height + 24 + Math.random() * 52;
+        particle.vx = (Math.random() - .5) * 3;
+        particle.vy = (Math.random() - .5) * 3;
+      }
+    };
+
+    const resolveAndHold = () => {
+      if (!onScreen || document.hidden) return;
+      setResolved(true);
+      cycleTimer = window.setTimeout(beginCycle, 5600);
+    };
+
+    function beginCycle() {
+      stopCycleTimers();
+      if (!onScreen || document.hidden || !particles.length) return;
+      setResolved(false);
+      scatterParticles();
+      resolveTimer = window.setTimeout(resolveAndHold, 1750);
+    }
 
     const buildParticles = () => {
       const width = Math.max(280, Math.round(frame.clientWidth));
       const compact = width < 620;
       const height = compact ? 156 : 138;
-      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      renderRatio = ratio;
       canvas.width = Math.round(width * ratio);
       canvas.height = Math.round(height * ratio);
       canvas.style.height = `${height}px`;
@@ -99,13 +134,14 @@ export function ParticleTextEffect() {
       }
       particles = nextParticles;
       setEnhanced(true);
+      beginCycle();
     };
 
     const paint = (time: number) => {
       animationFrame = window.requestAnimationFrame(paint);
       if (!onScreen || document.hidden || time - lastPaint < 32) return;
       lastPaint = time;
-      const width = canvas.width / Math.min(window.devicePixelRatio || 1, 1.5);
+      const width = canvas.width / renderRatio;
       const height = parseFloat(canvas.style.height) || 138;
       context.clearRect(0, 0, width, height);
       for (const particle of particles) {
@@ -122,11 +158,20 @@ export function ParticleTextEffect() {
       context.globalAlpha = 1;
     };
 
-    const observer = new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; }, { rootMargin: "120px" });
+    const observer = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      if (onScreen && !document.hidden) beginCycle();
+      else stopCycleTimers();
+    }, { rootMargin: "120px" });
     const resizeObserver = new ResizeObserver(() => {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(buildParticles, 120);
     });
+    const handleVisibility = () => {
+      if (document.hidden) stopCycleTimers();
+      else if (onScreen) beginCycle();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
     observer.observe(frame);
     resizeObserver.observe(frame);
     buildParticles();
@@ -136,12 +181,14 @@ export function ParticleTextEffect() {
       observer.disconnect();
       resizeObserver.disconnect();
       window.clearTimeout(resizeTimer);
+      stopCycleTimers();
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.cancelAnimationFrame(animationFrame);
     };
   }, []);
 
   return (
-    <footer className={`siteCredits${enhanced ? " isEnhanced" : ""}`} aria-label="Site credits">
+    <footer className={`siteCredits${enhanced ? " isEnhanced" : ""}${resolved ? " isResolved" : ""}`} aria-label="Site credits">
       <div className="siteCreditsParticleFrame" ref={frameRef}>
         <canvas className="siteCreditsCanvas" ref={canvasRef} aria-hidden="true" />
         <div className="siteCreditsFallback">
