@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { RevealExperience } from "@/components/RevealExperience";
 import { STORY_CHAPTERS, chapterNumberFromContributor, isTestContributor } from "@/lib/chapters";
@@ -16,6 +17,7 @@ import "./sandi-signature-trigger.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
 import "./tal-dedication.css";
+import "./reveal-contribute-cta.css";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +203,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
 
   return (
     <main className="revealPage">
+      <Link className="revealContributeCta" href="/contribute" aria-label="Contribute to Sandi’s celebration"><span>Contribute</span></Link>
       <RevealExperience
         chapters={STORY_CHAPTERS.map((title, index) => {
           const approved = approvedByNumber.get(index + 1);

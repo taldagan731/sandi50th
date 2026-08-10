@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isRevealPublic } from "@/lib/reveal-visibility";
 import { Navigation } from "@/components/Navigation";
 import { OpeningExperience } from "@/components/OpeningExperience";
 
@@ -23,7 +25,11 @@ const requests = [
   "A 30–120 second personal birthday message"
 ];
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  if (await isRevealPublic()) redirect("/reveal");
+
   return (
     <main>
       <Navigation />
