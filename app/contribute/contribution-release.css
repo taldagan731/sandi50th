@@ -194,3 +194,10 @@
 .contributionFirstScreen+.contributionFooter{display:none}
 @media(max-width:560px){.contributionFirstScreen{align-items:start;padding-top:max(6.5rem,calc(5rem + env(safe-area-inset-top)))}.simpleChoiceScreen h2{font-size:clamp(2.35rem,12vw,3.35rem);margin-bottom:1.25rem}.simpleChoiceGrid{gap:.65rem}.simpleChoiceGrid button{min-height:8.6rem;padding:.8rem}.simpleChoiceGrid button>span{font-size:1.55rem}.simpleChoiceGrid strong{font-size:1.2rem}.simpleChoiceGrid small{font-size:.76rem}.simpleWizardCard,.recordingForm.simpleContributionWizard{padding:1.15rem}.simpleWizardActions{grid-template-columns:1fr}.simpleRecordingChoices{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.simpleChoiceGrid button{transition:none}.simpleChoiceGrid button:hover,.simpleChoiceGrid button:focus-visible{transform:none}}
+
+.simpleMobileDrop{display:grid;justify-items:center;gap:.7rem;padding:clamp(1.1rem,4vw,2rem);border:2px dashed rgba(255,218,180,.5);border-radius:1.2rem;background:rgba(255,255,255,.055);text-align:center;touch-action:pan-y;transition:border-color .18s,background .18s,transform .18s}
+.simpleMobileDrop>strong{font:650 clamp(1.15rem,3vw,1.55rem)/1.2 var(--font-display,Georgia,serif);color:#fff8ef}
+.simpleMobileDrop>span{color:#ffd2a6;font-weight:800}
+.simpleMobileDrop>small{color:rgba(255,244,234,.68);line-height:1.4}
+.simpleMobileDrop.isDragging{border-color:#ffc078;background:rgba(255,156,142,.17);transform:scale(1.012)}
+@media(prefers-reduced-motion:reduce){.simpleMobileDrop{transition:none}.simpleMobileDrop.isDragging{transform:none}}

@@ -578,12 +578,27 @@ export function MemoryContributionForm({
 
           {simpleStep === 2 && startWithUpload && (
             <div className="simpleWizardStep">
-              <h2>Choose the photos you want to send.</h2>
-              <p>You can select several at once. No captions are required.</p>
-              <label className="filePicker primary simplePhotoPicker">Choose photos<input type="file" multiple accept="image/*,.heic,.heif" onChange={chooseFiles} /></label>
-              {!files.length && <small className="simpleInlineHelp">Choose at least one photo before continuing.</small>}
-              {files.length > 0 && <div className="simpleFileSummary"><strong>{files.length} photo{files.length === 1 ? "" : "s"} ready</strong><span>{formatBytes(totalSize)}</span></div>}
-              {files.length > 0 && <div className="thumbnailGrid simpleThumbnails">{files.map(item => <article key={item.id} className="uploadTile"><div className="uploadThumb"><UploadThumbnail item={item}/></div><div className="uploadTileCopy"><strong>{item.relativePath}</strong><small>{formatBytes(item.file.size)}</small></div><button type="button" aria-label={"Remove " + item.file.name} onClick={() => removeFile(item.id)}>?</button></article>)}</div>}
+              <h2>Choose photos or videos to send.</h2>
+              <p>Select several at once, or drag them here from Files or another app when your phone supports it.</p>
+              <div
+                className={"simpleMobileDrop " + (dragging ? "isDragging" : "")}
+                onDragEnter={event => { event.preventDefault(); setDragging(true); }}
+                onDragOver={event => { event.preventDefault(); setDragging(true); }}
+                onDragLeave={event => { if (event.currentTarget === event.target) setDragging(false); }}
+                onDrop={dropFiles}
+                aria-label="Drop photos or videos here"
+              >
+                <strong>Drag and drop photos or videos here</strong>
+                <span>or</span>
+                <label className="filePicker primary simplePhotoPicker">
+                  Choose photos or videos
+                  <input type="file" multiple accept="image/*,video/*,.heic,.heif,.mov,.mp4" onChange={chooseFiles} />
+                </label>
+                <small>On phones that do not support dragging between apps, use the button above.</small>
+              </div>
+              {!files.length && <small className="simpleInlineHelp">Choose or drop at least one photo or video before continuing.</small>}
+              {files.length > 0 && <div className="simpleFileSummary"><strong>{files.length} item{files.length === 1 ? "" : "s"} ready</strong><span>{formatBytes(totalSize)}</span></div>}
+              {files.length > 0 && <div className="thumbnailGrid simpleThumbnails">{files.map(item => <article key={item.id} className="uploadTile"><div className="uploadThumb"><UploadThumbnail item={item}/></div><div className="uploadTileCopy"><strong>{item.relativePath}</strong><small>{formatBytes(item.file.size)}</small></div><button type="button" aria-label={"Remove " + item.file.name} onClick={() => removeFile(item.id)}>Remove</button></article>)}</div>}
               {uploadError && <p className="simpleInlineError" role="alert">{uploadError}</p>}
               <div className="simpleWizardActions"><button className="secondary" type="button" onClick={() => setSimpleStep(1)}>Back</button><button className="primary" type="button" disabled={!files.length} onClick={() => setSimpleStep(3)}>Continue</button></div>
             </div>

@@ -35,17 +35,30 @@ test("memory path asks for name, memory, then permission", async ({ page }) => {
   await expect(send).toBeEnabled();
 });
 
-test("photo path accepts several photos without writing", async ({ page }) => {
+test("photo path shows a drop target and accepts photos and videos", async ({ page, browserName }) => {
   await choosePath(page, "Send photos");
-  await page.locator('input[type="file"]').setInputFiles([
-    { name: "one.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff,0xd8,0xff,0xd9]) },
-    { name: "two.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff,0xd8,0xff,0xd9]) }
-  ]);
-  await expect(page.getByText("2 photos ready")).toBeVisible();
+  const dropTarget = page.locator(".simpleMobileDrop");
+  await expect(dropTarget).toBeVisible();
+
+  if (browserName === "chromium") {
+    await dropTarget.evaluate(element => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([new Uint8Array([255,216,255,217])], "one.jpg", { type: "image/jpeg" }));
+      transfer.items.add(new File([new Uint8Array(8192)], "birthday.mp4", { type: "video/mp4" }));
+      element.dispatchEvent(new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer: transfer }));
+      element.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer }));
+    });
+  } else {
+    await page.locator('.simplePhotoPicker input[type="file"]').setInputFiles([
+      { name: "one.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff,0xd8,0xff,0xd9]) },
+      { name: "birthday.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(8192) }
+    ]);
+  }
+
+  await expect(page.getByText("2 items ready")).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Step 3 of 3")).toBeVisible();
 });
-
 test("voice path creates a Safari M4A and reaches send", async ({ page }) => {
   await page.addInitScript(() => {
     class FakeRecorder {
