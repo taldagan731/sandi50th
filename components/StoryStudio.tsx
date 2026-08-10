@@ -588,6 +588,8 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
   const [posterReady, setPosterReady] = useState(Boolean(item.poster_path));
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(false);
+  const [rotationVersion, setRotationVersion] = useState(0);
+  const [rotating, setRotating] = useState<"left" | "right" | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const isPhoto = item.mime_type.startsWith("image/");
   const isVideo = item.mime_type.startsWith("video/");
@@ -646,7 +648,31 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
     }
   }
 
+  async function rotatePhoto(direction: "left" | "right") {
+    setRotating(direction);
+    setError("");
+    try {
+      const response = await fetch("/api/studio/photo-orientation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "rotate", mediaId: item.id, direction })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        setError(body.error || "The photograph could not be rotated.");
+        return;
+      }
+      if (typeof body.reviewerNotes === "string") setNotes(body.reviewerNotes);
+      setRotationVersion(Number(body.version) || Date.now());
+    } catch {
+      setError("The photograph could not be rotated. Please try again.");
+    } finally {
+      setRotating(null);
+    }
+  }
+
   const mediaUrl = `/api/studio/media/${item.id}`;
+  const previewUrl = rotationVersion ? `${mediaUrl}?v=${rotationVersion}` : mediaUrl;
   return (
     <section id={`manage-media-${item.id}`} className={`reviewMedia review-${status} ${selected ? "isSelected" : ""}`}>
       <div className={`reviewPreview ${isPhoto ? "isSelectable" : ""}`} role={isPhoto ? "button" : undefined} tabIndex={isPhoto ? 0 : undefined} aria-label={isPhoto ? `Manage ${item.original_name}` : undefined} onClick={isPhoto ? () => setSelected(true) : undefined} onKeyDown={isPhoto ? event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected(true); } } : undefined}>
@@ -656,7 +682,7 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
           </video>
         ) : item.mime_type.startsWith("image/") ? (
           <ReviewImage
-            src={mediaUrl}
+            src={previewUrl}
             downloadUrl={`${mediaUrl}?download=1`}
             name={item.original_name}
             alt={caption || `Submitted photograph: ${item.original_name}`}
@@ -672,6 +698,19 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
         <strong>{item.original_name}</strong>
         {manageable && <span className={`mediaVisibilityBadge ${status === "excluded" ? "isHidden" : ""}`}>{status === "excluded" ? "Hidden from the website" : "Visible on the website"}</span>}
         <small>{formatBytes(item.bytes)}</small>
+        {isPhoto && (
+          <div className="mediaRotateControls" aria-label={`Rotate ${item.original_name}`}>
+            <span>Turn photograph</span>
+            <div>
+              <button type="button" disabled={saving || rotating !== null} onClick={() => rotatePhoto("left")} aria-label={`Rotate ${item.original_name} left 90 degrees`}>
+                <span aria-hidden="true">â†¶</span> {rotating === "left" ? "Turningâ€¦" : "Left"}
+              </button>
+              <button type="button" disabled={saving || rotating !== null} onClick={() => rotatePhoto("right")} aria-label={`Rotate ${item.original_name} right 90 degrees`}>
+                {rotating === "right" ? "Turningâ€¦" : "Right"} <span aria-hidden="true">â†·</span>
+              </button>
+            </div>
+          </div>
+        )}
         {item.mime_type.startsWith("image/") && (
           <div className={`intelligenceCard intelligence-${item.analysis_status || "unprocessed"}`}>
             <div className="intelligenceStatus">

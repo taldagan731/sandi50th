@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     if (repair.status !== "converted") return NextResponse.json({ error: repair.error || "The corrected derivative could not be created." }, { status: 500 });
     const { error } = await owner.supabase.from("media_assets").update({ reviewer_notes: reviewerNotes }).eq("id", media.id);
     if (error) throw error;
-    return NextResponse.json({ ok: true, id: media.id, manualRotation: next, version: Date.now() });
+    return NextResponse.json({ ok: true, id: media.id, manualRotation: next, reviewerNotes, version: Date.now() });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Photo orientation could not be changed." }, { status: 400 });
   }
