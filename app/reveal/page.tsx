@@ -16,6 +16,7 @@ import "./sandi-signature.css";
 import "./sandi-signature-trigger.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
+import "./tal-dedication.css";
 
 export const dynamic = "force-dynamic";
 

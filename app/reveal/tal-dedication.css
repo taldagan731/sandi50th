@@ -1,0 +1,133 @@
+.talDedication {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+  gap: clamp(2rem, 5vw, 5.5rem);
+  width: min(1180px, calc(100% - 32px));
+  margin: clamp(6rem, 12vw, 11rem) auto;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 228, 209, .28);
+  border-radius: clamp(28px, 4vw, 52px);
+  color: #fff8ef;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(129, 91, 235, .26), transparent 32rem),
+    radial-gradient(circle at 88% 76%, rgba(255, 111, 137, .22), transparent 31rem),
+    linear-gradient(145deg, rgba(61, 15, 72, .98), rgba(111, 27, 79, .97) 58%, rgba(79, 18, 65, .98));
+  box-shadow: 0 34px 100px rgba(38, 4, 36, .35);
+}
+
+.talDedicationGlow {
+  position: absolute;
+  z-index: -1;
+  inset: -35%;
+  background: conic-gradient(from 120deg, transparent, rgba(255, 179, 158, .12), transparent 34%, rgba(125, 105, 240, .14), transparent 68%);
+  animation: talDedicationBreathe 12s ease-in-out infinite alternate;
+}
+
+.talDedicationPortrait {
+  position: sticky;
+  top: 1.5rem;
+  align-self: start;
+  margin: 0;
+  overflow: hidden;
+  border-radius: clamp(22px, 3vw, 38px);
+  background: #32113f;
+  box-shadow: 0 28px 70px rgba(21, 2, 29, .42);
+}
+
+.talDedicationPortrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(1.15) contrast(1.03);
+}
+
+.talDedicationPortrait figcaption {
+  padding: .72rem 1rem .82rem;
+  font-size: .68rem;
+  line-height: 1.45;
+  color: rgba(255, 248, 239, .58);
+}
+
+.talDedicationPortrait a,
+.talDedicationLetter a {
+  color: #ffd0b6;
+  text-decoration-color: rgba(255, 208, 182, .45);
+  text-underline-offset: .18em;
+}
+
+.talDedicationLetter {
+  padding: clamp(1.3rem, 4vw, 4.25rem) clamp(.65rem, 3vw, 2.8rem) clamp(2rem, 5vw, 5rem) 0;
+}
+
+.talDedicationLetter .eyebrow {
+  color: #ffc3ae;
+  letter-spacing: .2em;
+}
+
+.talDedicationLetter h2 {
+  margin: .45rem 0 clamp(2rem, 4vw, 3.6rem);
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(3rem, 7vw, 6.8rem);
+  font-weight: 400;
+  line-height: .9;
+  letter-spacing: -.045em;
+}
+
+.talDedicationLetter p {
+  margin: 0 0 1.35em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 1.55vw, 1.3rem);
+  line-height: 1.82;
+  color: rgba(255, 248, 239, .88);
+}
+
+.talDedicationLetter p:first-of-type {
+  font-size: clamp(1.35rem, 2.1vw, 1.75rem);
+  color: #fff;
+}
+
+.talDedicationLetter em { color: #d7c8ff; }
+
+.talDedicationLetter .talDedicationSignature {
+  margin-top: 2.2rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(2.5rem, 5vw, 4.8rem);
+  font-style: italic;
+  line-height: 1;
+  color: #ffd0b6;
+}
+
+@keyframes talDedicationBreathe {
+  from { transform: translate3d(-2%, -1%, 0) rotate(-2deg) scale(.98); opacity: .72; }
+  to { transform: translate3d(2%, 1%, 0) rotate(2deg) scale(1.03); opacity: 1; }
+}
+
+@media (max-width: 780px) {
+  .talDedication {
+    grid-template-columns: 1fr;
+    gap: 0;
+    width: calc(100% - 18px);
+    padding: .65rem;
+    border-radius: 26px;
+  }
+
+  .talDedicationPortrait {
+    position: relative;
+    top: auto;
+    border-radius: 20px;
+  }
+
+  .talDedicationLetter { padding: 2.2rem 1rem 2.4rem; }
+  .talDedicationLetter h2 { font-size: clamp(3.5rem, 18vw, 5.5rem); }
+  .talDedicationLetter p { font-size: 1.05rem; line-height: 1.72; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talDedicationGlow { animation: none; }
+}

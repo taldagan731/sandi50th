@@ -11,6 +11,7 @@ import { fireRevealFinaleConfetti } from "@/lib/confetti";
 import { fireRevealFinaleBalloons, fireRevealOpeningBalloons } from "@/lib/balloons";
 import { ChildhoodCylinder } from "@/components/ChildhoodCylinder";
 import { ChapterContributionPoem, FamilyFinalePoem } from "@/components/ContributionPoems";
+import { TalDedication } from "@/components/TalDedication";
 
 type RevealMedia = {
   id: string;
@@ -323,6 +324,8 @@ export function RevealExperience({ chapters, media, familyAnswers, writtenMemori
       )}
 
       <FamilyFinalePoem />
+
+      <TalDedication />
 
       {birthdayMessages.length > 0 && (
         <BirthdayMessageReel items={birthdayMessages} activeId={activeRecordingId} onActiveChange={setActiveRecordingId} onFinale={completeRevealFinale} />
