@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireStudioOwner } from "@/lib/studio/auth";
 
 const baseMediaColumns = "id,submission_id,storage_path,original_name,mime_type,bytes,review_status,chapter_number,caption,reviewer_notes,poster_path,display_order,reviewed_at,created_at";
@@ -36,7 +36,6 @@ export async function GET() {
     .from("submissions")
     .select("id,name,contact,relationship,first_memory,story,approximate_year,location,people,life_chapter,prompt,consent,status,review_status,reviewer_notes,created_at,upload_completed_at")
     .eq("project_id", owner.project.id)
-    .neq("prompt", "CHAPTER_NINE")
     .order("created_at", { ascending: false });
   if (submissionError) {
     return NextResponse.json({ error: submissionError.message }, { status: 500 });

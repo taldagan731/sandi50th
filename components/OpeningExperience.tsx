@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Countdown } from "@/components/Countdown";
 
 const whispers = [
   "New Hyde Park · where the story began",
@@ -61,7 +62,7 @@ export function OpeningExperience() {
               Begin
               <span aria-hidden="true">↘</span>
             </motion.button>
-            <p className="privateNote">A private film and living archive for Sandi Yadegari</p>
+            <p className="privateNote">A private 50th-birthday film for Sandi Yadegari</p>
           </motion.div>
         ) : (
           <motion.div
@@ -77,22 +78,23 @@ export function OpeningExperience() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: reduceMotion ? 0 : .35, duration: 1 }}
             >
-              <span className="eyebrow">THE ARCHIVE CONTINUES</span>
+              <span className="eyebrow">A SECRET CELEBRATION · AUGUST 11, 2026</span>
               <h1>Every life leaves a <em>constellation.</em></h1>
               <p>
-                The birthday film has been seen, but the story is still moving. New memories, photographs, messages, and pages from Sandi herself still belong here.
+                We are gathering the photographs, home movies, stories, voices, and little forgotten moments that together tell the story of Sandi’s first fifty years.
               </p>
               <div className="deadlineCallout">
                 <span>✦</span>
                 <div>
-                  <strong>Contributions are still welcome.</strong>
-                  <small>Family photographs, keepsakes, voice notes, and the next pages of Chapter Nine can keep the archive alive.</small>
+                  <strong>Please contribute by August 10.</strong>
+                  <small>Baby pictures, childhood videos, family photographs, keepsakes, audio memories, and birthday messages are all welcome.</small>
                 </div>
               </div>
               <div className="actions leftActions">
                 <Link className="primary" href="/contribute">Share a memory</Link>
-                <Link className="secondary" href="/chapter-nine">Open Chapter Nine</Link>
+                <a className="secondary" href="#invitation">See what we’re creating</a>
               </div>
+              <Countdown />
             </motion.div>
 
             <motion.div

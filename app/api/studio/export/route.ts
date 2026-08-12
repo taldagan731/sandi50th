@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireStudioOwner } from "@/lib/studio/auth";
 
 export async function GET() {
@@ -24,20 +24,12 @@ export async function GET() {
     .eq("project_id", owner.project.id)
     .order("chapter_number");
 
-  const chapterNineEntries = (submissions ?? [])
-    .filter(item => item.prompt === "CHAPTER_NINE")
-    .map(item => ({
-      ...item,
-      media: (media ?? []).filter(asset => asset.submission_id === item.id)
-    }));
-
   const payload = {
     exportedAt: new Date().toISOString(),
     project: owner.project,
     submissions: submissions ?? [],
     media: media ?? [],
-    chapters: chapters ?? [],
-    chapterNineEntries
+    chapters: chapters ?? []
   };
 
   return new NextResponse(JSON.stringify(payload, null, 2), {

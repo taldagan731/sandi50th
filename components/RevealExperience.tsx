@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { ArchiveVideoStack, RevealTimeline } from "@/components/RevealArchive";
 
 type RevealMedia = {
@@ -25,33 +24,13 @@ type RevealChapter = {
   text: string;
 };
 
-type ChapterNineEntry = {
-  id: string;
-  dateLabel: string;
-  body: string;
-  createdAt: string;
-  media: Array<{
-    id: string;
-    originalName: string;
-    mimeType: string;
-  }>;
-};
-
 type RecordingCollectionProps = {
   items: RevealMedia[];
   activeId: string | null;
   onActiveChange: (id: string | null) => void;
 };
 
-export function RevealExperience({
-  chapters,
-  media,
-  chapterNineEntries
-}: {
-  chapters: RevealChapter[];
-  media: RevealMedia[];
-  chapterNineEntries: ChapterNineEntry[];
-}) {
+export function RevealExperience({ chapters, media }: { chapters: RevealChapter[]; media: RevealMedia[] }) {
   const [chapterIndex, setChapterIndex] = useState(0);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
@@ -74,7 +53,7 @@ export function RevealExperience({
     [archiveMedia, chapter]
   );
 
-  if (!chapters.length && !voiceMemories.length && !birthdayMessages.length && !chapterNineEntries.length) {
+  if (!chapters.length && !voiceMemories.length && !birthdayMessages.length) {
     return (
       <section className="revealEmpty">
         <span className="eyebrow">STILL BECOMING</span>
@@ -183,39 +162,9 @@ export function RevealExperience({
           <h2 id="chapter-nine-title">The rest is yours to write.</h2>
           <p>This story arrives at fifty without closing. It holds what the people who love you can see, and leaves room for everything only you can choose next.</p>
           <p>Whenever you are ready, this chapter belongs to you.</p>
-          <div className="chapterNineAction"><Link className="primary" href="/chapter-nine">Open Chapter Nine</Link></div>
           <div className="chapterNineRule" aria-hidden="true" />
         </div>
-        {chapterNineEntries.length > 0 && <ChapterNineArchive entries={chapterNineEntries} />}
       </section>
-    </div>
-  );
-}
-
-function ChapterNineArchive({ entries }: { entries: ChapterNineEntry[] }) {
-  return (
-    <div className="chapterNineArchive">
-      <header>
-        <span className="eyebrow">HER OWN PAGES</span>
-        <h3>What she has written since the film ended.</h3>
-      </header>
-      <div className="chapterNinePagesGrid">
-        {entries.map(entry => (
-          <article key={entry.id} className="chapterNinePageCard">
-            <span>{entry.dateLabel}</span>
-            <div className="chapterNinePageProse">
-              {entry.body.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-            </div>
-            {entry.media.length > 0 && (
-              <div className="chapterNinePagePhotos">
-                {entry.media.map(item => (
-                  <img key={item.id} src={`/api/studio/media/${item.id}`} alt={item.originalName} loading="lazy" />
-                ))}
-              </div>
-            )}
-          </article>
-        ))}
-      </div>
     </div>
   );
 }
@@ -408,6 +357,7 @@ function Waveform({ large = false }: { large?: boolean }) {
   });
   return <div className={large ? "voiceWave is-large" : "voiceWave"} aria-hidden="true">{bars}</div>;
 }
+
 
 function RevealImage({ item, url, eager }: { item: RevealMedia; url: string; eager: boolean }) {
   const [failed, setFailed] = useState(false);
