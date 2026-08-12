@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { OpeningExperience } from "@/components/OpeningExperience";
 
@@ -10,7 +10,8 @@ const chapters = [
   ["05", "The Family She Chose", "Love, partnership, and the chapter in which she became a stepmother to Bram and Josephine."],
   ["06", "Around the World", "Iceland, Spain, England, France, Italy, Puerto Rico, Israel, and the memories carried home."],
   ["07", "The People Who Love Her", "Nathan and Fay, Jenny and E, Steven and Debi, cousins, friends, colleagues, and generations of family."],
-  ["08", "Still Becoming", "A celebration of fifty years—and every unwritten page still ahead."]
+  ["08", "Still Becoming", "A celebration of fifty years—and every unwritten page still ahead."],
+  ["09", "The rest is yours to write", "The chapter Sandi continues herself, in her own words and photographs." ]
 ];
 
 const requests = [
@@ -20,7 +21,7 @@ const requests = [
   "Family holidays, trips, and funny candids",
   "Oracle photographs, awards, and stories",
   "Letters, cards, drawings, and keepsakes",
-  "A 30–120 second personal birthday message"
+  "A 30–120 second personal message or voice note"
 ];
 
 export default function Home() {
@@ -32,15 +33,18 @@ export default function Home() {
       <section id="invitation" className="section invitationSection">
         <div className="shell invitationGrid">
           <div className="sectionTitle">
-            <span className="eyebrow">HELP US RECOVER THE DETAILS</span>
-            <h2>Bring a piece of her story into the light.</h2>
+            <span className="eyebrow">THE ARCHIVE IS STILL GROWING</span>
+            <h2>Bring another piece of her story into the light.</h2>
             <p>
-              Search old albums, phones, family group chats, cloud libraries, tapes, and boxes of keepsakes. One forgotten photograph can unlock an entire story.
+              The birthday reveal has happened, but the archive stays open. One forgotten photograph, one voice note, or one small page from Sandi can still change the shape of the whole story.
             </p>
-            <Link className="primary" href="/contribute">Add your chapter</Link>
+            <div className="actions leftActions">
+              <Link className="primary" href="/contribute">Add to the archive</Link>
+              <Link className="secondary" href="/chapter-nine">Open Chapter Nine</Link>
+            </div>
           </div>
           <div className="memoryRequestCard">
-            <span className="requestLabel">We are looking for</span>
+            <span className="requestLabel">There is still room for</span>
             <ul>{requests.map(item => <li key={item}>{item}</li>)}</ul>
             <p>Questions or upload trouble? <a href="mailto:uploads@sandi50th.com">uploads@sandi50th.com</a></p>
           </div>
@@ -62,9 +66,9 @@ export default function Home() {
       <section id="chapters" className="section chapterSection">
         <div className="shell">
           <div className="sectionTitle wideTitle">
-            <span className="eyebrow">THE FILM WE ARE BUILDING</span>
-            <h2>Eight rooms. One unfolding story.</h2>
-            <p>The public site gathers the pieces. On August 11, those pieces become a private documentary and living archive created only for Sandi.</p>
+            <span className="eyebrow">THE STORY NOW HOLDS NINE ROOMS</span>
+            <h2>Eight chapters gathered for her. One chapter she keeps writing.</h2>
+            <p>The site still preserves new contributions, and Chapter Nine now belongs to Sandi herself.</p>
           </div>
           <div className="chapters">
             {chapters.map(([number, title, copy]) => (
@@ -80,14 +84,17 @@ export default function Home() {
 
       <section className="section closingInvitation">
         <div className="shell closingInner">
-          <span className="eyebrow">ONE MEMORY IS ENOUGH</span>
-          <h2>Help us make sure her story includes you.</h2>
-          <p>Nothing needs to be polished. Speak honestly, send what you have, and tell us why the moment matters.</p>
-          <Link className="primary" href="/contribute">Share a memory for Sandi</Link>
+          <span className="eyebrow">ONE MEMORY IS STILL ENOUGH</span>
+          <h2>The story did not stop on August 11.</h2>
+          <p>Send what you have, tell her what still matters, or let Sandi write the next page herself.</p>
+          <div className="actions">
+            <Link className="primary" href="/contribute">Share a memory for Sandi</Link>
+            <Link className="secondary" href="/chapter-nine">Enter Chapter Nine</Link>
+          </div>
         </div>
       </section>
 
-      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>Contributions due August 10, 2026 · uploads@sandi50th.com</span></div></footer>
+      <footer><div className="shell footerInner"><span>Created with love by the people whose lives she continues to change.</span><span>The archive remains open · uploads@sandi50th.com</span></div></footer>
     </main>
   );
 }

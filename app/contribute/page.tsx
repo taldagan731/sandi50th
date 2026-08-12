@@ -11,12 +11,12 @@ export default function ContributePage() {
         <div className="contributeGlow contributeGlowOne" />
         <div className="contributeGlow contributeGlowTwo" />
         <div className="shell contributeIntro">
-          <span className="eyebrow">A PRIVATE INVITATION</span>
-          <h1>Help us preserve a memory that deserves to live forever.</h1>
+          <span className="eyebrow">THE ARCHIVE REMAINS OPEN</span>
+          <h1>Send the memory, photograph, or voice note that still belongs with her story.</h1>
           <p>
-            Send a story, drop an entire album, or record your voice or birthday message. Everything will be woven into a private film for August 11.
+            The birthday reveal has happened, but this archive is still alive. Add a written memory, an album, a voice note, or a birthday message whenever it is ready.
           </p>
-          <div className="submissionDeadline"><span>✦</span><div><strong>Please contribute by August 10, 2026</strong><small>You may return and submit more than once.</small></div></div>
+          <div className="submissionDeadline"><span>*</span><div><strong>Contributions are still being added to the archive</strong><small>You can return and submit more than once.</small></div></div>
         </div>
       </section>
 
@@ -26,8 +26,11 @@ export default function ContributePage() {
 
       <section className="contributionFooter">
         <div className="shell contributionFooterInner">
-          <p>One photograph—or one familiar voice—can reopen an entire chapter.</p>
-          <Link href="/">Return to the invitation</Link>
+          <p>One photograph or one familiar voice can still reopen an entire chapter.</p>
+          <div className="actions">
+            <Link href="/">Return to the invitation</Link>
+            <Link href="/chapter-nine">Enter Chapter Nine</Link>
+          </div>
         </div>
       </section>
     </main>

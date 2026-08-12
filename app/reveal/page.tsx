@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { RevealExperience } from "@/components/RevealExperience";
 import { requireStudioOwner } from "@/lib/studio/auth";
@@ -68,25 +68,28 @@ export default async function RevealPage() {
 
   const { data: submissionRows } = await owner.supabase
     .from("submissions")
-    .select("id,name,relationship,prompt,approximate_year")
+    .select("id,name,relationship,prompt,approximate_year,first_memory,created_at,review_status")
     .eq("project_id", owner.project.id);
-  const submissionIds = submissionRows?.map(item => item.id) ?? [];
+
+  const regularSubmissions = (submissionRows ?? []).filter(item => item.prompt !== "CHAPTER_NINE" && item.review_status !== "excluded");
+  const chapterNineSubmissions = (submissionRows ?? []).filter(item => item.prompt === "CHAPTER_NINE" && item.review_status !== "excluded");
+  const allSubmissionIds = (submissionRows ?? []).map(item => item.id);
   const submissionsById = new Map((submissionRows ?? []).map(item => [item.id, item]));
 
   const baseColumns = "id,submission_id,original_name,mime_type,caption,chapter_number,poster_path,display_order";
   let mediaRows: MediaRow[] = [];
-  if (submissionIds.length) {
+  if (allSubmissionIds.length) {
     const enriched = await owner.supabase
       .from("media_assets")
       .select(`${baseColumns},inferred_year_start,inferred_year_end,date_inference_source`)
-      .in("submission_id", submissionIds)
+      .in("submission_id", allSubmissionIds)
       .eq("review_status", "included")
       .order("display_order");
     if (enriched.error && (enriched.error.code === "42703" || /inferred_year|date_inference/i.test(enriched.error.message))) {
       const fallback = await owner.supabase
         .from("media_assets")
         .select(baseColumns)
-        .in("submission_id", submissionIds)
+        .in("submission_id", allSubmissionIds)
         .eq("review_status", "included")
         .order("display_order");
       mediaRows = (fallback.data ?? []) as unknown as MediaRow[];
@@ -94,6 +97,23 @@ export default async function RevealPage() {
       mediaRows = (enriched.data ?? []) as unknown as MediaRow[];
     }
   }
+
+  const regularSubmissionIds = new Set(regularSubmissions.map(item => item.id));
+  const chapterNineIds = new Set(chapterNineSubmissions.map(item => item.id));
+  const regularMedia = mediaRows.filter(item => regularSubmissionIds.has(item.submission_id));
+  const chapterNineEntries = chapterNineSubmissions.map(entry => ({
+    id: entry.id,
+    dateLabel: entry.approximate_year || "Undated",
+    body: entry.first_memory || "",
+    createdAt: entry.created_at,
+    media: mediaRows
+      .filter(item => chapterNineIds.has(item.submission_id) && item.submission_id === entry.id && item.mime_type.startsWith("image/"))
+      .map(item => ({
+        id: item.id,
+        originalName: item.original_name,
+        mimeType: item.mime_type
+      }))
+  }));
 
   return (
     <main className="revealPage">
@@ -103,7 +123,7 @@ export default async function RevealPage() {
           title: item.title,
           text: item.approved_text
         }))}
-        media={mediaRows.map(item => {
+        media={regularMedia.map(item => {
           const submission = submissionsById.get(item.submission_id);
           const prompt = submission?.prompt?.toUpperCase();
           const suppliedRange = contributorYearRange(submission?.approximate_year);
@@ -135,6 +155,7 @@ export default async function RevealPage() {
             yearSource
           };
         })}
+        chapterNineEntries={chapterNineEntries}
       />
     </main>
   );

@@ -18,6 +18,11 @@ function requireText(path, text, label = text) {
   if (!content.includes(text)) failures.push(`${path} is missing: ${label}`);
 }
 
+function forbidText(path, text, label = text) {
+  const content = read(path);
+  if (content.includes(text)) failures.push(`${path} still contains: ${label}`);
+}
+
 function sourceFiles(directory) {
   const full = join(root, directory);
   if (!existsSync(full)) return [];
@@ -28,15 +33,20 @@ function sourceFiles(directory) {
 }
 
 requireText("app/layout.tsx", "robots: { index: false, follow: false }", "the sitewide noindex directive");
-requireText("app/robots.ts", "disallow: \"/\"", "robots exclusion");
-requireText("app/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
-requireText("app/contribute/page.tsx", "August 10, 2026", "the August 10 contribution deadline");
+requireText("app/robots.ts", 'disallow: "/"', "robots exclusion");
+requireText("app/page.tsx", "The archive remains open", "the post-launch archive footer");
+requireText("app/page.tsx", "Open Chapter Nine", "the Chapter Nine home entry point");
+requireText("app/contribute/page.tsx", "Contributions are still being added to the archive", "the open contribution message");
+requireText("app/contribute/page.tsx", "Enter Chapter Nine", "the Chapter Nine contribution entry point");
+forbidText("app/page.tsx", "August 10, 2026", "the expired contribution deadline");
+forbidText("app/contribute/page.tsx", "August 10, 2026", "the expired contribution deadline");
 requireText("components/OpeningExperience.tsx", "The way we see you.", "the present-tense hero line");
 requireText("components/MemoryContributionForm.tsx", "Drop an entire album", "bulk album invitation");
 requireText("components/RecordingContributionForm.tsx", "VOICE_WALL", "voice contribution path");
 requireText("components/RecordingContributionForm.tsx", "BIRTHDAY_MESSAGE", "birthday message path");
 requireText("components/RecordingContributionForm.tsx", "playsInline", "inline mobile recording playback");
 requireText("components/RevealExperience.tsx", "The rest is yours to write.", "Chapter Nine invitation");
+requireText("components/RevealExperience.tsx", "Open Chapter Nine", "Chapter Nine reveal entry point");
 requireText("components/RevealArchive.tsx", "Move through the years.", "time scrubber");
 requireText("components/RevealArchive.tsx", "playsInline", "inline archive film playback");
 requireText("app/api/studio/backups/route.ts", "byteCountVerified", "per-file backup byte verification");
@@ -44,18 +54,22 @@ requireText("app/api/release/route.ts", "VERCEL_GIT_COMMIT_SHA", "commit-specifi
 requireText(".github/workflows/post-deploy-smoke.yml", "${GITHUB_SHA}", "exact-commit production wait");
 requireText("lib/photo-intelligence/index.ts", "requestAnthropic(derivative", "derivative-only photo analysis");
 requireText("lib/photo-intelligence/index.ts", ".jpeg({ quality", "metadata-free derivative re-encoding");
+requireText("app/api/chapter-nine/session/route.ts", "setChapterNineSessionCookie", "Chapter Nine session login");
+requireText("app/api/chapter-nine/entries/route.ts", "CHAPTER_NINE_PROMPT", "Chapter Nine entry creation");
+requireText("app/chapter-nine/page.tsx", "ChapterNineRoom", "Chapter Nine writing room page");
 
 const publicSource = [...sourceFiles("app"), ...sourceFiles("components")]
   .filter(path => /\.(ts|tsx|css)$/.test(path));
 for (const path of publicSource) {
   const content = readFileSync(path, "utf8");
   if (/August\s+7(?:,\s*2026)?/i.test(content)) failures.push(`${relative(root, path)} still contains the old August 7 deadline.`);
+  if (/August\s+10(?:,\s*2026)?/i.test(content)) failures.push(`${relative(root, path)} still contains the expired August 10 deadline.`);
   if (/The way we remember you\.?/i.test(content)) failures.push(`${relative(root, path)} still frames Sandi in the past tense.`);
 }
 
 if (failures.length) {
-  console.error("\nReveal freeze check failed:\n- " + failures.join("\n- "));
+  console.error("\nRelease check failed:\n- " + failures.join("\n- "));
   process.exit(1);
 }
 
-console.log("Reveal freeze check passed: privacy, deadline, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");
+console.log("Release check passed: privacy, open archive messaging, Chapter Nine access, contribution paths, media safety, backup proof, and exact-deployment smoke are intact.");

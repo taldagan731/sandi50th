@@ -1,0 +1,5 @@
+owner-backups/
+owner-*.json
+.tmp-*
+.next/
+.openai/

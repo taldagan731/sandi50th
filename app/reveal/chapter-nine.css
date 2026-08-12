@@ -57,3 +57,63 @@
 @media (max-width: 600px) {
   .chapterNineInvitation { min-height: 78dvh; padding-inline: max(1.25rem, env(safe-area-inset-left)); }
 }
+.chapterNineAction {
+  margin-top: 2rem;
+}
+.chapterNineArchive {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  margin: 3rem auto 0;
+  display: grid;
+  gap: 1.25rem;
+  text-align: left;
+}
+.chapterNineArchive header h3 {
+  margin: .55rem 0 0;
+  font: 500 clamp(2rem, 4vw, 3.35rem) / .98 var(--font-serif, Georgia, serif);
+  letter-spacing: -.04em;
+}
+.chapterNinePagesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.chapterNinePageCard {
+  padding: 1.35rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  box-shadow: 0 26px 70px rgba(0,0,0,.22);
+}
+.chapterNinePageCard > span {
+  color: #d6b05c;
+  font-size: .72rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.chapterNinePageProse {
+  display: grid;
+  gap: .8rem;
+  margin-top: 1rem;
+}
+.chapterNinePageProse p {
+  margin: 0;
+  color: rgba(248, 240, 231, .78);
+  font-family: var(--font-serif, Georgia, serif);
+  line-height: 1.7;
+  font-size: 1.02rem;
+}
+.chapterNinePagePhotos {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+.chapterNinePagePhotos img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+}
