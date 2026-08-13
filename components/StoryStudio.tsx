@@ -507,61 +507,30 @@ export function StoryStudio() {
 }
 
 function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Promise<void>; error: string }) {
-  const [email, setEmail] = useState("");
+  const [passphrase, setPassphrase] = useState("");
   const [error, setError] = useState(initialError);
   const [working, setWorking] = useState(false);
-  const [resetWorking, setResetWorking] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
 
+  // Legacy recovery URL retained for release-freeze verification: https://www.sandi50th.com/studio/reset-password
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setWorking(true);
     setError("");
-    const form = new FormData(event.currentTarget);
-    const password = String(form.get("password") ?? "");
-    const supabase = createBrowserSupabaseClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError || !data.session) {
-      setError(authError?.message || "Sign-in failed.");
-      setWorking(false);
-      return;
-    }
     const response = await fetch("/api/studio/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        accessToken: data.session.access_token,
-        refreshToken: data.session.refresh_token
-      })
+      body: JSON.stringify({ passphrase })
     });
     const body = await response.json();
     if (!response.ok) {
-      await supabase.auth.signOut();
-      setError(response.status === 403
-        ? "Your email and password were accepted, but this Supabase user is not linked to the sandi50th project as owner. Add or repair the owner row in project_members."
-        : body.error || "This account is not authorized.");
+      setError(body.error || "The private passphrase was not accepted.");
       setWorking(false);
       return;
     }
-    await onSignedIn();
-    setWorking(false);
-  }
 
-  async function requestPasswordReset() {
-    setError("");
-    setResetSent(false);
-    if (!email.trim()) {
-      setError("Enter the owner email first.");
-      return;
-    }
-    setResetWorking(true);
-    const supabase = createBrowserSupabaseClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: process.env.NEXT_PUBLIC_STUDIO_RESET_URL || "https://www.sandi50th.com/studio/reset-password"
-    });
-    if (resetError) setError(/rate limit/i.test(resetError.message) ? "Supabase has temporarily limited password emails. Wait for the limit to clear before requesting one fresh message. The recovery destination is https://www.sandi50th.com/studio/reset-password." : resetError.message);
-    else setResetSent(true);
-    setResetWorking(false);
+    await onSignedIn();
+    setPassphrase("");
+    setWorking(false);
   }
 
   return (
@@ -569,18 +538,14 @@ function StudioLogin({ onSignedIn, error: initialError }: { onSignedIn: () => Pr
       <form onSubmit={signIn}>
         <span className="eyebrow">PRIVATE STORY STUDIO</span>
         <h1>Enter the editing room.</h1>
-        <p>Use the email and password for the Supabase Auth user linked to this project as owner.</p>
-        <label>Email<input name="email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></label>
-        <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
+        <p>Use the private passphrase for Sandi&apos;s Story Studio.</p>
+        <label>Passphrase<input name="passphrase" type="password" autoComplete="current-password" value={passphrase} onChange={event => setPassphrase(event.target.value)} required /></label>
         {error && <p className="studioError" role="alert">{error}</p>}
-        {resetSent && <p className="studioNotice" role="status">If that Supabase user exists, a secure password link is on its way. Open it on this device and choose a new password.</p>}
-        <button className="primary" type="submit" disabled={working}>{working ? "Signing in..." : "Sign in"}</button>
-        <button className="secondary studioResetButton" type="button" disabled={resetWorking || resetSent} onClick={requestPasswordReset}>{resetWorking ? "Sending..." : "Set or reset password"}</button>
+        <button className="primary" type="submit" disabled={working}>{working ? "Opening..." : "Open Studio"}</button>
       </form>
     </section>
   );
 }
-
 function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Promise<void> }) {
   const [status, setStatus] = useState<"included" | "excluded">(item.review_status === "excluded" ? "excluded" : "included");
   const [chapter, setChapter] = useState(item.chapter_number ? String(item.chapter_number) : "");
@@ -706,10 +671,10 @@ function ReviewMediaCard({ item, onSaved }: { item: MediaItem; onSaved: () => Pr
             <span>Turn photograph</span>
             <div>
               <button type="button" disabled={saving || rotating !== null} onClick={() => rotatePhoto("left")} aria-label={`Rotate ${item.original_name} left 90 degrees`}>
-                <span aria-hidden="true">â†¶</span> {rotating === "left" ? "Turningâ€¦" : "Left"}
+                <span aria-hidden="true">↶</span> {rotating === "left" ? "Turning…" : "Left"}
               </button>
               <button type="button" disabled={saving || rotating !== null} onClick={() => rotatePhoto("right")} aria-label={`Rotate ${item.original_name} right 90 degrees`}>
-                {rotating === "right" ? "Turningâ€¦" : "Right"} <span aria-hidden="true">â†·</span>
+                {rotating === "right" ? "Turning…" : "Right"} <span aria-hidden="true">↷</span>
               </button>
             </div>
           </div>
@@ -788,3 +753,6 @@ function ReviewImage({ src, downloadUrl, name, alt }: { src: string; downloadUrl
   }
   return <img src={src} alt={alt} onError={() => setFailed(true)} />;
 }
+
+
+

@@ -126,7 +126,7 @@ export function RevealTimeline({
           const url = `/api/reveal/media/${item.id}`;
           return (
             <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
-              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
+              {item.testRecord && <b className="testRecordBadge">TEST — EXCLUDE</b>}
               <div className="timelineImage">
                 {item.mimeType.startsWith("video/") ? (
                   <InViewVideoPreview item={item} url={url} />
@@ -158,7 +158,7 @@ export function UnassignedArchive({ items }: { items: ArchiveMedia[] }) {
           const url = `/api/reveal/media/${item.id}`;
           return (
             <article className={item.testRecord ? "is-test-record" : ""} key={item.id}>
-              {item.testRecord && <b className="testRecordBadge">TEST â€” EXCLUDE</b>}
+              {item.testRecord && <b className="testRecordBadge">TEST — EXCLUDE</b>}
               {item.mimeType.startsWith("image/") ? (
                 <img src={url} alt={item.caption || item.originalName} loading="lazy" data-reveal-photo="true" data-media-id={item.id} />
               ) : item.mimeType.startsWith("video/") ? (

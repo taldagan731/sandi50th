@@ -101,7 +101,7 @@ function WaterRippleLayer({ strength, onState }: { strength: RippleStrength; onS
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     const image=new window.Image();
-    let ready=false,visible=false,frame=0,started=performance.now();
+    let ready=false,visible=false,frame=0;const started=performance.now();
     const resolution=gl.getUniformLocation(program,"resolution");
     const clock=gl.getUniformLocation(program,"time");
     const resize=()=>{

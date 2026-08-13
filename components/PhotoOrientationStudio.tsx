@@ -30,7 +30,7 @@ export function PhotoOrientationStudio() {
     setPhotos(body.photos ?? []);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(timer); }, []);
 
   async function scanAndRepair() {
     setScanning(true);

@@ -130,13 +130,16 @@ export function MemoryContributionForm({
   const speechChunks = useRef<Blob[]>([]);
 
   useEffect(() => {
-    const speechWindow = window as SpeechWindow;
-    setSpeechSupported(Boolean(
-      speechWindow.SpeechRecognition ||
-      speechWindow.webkitSpeechRecognition ||
-      (typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder !== "undefined")
-    ));
+    const timer = window.setTimeout(() => {
+      const speechWindow = window as SpeechWindow;
+      setSpeechSupported(Boolean(
+        speechWindow.SpeechRecognition ||
+        speechWindow.webkitSpeechRecognition ||
+        (typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder !== "undefined")
+      ));
+    }, 0);
     return () => {
+      window.clearTimeout(timer);
       speechRecognition.current?.stop();
       if (speechRecorder.current?.state === "recording") speechRecorder.current.stop();
       speechStream.current?.getTracks().forEach(track => track.stop());

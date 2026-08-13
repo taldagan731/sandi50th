@@ -17,7 +17,7 @@ export function FaceTaggingStudio() {
     if (!response.ok) { setError(body.error || "Face-tag status could not be loaded."); return; }
     setStatus(body);
   }
-  useEffect(() => { void load(); return () => { stop.current = true; }; }, []);
+  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => { window.clearTimeout(timer); stop.current = true; }; }, []);
 
   async function run() {
     stop.current = false; setRunning(true); setError(""); setNotice("Preparing the confirmed face references…");

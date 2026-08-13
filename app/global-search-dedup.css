@@ -1,0 +1,4 @@
+/* Reveal and Studio keep local mounts for their release guards. Hide the
+   layout fallback on those two pages so exactly one control is visible. */
+body:has(.revealExperience) > .globalSearchTrigger,
+body:has(.studioApp) > .globalSearchTrigger { display: none; }

@@ -1,0 +1,34 @@
+.familyVoiceText,
+.writtenMemoryCard {
+  position: relative;
+  max-height: 27rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding-bottom: 2rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 213, 148, .48) transparent;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 1.15rem), transparent 100%);
+}
+
+.familyVoiceText { padding-right: 1rem; }
+
+.familyVoiceText::-webkit-scrollbar,
+.writtenMemoryCard::-webkit-scrollbar { width: 5px; }
+
+.familyVoiceText::-webkit-scrollbar-track,
+.writtenMemoryCard::-webkit-scrollbar-track { background: transparent; }
+
+.familyVoiceText::-webkit-scrollbar-thumb,
+.writtenMemoryCard::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 213, 148, .42);
+}
+
+.writtenMemoryCollection > div { align-items: start; }
+
+@media (max-width: 700px) {
+  .familyVoiceText,
+  .writtenMemoryCard { max-height: min(24rem, 62dvh); }
+}

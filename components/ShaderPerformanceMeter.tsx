@@ -10,9 +10,13 @@ export function ShaderPerformanceMeter({ sampleKey }: { sampleKey: string }) {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setReduced(reduceMotion);
-    if (reduceMotion) return;
-    setResult(null);
+    const initTimer = window.setTimeout(() => {
+      setReduced(reduceMotion);
+      if (!reduceMotion) setResult(null);
+    }, 0);
+    if (reduceMotion) {
+      return () => window.clearTimeout(initTimer);
+    }
     let frames = 0;
     let droppedFrames = 0;
     let last = performance.now();
@@ -39,8 +43,9 @@ export function ShaderPerformanceMeter({ sampleKey }: { sampleKey: string }) {
       }
     };
     raf = requestAnimationFrame(sample);
-    return () => { cancelAnimationFrame(raf); observer?.disconnect(); };
+    return () => { window.clearTimeout(initTimer); cancelAnimationFrame(raf); observer?.disconnect(); };
   }, [sampleKey]);
+
   return (
     <p className="shaderMetrics" aria-live="polite">
       {reduced

@@ -40,13 +40,16 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    fetch(`/api/photo-stories?mediaId=${encodeURIComponent(mediaId)}`, { cache: "no-store" })
-      .then(response => response.ok ? response.json() : { stories: [] })
-      .then(data => { if (active) setStories(Array.isArray(data.stories) ? data.stories : []); })
-      .catch(() => undefined)
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    const timer = window.setTimeout(() => {
+      if (!active) return;
+      setLoading(true);
+      fetch(`/api/photo-stories?mediaId=${encodeURIComponent(mediaId)}`, { cache: "no-store" })
+        .then(response => response.ok ? response.json() : { stories: [] })
+        .then(data => { if (active) setStories(Array.isArray(data.stories) ? data.stories : []); })
+        .catch(() => undefined)
+        .finally(() => { if (active) setLoading(false); });
+    }, 0);
+    return () => { active = false; window.clearTimeout(timer); };
   }, [mediaId]);
 
   const people = useMemo(() => peopleText.split(",").map(value => value.trim()).filter(Boolean), [peopleText]);
@@ -57,9 +60,12 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
   }, [src, imageAttempt]);
 
   useEffect(() => {
-    setImageLoading(true);
-    setImageFailed(false);
-    setImageAttempt(0);
+    const timer = window.setTimeout(() => {
+      setImageLoading(true);
+      setImageFailed(false);
+      setImageAttempt(0);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [src]);
 
   function chooseFace(event: PointerEvent<HTMLImageElement>) {
@@ -72,11 +78,11 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
     const centerX = (event.clientX - rect.left) / rect.width;
     const centerY = (event.clientY - rect.top) / rect.height;
     setFaceDraft({ x: Math.max(0, Math.min(1 - width, centerX - width / 2)), y: Math.max(0, Math.min(1 - height, centerY - height / 2)), width, height });
-    setFaceMessage("Face selected. Add the personâ€™s name below.");
+    setFaceMessage("Face selected. Add the person's name below.");
   }
 
   async function submitFaceTag() {
-    if (!faceDraft || !faceName.trim()) { setFaceMessage("Tap a face and enter the personâ€™s name."); return; }
+    if (!faceDraft || !faceName.trim()) { setFaceMessage("Tap a face and enter the person's name."); return; }
     setFaceSending(true); setFaceMessage("");
     try {
       const response = await fetch("/api/photo-face-tags", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaId, personName: faceName.trim(), authorName: authorName.trim(), ...faceDraft, website: "" }) });
@@ -133,7 +139,7 @@ export function PhotoStoryViewer({ mediaId, src, alt, onClose }: { mediaId: stri
         {imageFailed ? <div className="photoStoryImageFallback"><strong>The photograph needs another moment.</strong><button type="button" onClick={() => { setImageFailed(false); setImageLoading(true); setImageAttempt(value => value + 1); }}>Try again</button></div> : <img key={imageAttempt} ref={imageRef} className={`${imageLoading ? "is-loading " : ""}${faceTagging ? "is-face-tagging" : ""}`} src={fullImageSrc} alt={alt} data-media-id={mediaId} onPointerUp={chooseFace} style={{ transform: `scale(${zoom})` }} onLoad={() => setImageLoading(false)} onError={() => { setImageLoading(false); setImageFailed(true); }} />}
       </div>
       <section className="photoStoryPanel" aria-label="Stories attached to this photograph">
-        {(faceTagging || faceMessage) && <div className="publicFaceTagger"><div><strong>Tag someone in this photograph</strong><p>{faceTagging ? "Tap the center of a face above, then enter the personâ€™s name. Tags are reviewed before appearing publicly." : faceMessage}</p></div>{faceTagging && <><label>Personâ€™s name<input value={faceName} onChange={event => setFaceName(event.target.value)} maxLength={80} placeholder="Who is this?" /></label><button type="button" disabled={faceSending || !faceDraft || !faceName.trim()} onClick={submitFaceTag}>{faceSending ? "Sendingâ€¦" : "Submit face tag"}</button></>}<p role="status">{faceTagging ? faceMessage : ""}</p></div>}
+        {(faceTagging || faceMessage) && <div className="publicFaceTagger"><div><strong>Tag someone in this photograph</strong><p>{faceTagging ? "Tap the center of a face above, then enter the person's name. Tags are reviewed before appearing publicly." : faceMessage}</p></div>{faceTagging && <><label>Person&apos;s name<input value={faceName} onChange={event => setFaceName(event.target.value)} maxLength={80} placeholder="Who is this?" /></label><button type="button" disabled={faceSending || !faceDraft || !faceName.trim()} onClick={submitFaceTag}>{faceSending ? "Sending\u2026" : "Submit face tag"}</button></>}<p role="status">{faceTagging ? faceMessage : ""}</p></div>}
         <form className="photoStoryForm" onSubmit={submit}>
           <header><span>WHO’S HERE? WHAT DO YOU REMEMBER?</span><h2>Add to this photograph.</h2><p>Names, a detail, an impression, or a whole story—anything you remember belongs here.</p></header>
           <div className="photoStoryFields">

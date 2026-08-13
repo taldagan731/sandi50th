@@ -1,0 +1,20 @@
+/* Final low-risk launch polish: preserve interaction while improving legibility and touch reach. */
+.filmPlayer small { color: rgba(255, 248, 240, .82) !important; }
+.talDedicationPortrait figcaption a,
+.talDedicationLetter a { color: #ffe5cf !important; text-decoration: underline; text-underline-offset: .18em; }
+.birthWeekExperience .photoTvDial { min-width: 44px; min-height: 44px; }
+.birthWeekExperience .deckTransport button { min-height: 44px !important; padding-block: .55rem !important; }
+
+@media (max-width: 520px) {
+  .birthWeekExperience .deckTransport button { min-height: 44px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scatteredPhoto { animation: none !important; }
+}
+
+.brandedNotFound { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 1rem; padding: max(2rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(6rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); text-align: center; color: #fff8ef; background: radial-gradient(circle at 18% 12%, #ff718f 0, transparent 30%), radial-gradient(circle at 82% 80%, #ff9b6a 0, transparent 35%), linear-gradient(145deg, #4b164c, #8f245f 55%, #bc4d68); }
+.brandedNotFound h1 { margin: 0; max-width: 14ch; font-family: Georgia, serif; font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: .96; }
+.brandedNotFound p { margin: 0; max-width: 34rem; font-size: clamp(1rem, 2.4vw, 1.25rem); line-height: 1.55; }
+.brandedNotFound div { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+.brandedNotFound a { display: inline-grid; min-height: 44px; place-items: center; padding: .7rem 1rem; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; color: inherit; background: rgba(50,10,45,.28); text-decoration: none; }

@@ -116,7 +116,7 @@ export function FlowingCloudShader({ palette, className = "" }: { palette: Cloud
 
     let visible = false;
     let frame = 0;
-    let started = performance.now();
+    const started = performance.now();
     const resize = () => {
       const rect = shell.getBoundingClientRect();
       const scale = Math.min(window.devicePixelRatio || 1, 2) * .5;

@@ -33,7 +33,7 @@ export function RevealShareStudio() {
     setMigrationRequired(Boolean(body.migrationRequired));
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(timer); }, []);
 
   async function createLink() {
     setWorking(true);

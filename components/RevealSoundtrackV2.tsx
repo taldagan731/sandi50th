@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MUSIC_MUTE_EVENT, MUSIC_MUTE_STORAGE_KEY, type MusicMuteEventDetail } from "@/lib/music-preference";
 
 const DEFAULT_TRACK = "/audio/tavalodet-mobarak.mp3";
-
-function savedMusicMutePreference() {
-  if (typeof window === "undefined") return false;
-  try { return window.localStorage.getItem(MUSIC_MUTE_STORAGE_KEY) === "true"; }
-  catch { return false; }
-}
+const DEFAULT_DUCK_RATIO = .05;
+const DUCK_STORAGE_KEY = "sandi-reveal-duck-ratio";
 
 type NameRecording = { id: string; contributorName: string; displayOrder: number };
 
@@ -17,114 +12,186 @@ export function RevealSoundtrack({
   ducked,
   names,
   finaleSignal,
-  onStart
+  onStart,
+  ownerRehearsal = false
 }: {
   ducked: boolean;
   names: NameRecording[];
   finaleSignal: number;
   onStart: () => void;
+  ownerRehearsal?: boolean;
 }) {
   const songRef = useRef<HTMLAudioElement>(null);
   const audioContext = useRef<AudioContext | null>(null);
+  const songSource = useRef<MediaElementAudioSourceNode | null>(null);
+  const songGain = useRef<GainNode | null>(null);
   const chorusGain = useRef<GainNode | null>(null);
   const chorusSources = useRef<AudioBufferSourceNode[]>([]);
   const chorusRun = useRef(0);
-  const fadeFrame = useRef<number | null>(null);
-  const activeSpokenMedia = useRef<HTMLMediaElement | null>(null);
+  const focusedMedia = useRef<HTMLMediaElement | null>(null);
+  const releaseTimer = useRef<number | null>(null);
   const previousMuted = useRef(new WeakMap<HTMLMediaElement, boolean>());
   const startedRef = useRef(false);
+  const speakingRef = useRef(false);
+  const pendingFinaleChorus = useRef(false);
+  const [mediaFocusActive, setMediaFocusActive] = useState(false);
+  const [externalAudioActive, setExternalAudioActive] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [masterMuted, setMasterMuted] = useState(false);
-  const [musicMuted, setMusicMuted] = useState(savedMusicMutePreference);
   const [chorusEnabled, setChorusEnabled] = useState(true);
   const [volume, setVolume] = useState(.56);
-  const [duckVolume, setDuckVolume] = useState(.12);
-  const [mediaDucked, setMediaDucked] = useState(false);
+  const [duckRatio, setDuckRatio] = useState(DEFAULT_DUCK_RATIO);
   const [error, setError] = useState(false);
   const track = process.env.NEXT_PUBLIC_REVEAL_SOUNDTRACK_URL || DEFAULT_TRACK;
-
-  const shouldDuck = ducked || mediaDucked;
+  const speaking = ducked || mediaFocusActive;
+  speakingRef.current = speaking;
 
   useEffect(() => {
-    const readSaved = () => {
-      try { setMusicMuted(window.localStorage.getItem(MUSIC_MUTE_STORAGE_KEY) === "true"); }
-      catch { setMusicMuted(false); }
+    const onExternalAudio = (event: Event) => {
+      const detail = (event as CustomEvent<{ active?: boolean }>).detail;
+      setExternalAudioActive(Boolean(detail?.active));
     };
-    const handleMute = (event: Event) => setMusicMuted((event as CustomEvent<MusicMuteEventDetail>).detail.muted);
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === MUSIC_MUTE_STORAGE_KEY) setMusicMuted(event.newValue === "true");
-    };
-    readSaved();
-    window.addEventListener(MUSIC_MUTE_EVENT, handleMute);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(MUSIC_MUTE_EVENT, handleMute);
-      window.removeEventListener("storage", handleStorage);
-    };
+    window.addEventListener("sandi:external-audio", onExternalAudio);
+    return () => window.removeEventListener("sandi:external-audio", onExternalAudio);
   }, []);
 
   useEffect(() => {
-    const song = songRef.current;
-    if (song) {
-      const target = masterMuted || musicMuted ? 0 : shouldDuck ? Math.min(volume, duckVolume) : volume;
-      const duration = shouldDuck || masterMuted || musicMuted ? 300 : 1400;
-      if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
-      const start = song.volume;
-      const startedAt = performance.now();
-      const fade = (now: number) => {
-        const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
-        song.volume = Math.max(0, Math.min(1, start + (target - start) * progress));
-        fadeFrame.current = progress < 1 ? requestAnimationFrame(fade) : null;
-      };
-      fadeFrame.current = requestAnimationFrame(fade);
-    }
-    if (chorusGain.current) chorusGain.current.gain.setTargetAtTime(masterMuted || musicMuted || shouldDuck || !chorusEnabled ? 0 : .13, audioContext.current?.currentTime ?? 0, .04);
-    return () => {
-      if (fadeFrame.current !== null) cancelAnimationFrame(fadeFrame.current);
+    const syncGlobalMute = (event?: Event) => {
+      const detail = (event as CustomEvent<{ muted?: boolean }> | undefined)?.detail;
+      const next = detail?.muted ?? window.localStorage.getItem("sandi-global-muted") === "true";
+      setMasterMuted(next);
     };
-  }, [chorusEnabled, duckVolume, masterMuted, musicMuted, shouldDuck, volume]);
+    syncGlobalMute();
+    window.addEventListener("sandi:global-mute", syncGlobalMute);
+    return () => window.removeEventListener("sandi:global-mute", syncGlobalMute);
+  }, []);
+  useEffect(() => {
+    if (!ownerRehearsal) return;
+    const timer = window.setTimeout(() => {
+      const stored = Number(window.localStorage.getItem(DUCK_STORAGE_KEY));
+      if (Number.isFinite(stored) && stored >= .03 && stored <= .2) setDuckRatio(stored);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [ownerRehearsal]);
+
+  function ramp(parameter: AudioParam, target: number, seconds: number) {
+    const context = audioContext.current;
+    if (!context) return;
+    const now = context.currentTime;
+    parameter.cancelScheduledValues(now);
+    parameter.setValueAtTime(parameter.value, now);
+    parameter.linearRampToValueAtTime(target, now + seconds);
+  }
+
+  useEffect(() => {
+    const soundtrackSuppressed = masterMuted || externalAudioActive;
+    const activeDuckRatio = mediaFocusActive ? .05 : duckRatio;
+    const target = soundtrackSuppressed ? 0 : speaking ? volume * activeDuckRatio : volume;
+    const duration = soundtrackSuppressed ? .2 : speaking ? .3 : 1.4;
+    if (songGain.current) ramp(songGain.current.gain, target, duration);
+    else if (songRef.current) songRef.current.volume = target;
+
+    const chorusTarget = soundtrackSuppressed || speaking || !chorusEnabled ? 0 : .13;
+    if (chorusGain.current) ramp(chorusGain.current.gain, chorusTarget, speaking ? .03 : .35);
+    if (speaking || externalAudioActive) stopChorus();
+    else if (pendingFinaleChorus.current && playing && chorusEnabled) {
+      pendingFinaleChorus.current = false;
+      void playChorus();
+    }
+  }, [chorusEnabled, duckRatio, externalAudioActive, masterMuted, mediaFocusActive, ducked, playing, volume]);
 
   useEffect(() => {
     const root = document.querySelector(".revealExperience");
     if (!root) return;
+    const wired = new WeakSet<HTMLMediaElement>();
 
-    const release = (element: HTMLMediaElement) => {
-      if (activeSpokenMedia.current !== element) return;
-      activeSpokenMedia.current = null;
-      setMediaDucked(false);
+    const clearRelease = () => {
+      if (releaseTimer.current !== null) window.clearTimeout(releaseTimer.current);
+      releaseTimer.current = null;
     };
-    const handlePlay = (event: Event) => {
-      const element = event.target;
-      if (!(element instanceof HTMLMediaElement) || element === songRef.current || element.muted) return;
-      const previous = activeSpokenMedia.current;
+    const release = (element: HTMLMediaElement, delay = 0) => {
+      if (focusedMedia.current !== element) return;
+      clearRelease();
+      releaseTimer.current = window.setTimeout(() => {
+        if (focusedMedia.current !== element) return;
+        focusedMedia.current = null;
+        setMediaFocusActive(false);
+        releaseTimer.current = null;
+      }, delay);
+    };
+    const focus = (element: HTMLMediaElement) => {
+      if (element === songRef.current || element.muted || element.volume === 0) return;
+      clearRelease();
+      const previous = focusedMedia.current;
       if (previous && previous !== element && !previous.paused) previous.pause();
-      activeSpokenMedia.current = element;
-      setMediaDucked(true);
+      focusedMedia.current = element;
+      setMediaFocusActive(true);
     };
-    const handleEnded = (event: Event) => {
+    const wire = (element: HTMLMediaElement) => {
+      if (wired.has(element) || element === songRef.current) return;
+      wired.add(element);
+      element.addEventListener("webkitendfullscreen", () => {
+        if (element.paused) release(element);
+      });
+    };
+    const scan = () => {
+      root.querySelectorAll<HTMLMediaElement>("audio,video").forEach(wire);
+      const current = focusedMedia.current;
+      if (current && !current.isConnected) release(current);
+    };
+    const requestVideoSound = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const video = target.closest("video[controls]") as HTMLVideoElement | null;
+      if (!video) return;
+      window.localStorage.setItem("sandi-global-muted", "false");
+      window.dispatchEvent(new CustomEvent("sandi:global-mute", { detail: { muted: false } }));
+      video.muted = false;
+      if (video.volume === 0) video.volume = 1;
+    };
+    const onPlay = (event: Event) => {
+      if (event.target instanceof HTMLMediaElement) focus(event.target);
+    };
+    const onVolumeChange = (event: Event) => {
+      if (!(event.target instanceof HTMLMediaElement) || event.target === songRef.current) return;
+      if (!event.target.paused && !event.target.muted && event.target.volume > 0) focus(event.target);
+      else if ((event.target.muted || event.target.volume === 0) && focusedMedia.current === event.target) release(event.target);
+    };
+    const onEnded = (event: Event) => {
+      if (event.target instanceof HTMLMediaElement) release(event.target, 450);
+    };
+    const onInterrupted = (event: Event) => {
       if (event.target instanceof HTMLMediaElement) release(event.target);
     };
-    const handleVolume = (event: Event) => {
-      const element = event.target;
-      if (!(element instanceof HTMLMediaElement) || element === songRef.current) return;
-      if (!element.muted && !element.paused) handlePlay(event);
+    const onFullscreenChange = () => {
+      const current = focusedMedia.current;
+      if (!document.fullscreenElement && current?.paused) release(current);
     };
-    const observer = new MutationObserver(() => {
-      const active = activeSpokenMedia.current;
-      if (active && !active.isConnected) release(active);
-    });
 
-    root.addEventListener("play", handlePlay, true);
-    root.addEventListener("ended", handleEnded, true);
-    root.addEventListener("emptied", handleEnded, true);
-    root.addEventListener("volumechange", handleVolume, true);
+    scan();
+    root.addEventListener("pointerdown", requestVideoSound, true);
+    root.addEventListener("keydown", requestVideoSound, true);
+    root.addEventListener("play", onPlay, true);
+    root.addEventListener("volumechange", onVolumeChange, true);
+    root.addEventListener("ended", onEnded, true);
+    root.addEventListener("abort", onInterrupted, true);
+    root.addEventListener("emptied", onInterrupted, true);
+    root.addEventListener("error", onInterrupted, true);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    const observer = new MutationObserver(scan);
     observer.observe(root, { childList: true, subtree: true });
     return () => {
-      root.removeEventListener("play", handlePlay, true);
-      root.removeEventListener("ended", handleEnded, true);
-      root.removeEventListener("emptied", handleEnded, true);
-      root.removeEventListener("volumechange", handleVolume, true);
+      clearRelease();
       observer.disconnect();
+      root.removeEventListener("pointerdown", requestVideoSound, true);
+      root.removeEventListener("keydown", requestVideoSound, true);
+      root.removeEventListener("play", onPlay, true);
+      root.removeEventListener("volumechange", onVolumeChange, true);
+      root.removeEventListener("ended", onEnded, true);
+      root.removeEventListener("abort", onInterrupted, true);
+      root.removeEventListener("emptied", onInterrupted, true);
+      root.removeEventListener("error", onInterrupted, true);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
     };
   }, []);
 
@@ -151,38 +218,34 @@ export function RevealSoundtrack({
   }, [masterMuted]);
 
   useEffect(() => {
-    if (finaleSignal > 0 && startedRef.current && playing && chorusEnabled) void playChorus();
+    if (finaleSignal <= 0 || !startedRef.current || !playing || !chorusEnabled) return;
+    if (speakingRef.current) pendingFinaleChorus.current = true;
+    else void playChorus();
   }, [finaleSignal]);
 
-  useEffect(() => () => stopChorus(), []);
-
-  useEffect(() => {
-    let disposed = false;
-    const detach = () => {
-      document.removeEventListener("pointerdown", beginFromGesture, true);
-      document.removeEventListener("touchstart", beginFromGesture, true);
-      document.removeEventListener("keydown", beginFromGesture, true);
-    };
-    const attempt = async () => {
-      if (disposed || startedRef.current) return;
-      if (await startPlayback(false)) detach();
-    };
-    function beginFromGesture() { void attempt(); }
-    document.addEventListener("pointerdown", beginFromGesture, true);
-    document.addEventListener("touchstart", beginFromGesture, true);
-    document.addEventListener("keydown", beginFromGesture, true);
-    void attempt();
-    return () => { disposed = true; detach(); };
+  useEffect(() => () => {
+    stopChorus();
+    if (releaseTimer.current !== null) window.clearTimeout(releaseTimer.current);
+    void audioContext.current?.close();
   }, []);
 
   async function ensureAudioContext() {
     if (!audioContext.current) {
       const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextClass) return null;
-      audioContext.current = new AudioContextClass();
-      chorusGain.current = audioContext.current.createGain();
-      chorusGain.current.gain.value = .13;
-      chorusGain.current.connect(audioContext.current.destination);
+      const context = new AudioContextClass();
+      audioContext.current = context;
+      songGain.current = context.createGain();
+      chorusGain.current = context.createGain();
+      songGain.current.gain.value = masterMuted || externalAudioActive ? 0 : speakingRef.current ? volume * duckRatio : volume;
+      chorusGain.current.gain.value = masterMuted || externalAudioActive || speakingRef.current || !chorusEnabled ? 0 : .13;
+      songGain.current.connect(context.destination);
+      chorusGain.current.connect(context.destination);
+      if (songRef.current) {
+        songRef.current.volume = 1;
+        songSource.current = context.createMediaElementSource(songRef.current);
+        songSource.current.connect(songGain.current);
+      }
     }
     await audioContext.current.resume();
     return audioContext.current;
@@ -206,19 +269,19 @@ export function RevealSoundtrack({
   }
 
   async function playChorus(force = false) {
-    if ((!chorusEnabled && !force) || !names.length) return;
+    if (speakingRef.current || (!chorusEnabled && !force) || !names.length) return;
     const context = await ensureAudioContext();
-    if (!context || !chorusGain.current) return;
+    if (!context || !chorusGain.current || speakingRef.current) return;
     stopChorus();
     const run = chorusRun.current;
     let nextStart = context.currentTime + .15;
     for (const recording of orderedNames()) {
-      if (run !== chorusRun.current || !chorusEnabled) return;
+      if (run !== chorusRun.current || !chorusEnabled || speakingRef.current) return;
       try {
         const response = await fetch(`/api/reveal/media/${recording.id}`, { cache: "force-cache" });
         if (!response.ok) continue;
         const decoded = await context.decodeAudioData(await response.arrayBuffer());
-        if (run !== chorusRun.current) return;
+        if (run !== chorusRun.current || speakingRef.current) return;
         const source = context.createBufferSource();
         source.buffer = decoded;
         source.connect(chorusGain.current);
@@ -227,32 +290,7 @@ export function RevealSoundtrack({
         chorusSources.current.push(source);
         const overlap = .28 + Math.random() * .42;
         nextStart = start + Math.max(.7, decoded.duration - overlap);
-      } catch {
-        // One unusable name never interrupts the room of voices.
-      }
-    }
-  }
-
-  async function startPlayback(reportFailure = false) {
-    const song = songRef.current;
-    if (!song) return false;
-    setError(false);
-    const contextPromise = ensureAudioContext().catch(() => null);
-    try {
-      await song.play();
-      if (!startedRef.current) {
-        startedRef.current = true;
-        onStart();
-      }
-      setPlaying(true);
-      void contextPromise.then(context => {
-        if (context && chorusEnabled) void playChorus();
-      });
-      return true;
-    } catch {
-      if (reportFailure) setError(true);
-      setPlaying(false);
-      return false;
+      } catch {}
     }
   }
 
@@ -265,50 +303,52 @@ export function RevealSoundtrack({
       setPlaying(false);
       return;
     }
-    await startPlayback(true);
+    setError(false);
+    window.localStorage.setItem("sandi-global-muted", "false");
+    window.dispatchEvent(new CustomEvent("sandi:global-mute", { detail: { muted: false } }));
+    setMasterMuted(false);
+    song.muted = false;
+    try {
+      const contextReady = ensureAudioContext();
+      const playback = song.play();
+      await contextReady;
+      if (songGain.current) songGain.current.gain.value = speakingRef.current ? volume * duckRatio : volume;
+      await playback;
+      if (!startedRef.current) { startedRef.current = true; onStart(); }
+      setPlaying(true);
+      if (chorusEnabled && !speakingRef.current) void playChorus();
+    } catch {
+      setError(true);
+      setPlaying(false);
+    }
   }
 
   function toggleChorus() {
     const next = !chorusEnabled;
     setChorusEnabled(next);
     if (!next) stopChorus();
-    else if (playing) void playChorus(true);
+    else if (playing && !speakingRef.current) void playChorus(true);
   }
 
-  return (
-    <>
-      <div className="musicInvitation">
-        <span aria-hidden="true">♪</span>
-        <div>
-          <strong>Come into the room.</strong>
-          <p>Begin the birthday song and hear the names of the people who are here for Sandi.</p>
-        </div>
-        {!playing && <small role="status">Music begins automatically. If your browser pauses sound, your first tap anywhere will start it.</small>}
-        {error && <small role="status">Sound is still paused by this browser. Tap anywhere in the reveal to begin.</small>}
-      </div>
+  function changeDuckRatio(next: number) {
+    setDuckRatio(next);
+    window.localStorage.setItem(DUCK_STORAGE_KEY, String(next));
+  }
 
-      <audio ref={songRef} preload="auto" loop onEnded={() => setPlaying(false)}>
-        <source src={track} type="audio/mpeg" />
-      </audio>
-
-      {playing && (
-        <aside className="soundtrackDock" aria-label="Reveal audio controls">
-          <button type="button" onClick={togglePlayback}>Pause</button>
-          <label>
-            <span>Music {Math.round(volume * 100)}%</span>
-            <input aria-label="Birthday song volume" type="range" min="0" max="1" step=".05" value={volume} onChange={event => setVolume(Number(event.target.value))} />
-          </label>
-          <label title="Music level while someone is speaking">
-            <span>Under voices {Math.round(duckVolume * 100)}%</span>
-            <input aria-label="Music level under voices" type="range" min=".03" max=".18" step=".01" value={duckVolume} onChange={event => setDuckVolume(Number(event.target.value))} />
-          </label>
-          <button type="button" onClick={toggleChorus} aria-pressed={chorusEnabled}>{chorusEnabled ? "Voices on" : "Voices off"}</button>
-          <button className="masterMute" type="button" onClick={() => setMasterMuted(value => !value)} aria-pressed={masterMuted}>
-            {masterMuted ? "Unmute all" : "Mute all"}
-          </button>
-          {shouldDuck && <span className="soundtrackDucked" aria-live="polite">Music lowered; name chorus paused for this voice</span>}
-        </aside>
-      )}
-    </>
-  );
+  return <>
+    <div className="musicInvitation">
+      <span aria-hidden="true">♪</span><div><strong>Come into the room.</strong><p>Begin the birthday song and hear the names of the people who are here for Sandi.</p></div>
+      <button type="button" onClick={togglePlayback}>{playing ? "Pause" : "Press play"}</button>
+      {error && <small role="status">The soundtrack could not start. Tap once more, or continue in silence.</small>}
+    </div>
+    <audio ref={songRef} preload="metadata" loop onEnded={() => setPlaying(false)}><source src={track} type="audio/mpeg" /></audio>
+    {playing && <aside className="soundtrackDock" aria-label="Reveal audio controls">
+      <button type="button" onClick={togglePlayback}>Pause</button>
+      <label><span className="srOnly">Birthday song volume</span><input type="range" min="0" max="1" step=".05" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
+      <button type="button" onClick={toggleChorus} aria-pressed={chorusEnabled}>{chorusEnabled ? "Voices on" : "Voices off"}</button>
+      <button className="masterMute" type="button" onClick={() => setMasterMuted(value => !value)} aria-pressed={masterMuted}>{masterMuted ? "Unmute all" : "Mute all"}</button>
+      {ownerRehearsal && <label className="duckingTuner"><span>Voice music bed <strong>{Math.round(duckRatio * 100)}%</strong></span><input aria-label="Music level under spoken recordings" type="range" min=".03" max=".15" step=".01" value={duckRatio} onChange={event => changeDuckRatio(Number(event.target.value))} /></label>}
+      {speaking && <span className="soundtrackDucked" aria-live="polite">Music at {Math.round(duckRatio * 100)}% · other voices muted</span>}
+    </aside>}
+  </>;
 }

@@ -1,0 +1,229 @@
+/* TPS-L2-inspired SANDI personal stereo. Functional Spotify controls stay unchanged. */
+.birthWeekExperience .cassetteDeck {
+  --tps-blue: #17659a;
+  --tps-blue-deep: #0b456f;
+  --tps-silver: #d7d8d4;
+  --tps-orange: #ef6f32;
+  perspective: 1100px;
+}
+
+.birthWeekExperience .deckFaceplate {
+  position: relative;
+  width: min(100%, 22.5rem);
+  min-height: 31rem;
+  margin-inline: auto;
+  padding: 5.2rem 1.35rem 1.45rem;
+  overflow: visible;
+  border: 1px solid #12344b;
+  border-radius: .42rem;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.1), transparent 18%, rgba(0,0,0,.08) 76%, rgba(255,255,255,.08)),
+    linear-gradient(180deg, var(--tps-silver) 0 20%, var(--tps-blue) 20% 79%, var(--tps-blue-deep) 79% 100%);
+  box-shadow:
+    0 2.2rem 4.5rem rgba(35, 9, 26, .35),
+    inset 0 1px rgba(255,255,255,.85),
+    inset -8px 0 12px rgba(3, 33, 54, .22),
+    9px 8px 0 #17384d;
+  transform: rotateY(-2deg) rotateX(.7deg);
+}
+
+.birthWeekExperience .deckFaceplate::before {
+  content: "";
+  position: absolute;
+  inset: .42rem;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid rgba(12, 33, 47, .34);
+  border-radius: .2rem;
+  background:
+    radial-gradient(circle at 6% 4%, #30373a 0 2px, #a7aaa8 2.5px 4px, transparent 4.5px),
+    radial-gradient(circle at 94% 4%, #30373a 0 2px, #a7aaa8 2.5px 4px, transparent 4.5px),
+    radial-gradient(circle at 6% 96%, #24384a 0 2px, #4b91ba 2.5px 4px, transparent 4.5px),
+    radial-gradient(circle at 94% 96%, #24384a 0 2px, #4b91ba 2.5px 4px, transparent 4.5px);
+}
+
+.birthWeekExperience .deckFaceplate::after {
+  content: "";
+  position: absolute;
+  inset: auto 2.2rem -.88rem 2.65rem;
+  height: .72rem;
+  border-radius: 0 0 .25rem .25rem;
+  background: linear-gradient(180deg, #143b57, #071d2c);
+  box-shadow: 0 .45rem .85rem rgba(26, 8, 20, .3);
+}
+
+.birthWeekExperience .deckFaceplate > * {
+  position: relative;
+  z-index: 2;
+}
+
+.birthWeekExperience .deckHeader {
+  position: absolute;
+  top: 1.15rem;
+  left: 1.35rem;
+  right: 1.35rem;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: .55rem;
+  color: #111719;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.birthWeekExperience .deckBrand {
+  color: #111719;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.52rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -.095em;
+  line-height: 1;
+  text-shadow: .5px .5px 0 rgba(255,255,255,.65);
+}
+
+.birthWeekExperience .deckHeader span,
+.birthWeekExperience .deckHeader i {
+  color: #252b2d;
+  font: 700 .58rem/1.1 "Arial Narrow", Arial, sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.birthWeekExperience .deckHeader i { font-style: normal; }
+
+.birthWeekExperience .walkmanTop {
+  position: absolute;
+  top: -1.55rem;
+  left: .9rem;
+  right: .9rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .36rem;
+  padding: .25rem .65rem;
+  color: #eef1ef;
+  border: 1px solid #101819;
+  border-radius: .25rem .25rem 0 0;
+  background: linear-gradient(180deg, #353a3b, #111718);
+  box-shadow: inset 0 1px rgba(255,255,255,.2), 0 -.18rem .35rem rgba(26,8,20,.22);
+}
+
+.birthWeekExperience .walkmanTop span {
+  font: 700 .47rem/1 Arial, sans-serif;
+  letter-spacing: .09em;
+}
+
+.birthWeekExperience .walkmanTop b {
+  width: .82rem;
+  height: .82rem;
+  border: 2px solid #8f9796;
+  border-radius: 50%;
+  background: radial-gradient(circle, #050708 0 38%, #2e3536 41% 65%, #090b0c 68%);
+  box-shadow: 0 1px 0 rgba(255,255,255,.25);
+}
+
+.birthWeekExperience .walkmanTop i {
+  width: 2.4rem;
+  height: .68rem;
+  border: 1px solid #0a0d0e;
+  border-radius: .1rem;
+  background: repeating-linear-gradient(90deg, #101415 0 3px, #6c7373 3px 4px);
+}
+
+.birthWeekExperience .hotLineControl {
+  position: absolute;
+  top: 7.35rem;
+  left: -1rem;
+  width: 2.15rem;
+  padding: .42rem .2rem .5rem;
+  display: grid;
+  place-items: center;
+  gap: .28rem;
+  color: #f5eee7;
+  border: 1px solid #0e2a3e;
+  border-radius: .25rem;
+  background: #0b3f64;
+  font: 800 .43rem/1 "Arial Narrow", Arial, sans-serif;
+  letter-spacing: .06em;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: 2px 3px 7px rgba(10,20,28,.32);
+}
+
+.birthWeekExperience .hotLineControl em {
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid #ffb184;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff9a61, var(--tps-orange) 55%, #b73e16 100%);
+  box-shadow: inset 0 -2px 3px rgba(93,25,7,.38), 0 1px 2px rgba(0,0,0,.35);
+}
+
+.birthWeekExperience .deckMeters {
+  min-height: 2.35rem;
+  margin: 0 0 .8rem;
+  border: 1px solid #273134;
+  border-radius: .12rem;
+  background: #d9d5be;
+  box-shadow: inset 0 0 0 3px #b5b4aa;
+}
+
+.birthWeekExperience .cassetteBay {
+  min-height: 17.4rem;
+  padding: 1.25rem .9rem;
+  border: 3px solid #c6cbc9;
+  border-radius: .2rem;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.1), transparent 35%),
+    linear-gradient(180deg, #17313d, #071116);
+  box-shadow: inset 0 0 0 1px #06141c, inset 0 0 2.1rem rgba(0,0,0,.72), 0 2px 0 rgba(255,255,255,.2);
+}
+
+.birthWeekExperience .cassette {
+  filter: saturate(.88) contrast(1.05);
+  box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.5);
+}
+
+.birthWeekExperience .deckTransport {
+  margin-top: .88rem;
+  padding: .58rem .65rem;
+  border: 1px solid #092b45;
+  border-radius: .12rem;
+  background: linear-gradient(180deg, #2978aa, #0c4c77);
+}
+
+.birthWeekExperience .deckTransport button {
+  min-height: 2.05rem;
+  color: #f4f5f3;
+  border-color: #07161e;
+  border-radius: .1rem;
+  background: linear-gradient(180deg, #30383a, #0d1213);
+  box-shadow: inset 0 1px rgba(255,255,255,.16), 0 2px 2px rgba(0,0,0,.35);
+}
+
+.birthWeekExperience .tapeNowPlaying {
+  margin-top: .82rem;
+  padding: .8rem .9rem;
+  color: #f6eee5;
+  border-color: rgba(255,255,255,.24);
+  background: rgba(5, 37, 58, .72);
+}
+
+@media (max-width: 540px) {
+  .birthWeekExperience .deckFaceplate {
+    width: min(88vw, 19rem);
+    min-height: 27rem;
+    padding: 4.8rem 1.05rem 1.15rem;
+    box-shadow: 0 1.5rem 3rem rgba(35,9,26,.32), inset 0 1px rgba(255,255,255,.85), inset -6px 0 10px rgba(3,33,54,.2), 6px 6px 0 #17384d;
+  }
+
+  .birthWeekExperience .cassetteBay { min-height: 14.6rem; }
+  .birthWeekExperience .hotLineControl { left: -.65rem; transform: scale(.88); transform-origin: right center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .birthWeekExperience .deckFaceplate { transform: none; }
+}

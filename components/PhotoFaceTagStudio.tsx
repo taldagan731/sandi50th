@@ -27,7 +27,7 @@ export function PhotoFaceTagStudio({ mediaId, imageSrc, alt }: { mediaId: string
     setMigrationRequired(Boolean(body.migrationRequired));
   }
 
-  useEffect(() => { void load(); }, [mediaId]);
+  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(timer); }, [mediaId]);
 
   function markFace(event: PointerEvent<HTMLDivElement>) {
     if (migrationRequired || event.target !== imageRef.current) return;
