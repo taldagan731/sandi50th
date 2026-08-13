@@ -1,0 +1,6 @@
+.walkmanPreviewPage { min-height:100dvh; padding:clamp(2rem,5vw,5rem) 1rem 8rem; color:#fff8ef; background:radial-gradient(circle at 20% 10%,#c84772,transparent 32%),linear-gradient(145deg,#48133f,#852653 55%,#bb5365); }
+.walkmanPreviewPage>header { width:min(48rem,100%); margin:0 auto 2rem; text-align:center; }
+.walkmanPreviewPage>header span { color:#f6c680; font:800 .72rem/1.2 system-ui,sans-serif; letter-spacing:.16em; }
+.walkmanPreviewPage>header h1 { margin:.7rem 0; font-family:Georgia,serif; font-size:clamp(2.2rem,7vw,5rem); line-height:.95; }
+.walkmanPreviewPage>header p { margin:0 auto; max-width:42rem; color:rgba(255,248,239,.8); font:1rem/1.55 system-ui,sans-serif; }
+.walkmanPreviewPage .birthWeekExperience { width:min(58rem,100%); margin:auto; }

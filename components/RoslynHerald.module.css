@@ -1,0 +1,250 @@
+.section {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  padding: clamp(1.25rem, 4vw, 3rem);
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 14% 4%, rgba(255, 170, 133, .2), transparent 35%),
+    linear-gradient(145deg, rgba(99, 24, 70, .82), rgba(42, 13, 38, .9));
+  box-shadow: 0 2rem 5rem rgba(30, 5, 24, .34);
+}
+
+.introduction {
+  max-width: 58rem;
+  text-align: center;
+}
+
+.introduction span {
+  color: #ffd39b;
+  font: 850 .7rem/1.2 var(--sans, Arial, sans-serif);
+  letter-spacing: .18em;
+}
+
+.introduction h3 {
+  margin: .4rem 0 .55rem;
+  font: 500 clamp(2.8rem, 7vw, 6.2rem)/.9 var(--serif, Georgia, serif);
+  letter-spacing: -.045em;
+}
+
+.introduction p {
+  max-width: 48rem;
+  margin: 0 auto;
+  color: rgba(255, 247, 237, .76);
+  font-size: clamp(.95rem, 1.7vw, 1.15rem);
+  line-height: 1.6;
+}
+
+.pageButton {
+  position: relative;
+  width: min(48rem, 100%);
+  padding: 0;
+  border: 0;
+  border-radius: .35rem;
+  background: #eee3cf;
+  box-shadow: 0 2rem 4.5rem rgba(22, 4, 17, .5), 0 0 0 1px rgba(255, 231, 190, .28);
+  cursor: zoom-in;
+}
+
+.pageButton:focus-visible {
+  outline: 4px solid #ffd494;
+  outline-offset: 6px;
+}
+
+.pageFrame {
+  display: block;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #eee3cf;
+}
+
+.pageFrame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.readCue {
+  position: absolute;
+  right: clamp(.65rem, 2vw, 1rem);
+  bottom: clamp(.65rem, 2vw, 1rem);
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 44px;
+  padding: .55rem .85rem;
+  border: 1px solid rgba(255, 238, 205, .5);
+  border-radius: 999px;
+  background: rgba(57, 14, 42, .9);
+  box-shadow: 0 .7rem 1.8rem rgba(24, 4, 18, .32);
+  color: #fff8ee;
+  font: 800 .72rem/1 var(--sans, Arial, sans-serif);
+  letter-spacing: .04em;
+  backdrop-filter: blur(12px);
+}
+
+.readCue b {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: #ffd494;
+  color: #561437;
+  font-size: 1rem;
+}
+
+.viewer {
+  position: fixed;
+  z-index: 1400;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(24, 6, 21, .99), rgba(79, 19, 57, .99));
+  color: #fff8ee;
+}
+
+.toolbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: max(.75rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) .75rem max(1rem, env(safe-area-inset-left));
+  border-bottom: 1px solid rgba(255, 214, 169, .18);
+  background: rgba(27, 7, 23, .92);
+  backdrop-filter: blur(16px);
+}
+
+.toolbar > span {
+  color: #ffd6ae;
+  font: 800 .72rem/1.2 var(--sans, Arial, sans-serif);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.toolbar > div {
+  display: flex;
+  gap: .45rem;
+}
+
+.toolbar button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: .55rem .9rem;
+  border: 1px solid rgba(255, 216, 178, .35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  color: #fff8ee;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.toolbar button:hover,
+.toolbar button:focus-visible {
+  border-color: #ffd494;
+  background: rgba(255, 212, 148, .16);
+  outline: none;
+}
+
+.viewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  padding: 1rem;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 114, 141, .13), transparent 44%), #140711;
+  cursor: grab;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.viewport img {
+  display: block;
+  max-width: min(94vw, 68rem);
+  max-height: calc(100dvh - 6rem);
+  object-fit: contain;
+  transform-origin: center;
+  user-select: none;
+  will-change: transform;
+  box-shadow: 0 1.5rem 5rem rgba(6, 1, 5, .58);
+}
+
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 520px) {
+  .section {
+    margin-inline: -.35rem;
+    padding: 1.1rem .65rem 1.35rem;
+    border-radius: 1.25rem;
+  }
+
+  .pageFrame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .pageFrame img {
+    height: auto;
+    object-fit: cover;
+    object-position: top center;
+  }
+
+  .readCue {
+    right: .5rem;
+    bottom: .5rem;
+  }
+
+  .toolbar {
+    align-items: flex-start;
+  }
+
+  .toolbar > span {
+    display: none;
+  }
+
+  .toolbar > div {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .toolbar button {
+    padding-inline: .72rem;
+  }
+
+  .viewport {
+    padding: .35rem;
+  }
+
+  .viewport img {
+    max-width: 98vw;
+    max-height: calc(100dvh - 5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageButton,
+  .toolbar button,
+  .viewport img {
+    transition: none !important;
+  }
+}

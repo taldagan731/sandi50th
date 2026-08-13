@@ -1,0 +1,39 @@
+/* Final GE Porta-Color photographic alignment. The image supplies the physical
+   cabinet, glass, veneer, speaker grille, hardware and period controls. */
+.birthWeekExperience .retroTv {
+  aspect-ratio: 4 / 3;
+}
+
+.birthWeekExperience .retroTvScreen {
+  top: 24.4%;
+  left: 15.5%;
+  width: 53.8%;
+  height: 55.3%;
+  border-radius: 15% / 11%;
+  transform: perspective(1000px) rotateY(-0.4deg);
+  clip-path: inset(0 round 15% 15% 14% 14% / 11% 11% 10% 10%);
+}
+
+.birthWeekExperience .photoTvDial {
+  right: 14.2%;
+  width: 10.8%;
+}
+
+.birthWeekExperience .photoTvDial.vhf { top: 24.5%; }
+.birthWeekExperience .photoTvDial.uhf { top: 43%; }
+
+.birthWeekExperience .photoTvChannelWindow {
+  top: 20.7%;
+  right: 16.3%;
+  min-width: 1.65rem;
+  border-color: rgba(255,255,255,.18);
+  background: rgba(20,16,12,.92);
+}
+
+@media (max-width: 520px) {
+  .birthWeekExperience .retroTvScreen iframe {
+    inset: -4%;
+    width: 108%;
+    height: 108%;
+  }
+}

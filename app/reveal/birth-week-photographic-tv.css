@@ -1,0 +1,147 @@
+/* Licensed product photograph supplies the cabinet, glass, knobs, wear and reflections. */
+.birthWeekExperience .retroTv {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1100 / 830;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.birthWeekExperience .retroTv::before,
+.birthWeekExperience .retroTv::after,
+.birthWeekExperience .retroTvSpeaker,
+.birthWeekExperience .retroTvControls {
+  display: none;
+}
+
+.birthWeekExperience .retroTvPhoto {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 1.8rem 1.7rem rgba(0,0,0,.44));
+  pointer-events: none;
+  user-select: none;
+}
+
+.birthWeekExperience .retroTvScreen {
+  position: absolute;
+  z-index: 2;
+  top: 14.3%;
+  left: 8.5%;
+  width: 62.8%;
+  height: 65.4%;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14% / 10%;
+  background: #050606;
+  box-shadow: inset 0 0 2.4rem #000;
+  transform: none;
+}
+
+.birthWeekExperience .retroTvScreen::before {
+  z-index: 4;
+  background:
+    linear-gradient(126deg, rgba(255,255,255,.14), rgba(255,255,255,.025) 20%, transparent 35% 75%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 2rem rgba(0,0,0,.68);
+}
+
+.birthWeekExperience .retroTvScreen::after {
+  z-index: 5;
+}
+
+.birthWeekExperience .retroTvScreen iframe {
+  position: absolute;
+  z-index: 2;
+  inset: -2%;
+  width: 104%;
+  height: 104%;
+  filter: saturate(.84) contrast(1.08) brightness(.88);
+}
+
+.birthWeekExperience .retroTvGlass {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(125deg, rgba(255,255,255,.1), transparent 28% 76%, rgba(142,183,168,.025));
+  box-shadow: inset 0 0 2.2rem rgba(0,0,0,.7);
+}
+
+.birthWeekExperience .photoTvDial {
+  position: absolute;
+  z-index: 6;
+  right: 10.2%;
+  width: 11.5%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: end center;
+  padding: 0 0 -.2rem;
+  color: transparent;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.birthWeekExperience .photoTvDial::after {
+  content: attr(data-band);
+  position: absolute;
+  top: calc(100% + .1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #d8d2c8;
+  font: 700 .48rem/1 Arial, sans-serif;
+  letter-spacing: .08em;
+  text-shadow: 0 1px 2px #000;
+}
+
+.birthWeekExperience .photoTvDial:focus-visible {
+  outline: 3px solid #f3c989;
+  outline-offset: 3px;
+}
+
+.birthWeekExperience .photoTvDial.vhf { top: 19.5%; }
+.birthWeekExperience .photoTvDial.uhf { top: 42.5%; }
+
+.birthWeekExperience .photoTvChannelWindow {
+  position: absolute;
+  z-index: 7;
+  top: 32.8%;
+  right: 12.6%;
+  min-width: 2rem;
+  padding: .12rem .25rem;
+  color: #eee9df;
+  border: 1px solid #080909;
+  border-radius: .08rem;
+  background: rgba(12,14,13,.9);
+  box-shadow: inset 0 0 .35rem #000;
+  font: 700 .58rem/1 Arial, sans-serif;
+  text-align: center;
+  pointer-events: none;
+}
+
+.birthWeekExperience .tvHardwareCredit {
+  grid-column: 1 / -1;
+  margin: .45rem 0 0;
+  color: rgba(255,255,255,.5);
+  font-size: .64rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.birthWeekExperience .tvHardwareCredit a { color: #d7b786; }
+
+@media (max-width: 520px) {
+  .birthWeekExperience .photoTvDial::after { font-size: .38rem; }
+  .birthWeekExperience .photoTvChannelWindow { min-width: 1.45rem; font-size: .44rem; }
+}

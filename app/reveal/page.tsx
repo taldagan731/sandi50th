@@ -15,6 +15,25 @@ import "./sandi-signature.css";
 import "./sandi-signature-trigger.css";
 import "./chapter-nine.css";
 import "./reveal-family-qa.css";
+import "./text-scroll.css";
+import "./birth-week-experience.css";
+import "./birth-week-luxury-pass.css";
+import "./birth-week-print-brand-pass.css";
+import "./birth-week-walkman-pass.css";
+import "./birth-week-teal-tv-pass.css";
+import "./birth-week-tps-l2-pass.css";
+import "./birth-week-real-tv-pass.css";
+import "./birth-week-photoreal-pass.css";
+import "./birth-week-photographic-tv.css";
+import "./birth-week-ge-tv.css";
+import "./birth-week-embed-safety.css";
+import "./birth-week-cassette-mechanism.css";
+import "./birth-week-matched-walkman.css";
+
+import "./photo-stories.css";
+import "./face-tags.css";
+import "./chapter-navigator.css";
+import "./tal-dedication.css";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +63,18 @@ type MediaRow = {
 };
 
 const SPECIAL_TEXT_PROMPTS = new Set(["VOICE_WALL", "BIRTHDAY_MESSAGE", "NAME_CHORUS", "OWNER_ARCHIVE"]);
+const SYSTEM_PLACEHOLDER_TEXT = new Set([
+  "a birthday message recorded for sandi.",
+  "a voice memory recorded for sandi.",
+  "voice memory recorded for sandi. please edit this sentence if the live transcript did not appear.",
+  "name chorus recording.",
+  "photographs or video shared for sandi's birthday story."
+]);
+
+function meaningfulContributionText(value: string | null | undefined) {
+  const text = value?.trim() ?? "";
+  return text && !SYSTEM_PLACEHOLDER_TEXT.has(text.toLowerCase()) ? text : "";
+}
 
 function contributorYearRange(value: string | null | undefined) {
   if (!value) return null;
@@ -105,6 +136,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
   if (!includeTests) {
     submissionQuery = submissionQuery
       .neq("review_status", "excluded")
+      .not("name", "ilike", "%AUTOMATED TEST%")
       .not("name", "ilike", "%MOBILE TEST%")
       .not("name", "ilike", "%CODEX%");
   }
@@ -142,12 +174,13 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
   const presentationMediaRows = mediaRows;
 
   const writtenMemories = submissionRows.flatMap(item => {
-    if (item.status === "family_qa" || SPECIAL_TEXT_PROMPTS.has(item.prompt?.toUpperCase() ?? "")) return [];
-    const firstMemory = item.first_memory?.trim() ?? "";
-    const story = item.story?.trim() ?? "";
+    if (item.status === "family_qa") return [];
+    const firstMemory = meaningfulContributionText(item.first_memory);
+    const story = meaningfulContributionText(item.story);
     if (!firstMemory && !story) return [];
-    const chapterNumber = chapterNumberFromContributor(item.life_chapter);
-    if (!chapterNumber) return [];
+    // Every included written contribution must be visible. Unknown labels are
+    // placed in Still Becoming instead of disappearing from the reveal.
+    const chapterNumber = chapterNumberFromContributor(item.life_chapter) ?? 8;
     return [{
       id: item.id,
       chapterNumber,
@@ -208,6 +241,7 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
             text: approved?.approved_text || ""
           };
         })}
+        ownerRehearsal={Boolean(owner || ownerPreview)}
         familyAnswers={familyAnswers}
         writtenMemories={writtenMemories}
         media={presentationMediaRows.map(item => {
@@ -223,10 +257,19 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
               : item.date_inference_source === "visual-decade"
                 ? "visual-decade" as const
                 : null;
+          // Every contributed audio file is a voice recording unless its prompt
+          // explicitly places it in the birthday reel or name chorus.
+          const looksLikeVoiceRecording = item.mime_type.startsWith("audio/");
           return {
             id: item.id,
             originalName: item.original_name,
-            mimeType: item.mime_type,
+            // A H.264/AAC QuickTime file is an ISO-BMFF stream that browsers can
+            // play reliably when advertised as MP4. The original remains intact.
+            mimeType: item.mime_type === "video/quicktime"
+              ? "video/mp4"
+              : item.mime_type === "audio/x-m4a"
+                ? "audio/mp4"
+                : item.mime_type,
             caption: item.caption ?? "",
             chapterNumber: item.chapter_number,
             poster: Boolean(item.poster_path),
@@ -234,10 +277,10 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
             relationship: submission?.relationship ?? "",
             collection: prompt === "NAME_CHORUS" || item.original_name.startsWith("name-chorus-")
               ? "name" as const
-              : prompt === "VOICE_WALL"
-                ? "voice" as const
-                : prompt === "BIRTHDAY_MESSAGE"
-                  ? "birthday" as const
+              : prompt === "BIRTHDAY_MESSAGE"
+                ? "birthday" as const
+                : prompt === "VOICE_WALL" || looksLikeVoiceRecording
+                  ? "voice" as const
                   : "archive" as const,
             yearStart: suppliedRange?.start ?? inferredStart,
             yearEnd: suppliedRange?.end ?? inferredEnd,
@@ -250,3 +293,6 @@ export default async function RevealPage({ searchParams }: { searchParams?: Prom
     </main>
   );
 }
+
+
+
